@@ -1,3 +1,3 @@
-require(testthat)
-library("RcppBlaze")
-test_check("RcppBlaze")
+library(testthat)
+library(RcppBlaze)
+testthat:::run_tests("RcppBlaze", "tests", NULL, "check", ...)

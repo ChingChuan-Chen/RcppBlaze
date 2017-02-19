@@ -10,25 +10,21 @@ repos:
 
 matrix:
   include:
-    - r: release
-    - r: oldrel
-    - r: devel
-    - os: osx
-    - os: linux
+  - r: release
+  - r: oldrel
+  - r: devel
+  - os: osx
+  - os: linux
   allow_failures:
-    - os: osx
-
-compiler:
-  - gcc
-  - clang
+  - os: osx
 
 addons:
  apt:
    sources:
-     - ubuntu-toolchain-r-test
+   - ubuntu-toolchain-r-test
    packages:
-     - gcc-4.9
-     - g++-4.9
+   - gcc-4.9
+   - g++-4.9
 
 r_github_packages:
   - jimhester/covr

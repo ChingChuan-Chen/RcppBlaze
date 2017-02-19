@@ -33,7 +33,6 @@ Description: 'Blaze' is an open-source, high-performance C++ math library
 Depends:
     R (>= 3.0.2)
 Imports:
-    stats,
     utils,
     Rcpp (>= 0.11.0),
     Matrix (>= 1.1-0)

@@ -1,6 +1,6 @@
 ## RcppBlaze
 
-[![Build Status](https://travis-ci.org/ChingChuan-Chen/RcppBlaze.svg)](https://travis-ci.org/ChingChuan-Chen/RcppBlaze) [![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](http://www.gnu.org/licenses/gpl-2.0.html) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![CRAN](http://www.r-pkg.org/badges/version/RcppBlaze)](http://cran.r-project.org/package=RcppBlaze) [![Downloads](http://cranlogs.r-pkg.org/badges/RcppBlaze?color=brightgreen)](http://www.r-pkg.org/pkg/RcppBlaze)
+[![Build Status](https://travis-ci.org/ChingChuan-Chen/RcppBlaze.svg)](https://travis-ci.org/ChingChuan-Chen/RcppBlaze) [![Build status](https://ci.appveyor.com/api/projects/status/ip1s0avhreksvgd5?svg=true)](https://ci.appveyor.com/project/ChingChuan-Chen/rcppblaze) [![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](http://www.gnu.org/licenses/gpl-2.0.html) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![CRAN](http://www.r-pkg.org/badges/version/RcppBlaze)](http://cran.r-project.org/package=RcppBlaze) [![Downloads](http://cranlogs.r-pkg.org/badges/RcppBlaze?color=brightgreen)](http://www.r-pkg.org/pkg/RcppBlaze)
 
 ### Overview
 
