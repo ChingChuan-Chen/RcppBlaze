@@ -1,3 +1,9 @@
+## Status
+
+     License       |  Linux/osx Build  |   Windows Build   |  Coverage Status  |        CRAN       |
+-------------------|-------------------|-------------------|-------------------|-------------------|
+[![GitHub license](https://img.shields.io/badge/lincense-MIT-blue.svg)](http://badges.mit-license.org) | [![Build status](https://travis-ci.org/ChingChuan-Chen/RcppBlaze.svg?branch=master)](https://travis-ci.org/ChingChuan-Chen/RcppBlaze/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/2yms6ao3mf69fdht/branch/master?svg=true)](https://ci.appveyor.com/project/ChingChuan-Chen/RcppBlaze/branch/master) | [![Coverage Status](https://codecov.io/github/ChingChuan-Chen/RcppBlaze/coverage.svg?branch=master)](https://codecov.io/github/ChingChuan-Chen/RcppBlaze?branch=master) | [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/RcppBlaze)](http://cran.r-project.org/package=RcppBlaze)   [![Downloads](http://cranlogs.r-pkg.org/badges/grand-total/RcppBlaze)](http://cran.rstudio.com/package=RcppBlaze)
+
 ## RcppBlaze
 
 [![Build Status](https://travis-ci.org/ChingChuan-Chen/RcppBlaze.svg)](https://travis-ci.org/ChingChuan-Chen/RcppBlaze) [![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](http://www.gnu.org/licenses/gpl-2.0.html) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![CRAN](http://www.r-pkg.org/badges/version/RcppBlaze)](http://cran.r-project.org/package=RcppBlaze) [![Downloads](http://cranlogs.r-pkg.org/badges/RcppBlaze?color=brightgreen)](http://www.r-pkg.org/pkg/RcppBlaze)
@@ -31,7 +37,16 @@ we will use the version 2.6 of **Blaze** which is C++98 compatible to support th
 
 ### Documentation
 
-# to be done
+You can install:
+
+* the latest development version from github with
+
+    ```R
+    install.packages("devtools")
+    devtools::install_github("ChingChuan-Chen/RcppBlaze")
+    ```
+
+If you encounter a bug, please file a reproducible example on [github](https://github.com/ChingChuan-Chen/RcppBlaze/issues).
 
 ### Authors
 
