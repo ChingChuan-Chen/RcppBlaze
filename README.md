@@ -29,7 +29,7 @@ as is the rest of *'**Rcpp**.
 Note that since latest version of **Blaze** (3.0) commit to C++14 which does not used by most R users, 
 we will use the version 2.6 of **Blaze** which is C++98 compatible to support the most compilers and system.
 
-### Documentation
+### Installation
 
 You can install:
 
@@ -44,7 +44,7 @@ If you encounter a bug, please file a reproducible example on [github](https://g
 
 ### Authors
 
-Chingchuan Chen
+Chingchuan Chen, Klaus Iglberger, Georg Hager, Christian Godenschwager, Tobias Scharpff
 
 ### License
 
