@@ -1,4 +1,3 @@
-Sys.setenv(R_TEST = "")
 Rcpp::sourceCpp("cpp/test-adaptors.cpp")
 x <- matrix(c(rep(0, 4), 1, 3, rep(0, 3), 4, rep(0, 2), 2, 0, 5, 0), 4)
 x2 <- t(x)
