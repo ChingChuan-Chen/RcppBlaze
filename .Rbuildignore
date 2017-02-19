@@ -1,0 +1,6 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+.Rhistory
+.travis.yml
+.git
+appveyor.yml
