@@ -39,7 +39,8 @@ Imports:
 LinkingTo: Rcpp,
     BH (>= 1.54.0-2)
 Suggests:
-    RUnit
+    RUnit,
+    pkgKitten
 LazyData: yes
 License: GPL (>= 2)
 RoxygenNote: 5.0.1
