@@ -2,7 +2,7 @@ Package: RcppBlaze
 Type: Package
 Title: 'Rcpp' Integration for the 'Blaze' high-performance C++ math library
 Version: 0.1.0
-Date: 2017-02-20
+Date: 2017-02-21
 Author: Ching-Chuan Chen, Klaus Iglberger, Georg Hager, Christian Godenschwager,
     Tobias Scharpff
 Maintainer: Ching-Chuan Chen <zw12356@gmail.com>
