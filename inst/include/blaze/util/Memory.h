@@ -90,7 +90,7 @@ inline byte* allocate_backend( size_t size, size_t alignment )
 #elif ( defined(_POSIX_ADVISORY_INFO) && (_POSIX_ADVISORY_INFO >= 200112L) )
    if( posix_memalign( &raw, alignment, size ) ) {
 #else
-   raw = (void*) malloc( size, alignment );
+   raw = (void*) malloc( size );
    if( raw == NULL ) {
 #endif
       BLAZE_THROW_BAD_ALLOC;
