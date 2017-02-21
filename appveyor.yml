@@ -33,7 +33,7 @@ environment:
     CRAN: http://cran.rstudio.com
 
 build_script:
-  - travis-tool.sh install_r ggplot2 testthat covr
+  - travis-tool.sh install_r RUnit pkgKitten
   - travis-tool.sh install_deps
 
 test_script:
