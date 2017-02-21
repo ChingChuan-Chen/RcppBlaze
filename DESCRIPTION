@@ -17,7 +17,7 @@ Description: 'Blaze' is an open-source, high-performance C++ math library
     - high performance through the integration of BLAS libraries and manually
     tuned HPC math kernels - vectorization by SSE, SSE2, SSE3, SSSE3, SSE4, AVX,
     AVX2, AVX-512, FMA, and SVML - parallel execution by OpenMP, C++11 threads and
-    Boost threads (Boost threads is disables in RcppBlaze) - the intuitive and easy
+    Boost threads (Boost threads are disabled in RcppBlaze) - the intuitive and easy
     to use API of a domain specific language - unified arithmetic with dense and
     sparse vectors and matrices - thoroughly tested matrix and vector arithmetic -
     completely portable, high quality C++ source code The RcppBlaze package includes
@@ -26,10 +26,10 @@ Description: 'Blaze' is an open-source, high-performance C++ math library
     a header-only library. Therefore, users do not need to install Blaze and the
     dependency Boost. Blaze is licensed under the New (Revised) BSD license, while
     RcppBlaze (the Rcpp bindings/bridge to Blaze) is licensed under the GNU GPL
-    version 2 or later, as is the rest of Rcpp. Note that since latest version of
-    Blaze (3.0) commit to C++14 which does not used by most R users, we will use the
-    version 2.6 of Blaze which is C++98 compatible to support the most compilers and
-    system.
+    version 2 or later, as is the rest of Rcpp. Note that since \strong{Blaze} has 
+    committed to C++14 commit to C++14 which does not used by most R users from 
+    version 3.0, we will use the version 2.6 of Blaze which is C++98 compatible to 
+    support the most compilers and system.
 Depends:
     R (>= 3.0.2)
 Imports:

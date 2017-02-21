@@ -30,7 +30,7 @@ header-only library. Therefore, users do not need to  install \strong{Blaze} and
 (the \strong{Rcpp} bindings/bridge to \strong{Blaze}) is licensed under the GNU GPL version 2 or later,
 as is the rest of \strong{Rcpp}.
 
-Note that since latest version of \strong{Blaze} (3.0) commit to C++14 which does not used by most \strong{R} users,
+Note that since \strong{Blaze} has committed to C++14 which does not used by most \strong{R} users from version 3.0,
 we will use the version 2.6 of \strong{Blaze} which is C++98 compatible to support the most compilers and system.
 }
 \section{Caution}{
