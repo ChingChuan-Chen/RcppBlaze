@@ -1,6 +1,10 @@
-## RcppBlaze.package.skeleton.R: makes a skeleton for a package that wants to use RcppBlaze
+## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
+## Copyright (C) 2014        Dirk Eddelbuettel
+## Copyright (C) 2017        Chingchuan Chen
 ##
-## Copyright (C)       2017 Chingchuan Chen
+## This file is based on RcppArmadillo.package.skeleton.R,
+## RcppArmadillo.package.skeleton.Rd, RcppEigen.package.skeleton.R
+## and RcppEigen.package.skeleton.Rd from RcppArmadillo and RcppEigen.
 ##
 ## This file is part of RcppBlaze.
 ##

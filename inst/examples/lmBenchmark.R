@@ -2,7 +2,8 @@
 ##
 ## Copyright (C)  2017 Douglas Bates, Dirk Eddelbuettel, Romain Francois and Chingchuan Chen
 ##
-## This file is part of RcppEigen and RcppBlaze.
+## This file is based on lmBenchmark.R from RcppEigen.
+## This file is part of RcppBlaze.
 
 require("stats", character=TRUE, quietly=TRUE)
 require("microbenchmark", character=TRUE, quietly=TRUE)

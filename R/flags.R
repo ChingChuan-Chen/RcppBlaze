@@ -1,5 +1,8 @@
-## Copyright (C)       2017 Chingchuan Chen
+## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
+## Copyright (C) 2014        Dirk Eddelbuettel
+## Copyright (C) 2017        Chingchuan Chen
 ##
+## This file is based on flags.R and inline.R from RcppArmadillo and RcppEigen.
 ## This file is part of RcppBlaze.
 ##
 ## RcppBlaze is free software: you can redistribute it and/or modify it

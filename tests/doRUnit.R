@@ -1,7 +1,9 @@
+## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
+## Copyright (C) 2014        Dirk Eddelbuettel
+## Earlier copyrights Gregor Gorjanc, Martin Maechler and Murray Stokely as detailed below
 ## Copyright (C) 2017 Chingchuan Chen
-## Earlier copyrights Dirk Eddelbuettel, Romain Francois and Douglas Bates,
-##   Gregor Gorjanc, Martin Maechler and Murray Stokely as detailed below
 ##
+## This file is based on doUnit.R from RcppArmadillo and RcppEigen.
 ## This file is part of RcppBlaze.
 ##
 ## RcppBlaze is free software: you can redistribute it and/or modify it
@@ -25,9 +27,9 @@
 ## and changed further by Martin Maechler
 ## and more changes by Murray Stokely in HistogramTools
 ## and then used adapted in RProtoBuf
-## and now used in Rcpp, RcppArmadillo and Here
+## and now used in Rcpp, RcppArmadillo, RcppEigen and Here
 ##
-## Chingchuan Chen, Feb 2017
+## Dirk Eddelbuettel, Feb - June 2014
 
 if (require("RUnit", quietly = TRUE)) {
   pkg <- "RcppBlaze"
