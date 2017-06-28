@@ -25,6 +25,7 @@
 
 // remove some warnings
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#pragma GCC diagnostic ignored "-Wpedantic"
 
 #define BOOST_ERROR_CODE_HEADER_ONLY
 #define BOOST_SYSTEM_NO_DEPRECATED
