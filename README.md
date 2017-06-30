@@ -26,7 +26,7 @@ header-only library. Therefore, users do not need to  install **Blaze** and the 
 (the 'Rcpp' bindings/bridge to **Blaze**) is licensed under the GNU GPL version 2 or later, 
 as is the rest of **Rcpp**. 
 
-Note that since \strong{Blaze} has committed to C++14 which does not used by most R users from version 3.0, 
+Note that since **Blaze** has committed to C++14 which does not used by most R users from version 3.0, 
 we will use the version 2.6 of **Blaze** which is C++98 compatible to support the most compilers and system.
 
 ### Installation
