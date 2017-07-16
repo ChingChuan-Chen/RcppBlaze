@@ -23,6 +23,7 @@
 // along with RcppBlaze.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <RcppBlaze.h>
+#include <blaze/system/Version.h>
 
 // [[Rcpp::export]]
 Rcpp::IntegerVector blaze_version(bool single) {

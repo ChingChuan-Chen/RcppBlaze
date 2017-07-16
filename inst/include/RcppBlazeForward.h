@@ -24,22 +24,24 @@
 #define RcppBlaze__RcppBlazeForward__h
 
 #include <RcppBlazeConfig.h>
+
 #define STRICT_R_HEADERS
 #define R_NO_REMAP
+
 #include <Rinternals.h>
 #include <R_ext/Boolean.h>
 #include <Rcpp/XPtr.h>
-#include <RcppCommon.h>
 #include <Rconfig.h>
-#include <blaze/Blaze.h>
-#include <blaze/system/Version.h>
 
-#ifdef RCPPBLAZE_USE_RCPPLAPACKE
+#include <blaze/system/BLAS.h>
+#ifdef RCPPBLAZE_USE_RCPPCBLAS
 #undef BLAZE_BLAS_MODE
 #define BLAZE_BLAS_MODE 1
 #undef BLAZE_BLAS_IS_PARALLEL
 #define BLAZE_BLAS_IS_PARALLEL 1
 #endif
+
+#include <blaze/Blaze.h>
 
 /* forward declarations */
 namespace Rcpp {

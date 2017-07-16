@@ -61,11 +61,7 @@ The important steps are
 }
 }
 }
-\author{
-For RcppBlaze: Chingchuan Chen
-Maintainer: Chingchuan Chen <zw12356@gmail.com>
-For blaze: Klaus Iglberger, Georg Hager, Christian Godenschwager, Tobias Scharpff
-}
+
 \references{
 \enumerate{
 \item Blaze project: \url{https://bitbucket.org/blaze-lib/blaze}
@@ -80,6 +76,10 @@ For blaze: Klaus Iglberger, Georg Hager, Christian Godenschwager, Tobias Scharpf
       for the Manycore Era (APMM 2012) at HPCS 2012
 }
 }
+\author{
+For RcppBlaze: Chingchuan Chen
+Maintainer: Chingchuan Chen <zw12356@gmail.com>
+For blaze: Klaus Iglberger, Georg Hager, Christian Godenschwager, Tobias Scharpff
+}
 \keyword{interface}
 \keyword{package}
-
