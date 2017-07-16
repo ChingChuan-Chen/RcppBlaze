@@ -49,7 +49,8 @@ if (suppressMessages(require("RcppEigen", character = TRUE, quietly = TRUE))) {
   ## LLt Cholesky decomposition
   exprs$eigen_LLt <- expression(.Call("RcppEigen_fastLm_Impl", PACKAGE = "RcppEigen", mm, y, 3L))
 
-  if (suppressMessages(require("RcppLAPACKE", character = TRUE, quietly = TRUE)) && packageVersion("RcppEigen") >= "0.3.3.3.0") {
+  if (suppressMessages(require("RcppLAPACKE", character = TRUE, quietly = TRUE)) &&
+      packageVersion("RcppEigen") >= "0.3.3.3.0") {
     Rcpp::sourceCpp(system.file("examples","RcppEigen_with_RcppLAPACKE.cpp", package = "RcppBlaze"))
     # Let RcppEigen use LAPACKE
     exprs$eigen_PivQR_lapacke <- expression(fastLm_Impl2(mm, y, 0L))

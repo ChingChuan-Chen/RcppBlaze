@@ -37,6 +37,13 @@
 #error "Boost threads could not be used!"
 #endif
 
+#ifdef _OPENMP
+#include <omp.h>
+#else
+#define omp_get_num_threads() 1
+#define omp_get_thread_num() 0
+#endif
+
 #if defined(_OPENMP) && defined(BLAZE_USE_CPP_THREADS)
 #error "Openmp is used, not to use C++11 threads!"
 #undef BLAZE_USE_CPP_THREADS
