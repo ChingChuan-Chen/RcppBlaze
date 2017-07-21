@@ -27,9 +27,12 @@
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #pragma GCC diagnostic ignored "-Wpedantic"
 
+#ifndef BOOST_ERROR_CODE_HEADER_ONLY
 #define BOOST_ERROR_CODE_HEADER_ONLY
+#endif
+#ifndef BOOST_SYSTEM_NO_DEPRECATED
 #define BOOST_SYSTEM_NO_DEPRECATED
-
+#endif
 // avoid conflict to R constants
 #define _BLAZE_MATH_CONSTANTS_H_
 

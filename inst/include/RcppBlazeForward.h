@@ -25,8 +25,12 @@
 
 #include <RcppBlazeConfig.h>
 
+#ifndef STRICT_R_HEADERS
 #define STRICT_R_HEADERS
+#endif
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 
 #include <Rinternals.h>
 #include <R_ext/Boolean.h>
