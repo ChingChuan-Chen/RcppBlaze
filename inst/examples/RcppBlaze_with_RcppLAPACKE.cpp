@@ -22,7 +22,8 @@
 
 #define RCPPBLAZE_USE_RCPPCBLAS
 // must include RcppCBLAS first
-#include <RcppCBLAS.h>
+#include <cblas.h>
+#include <cblas_f77.h>
 #include <RcppBlaze.h>
 // [[Rcpp::depends(RcppBlaze, RcppLAPACKE)]]
 

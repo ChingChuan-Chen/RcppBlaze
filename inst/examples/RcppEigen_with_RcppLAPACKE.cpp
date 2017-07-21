@@ -23,7 +23,7 @@
 #define EIGEN_USE_BLAS
 #define EIGEN_USE_LAPACKE
 // must include RcppLAPACKE first
-#include <RcppLAPACKE.h>
+#include <lapacke.h>
 #include <RcppEigen.h>
 // [[Rcpp::depends(RcppEigen, RcppLAPACKE)]]
 
@@ -231,11 +231,11 @@ int gesdd(MatrixXd& A, ArrayXd& S, MatrixXd& Vt) {
   double wrk;
   if (m < n || S.size() != n || Vt.rows() != n || Vt.cols() != n)
     throw std::invalid_argument("dimension mismatch in gesvd");
-  F77_CALL(dgesdd)("O", &m, &n, A.data(), &m, S.data(), A.data(),
+  F77_CALL(dgesdd)((char*) "O", &m, &n, A.data(), &m, S.data(), A.data(),
            &m, Vt.data(), &n, &wrk, &mone, &iwork[0], &info);
   int lwork(wrk);
   std::vector<double> work(lwork);
-  F77_CALL(dgesdd)("O", &m, &n, A.data(), &m, S.data(), A.data(),
+  F77_CALL(dgesdd)((char*) "O", &m, &n, A.data(), &m, S.data(), A.data(),
            &m, Vt.data(), &n, &work[0], &lwork, &iwork[0], &info);
   return info;
 }

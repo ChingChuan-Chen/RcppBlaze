@@ -1,3 +1,6 @@
+# RcppBlaze v0.2.1
+
+* Modification of examples.
 
 # RcppBlaze v0.2.0
 

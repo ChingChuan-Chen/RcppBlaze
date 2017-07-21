@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // fastLmPure
 List fastLmPure(blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, int type);
-RcppExport SEXP RcppBlaze_fastLmPure(SEXP XSEXP, SEXP ySEXP, SEXP typeSEXP) {
+RcppExport SEXP _RcppBlaze_fastLmPure(SEXP XSEXP, SEXP ySEXP, SEXP typeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,7 +21,7 @@ END_RCPP
 }
 // blaze_version
 Rcpp::IntegerVector blaze_version(bool single);
-RcppExport SEXP RcppBlaze_blaze_version(SEXP singleSEXP) {
+RcppExport SEXP _RcppBlaze_blaze_version(SEXP singleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -32,7 +32,7 @@ END_RCPP
 }
 // Blaze_SSE
 bool Blaze_SSE();
-RcppExport SEXP RcppBlaze_Blaze_SSE() {
+RcppExport SEXP _RcppBlaze_Blaze_SSE() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -42,7 +42,7 @@ END_RCPP
 }
 // Blaze_AVX
 bool Blaze_AVX();
-RcppExport SEXP RcppBlaze_Blaze_AVX() {
+RcppExport SEXP _RcppBlaze_Blaze_AVX() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -52,7 +52,7 @@ END_RCPP
 }
 // Blaze_AVX2
 bool Blaze_AVX2();
-RcppExport SEXP RcppBlaze_Blaze_AVX2() {
+RcppExport SEXP _RcppBlaze_Blaze_AVX2() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -62,7 +62,7 @@ END_RCPP
 }
 // Blaze_MIC
 bool Blaze_MIC();
-RcppExport SEXP RcppBlaze_Blaze_MIC() {
+RcppExport SEXP _RcppBlaze_Blaze_MIC() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -72,11 +72,27 @@ END_RCPP
 }
 // Blaze_FMA
 bool Blaze_FMA();
-RcppExport SEXP RcppBlaze_Blaze_FMA() {
+RcppExport SEXP _RcppBlaze_Blaze_FMA() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(Blaze_FMA());
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_RcppBlaze_fastLmPure", (DL_FUNC) &_RcppBlaze_fastLmPure, 3},
+    {"_RcppBlaze_blaze_version", (DL_FUNC) &_RcppBlaze_blaze_version, 1},
+    {"_RcppBlaze_Blaze_SSE", (DL_FUNC) &_RcppBlaze_Blaze_SSE, 0},
+    {"_RcppBlaze_Blaze_AVX", (DL_FUNC) &_RcppBlaze_Blaze_AVX, 0},
+    {"_RcppBlaze_Blaze_AVX2", (DL_FUNC) &_RcppBlaze_Blaze_AVX2, 0},
+    {"_RcppBlaze_Blaze_MIC", (DL_FUNC) &_RcppBlaze_Blaze_MIC, 0},
+    {"_RcppBlaze_Blaze_FMA", (DL_FUNC) &_RcppBlaze_Blaze_FMA, 0},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_RcppBlaze(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }
