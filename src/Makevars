@@ -1,4 +1,9 @@
 
-PKG_CXXFLAGS=-I../inst/include $(SHLIB_OPENMP_CXXFLAGS)
-PKG_LIBS=$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
-
+CXX11=$(shell "${R_HOME}"/bin/R CMD config CXX11)
+ifeq ($(shell $(CXX11) -fopenmp -E -xc++ - 2>&1 >/dev/null && echo 'true'), true)
+	PKG_CXXFLAGS=-I../inst/include
+	PKG_LIBS=$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+else
+	PKG_CXXFLAGS=-I../inst/include $(SHLIB_OPENMP_CXXFLAGS)
+	PKG_LIBS=$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
+endif
