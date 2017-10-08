@@ -1,3 +1,7 @@
+# RcppBlaze v0.2.2
+
+* Fix building problem on windows.
+
 # RcppBlaze v0.2.1
 
 * Modification of examples.
