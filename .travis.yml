@@ -27,6 +27,9 @@ addons:
    - gcc-4.9
    - g++-4.9
 
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir -p ~/.R && echo "SHLIB_OPENMP_CXXFLAGS = " >>~/.R/Makevars; fi
+
 notifications:
   email:
     on_success: change
