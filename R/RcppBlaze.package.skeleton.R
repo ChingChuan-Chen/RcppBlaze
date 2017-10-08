@@ -153,12 +153,6 @@ RcppBlaze.package.skeleton <- function(name = "anRpackage",
     message(" >> added Makevars file with RcppBlaze settings")
   }
 
-  Makevars.win <- file.path(src, "Makevars.win")
-  if (!file.exists(Makevars.win)) {
-    file.copy(file.path(skeleton, "Makevars.win"), Makevars.win)
-    message(" >> added Makevars.win file with RcppBlaze settings")
-  }
-
   if (example_code) {
     file.copy(file.path(skeleton, "rcppblaze_hello_world.cpp"), src)
     message(" >> added example src file using Blaze classes")

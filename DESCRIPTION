@@ -4,7 +4,7 @@ Title: 'Rcpp' Integration for the 'Blaze' High-Performance C++ Math Library
 Version: 0.2.2
 Date: 2017-10-08
 Author: Ching-Chuan Chen, Klaus Iglberger, Georg Hager, Christian Godenschwager,
-    Tobias Scharpff
+    Tobias Scharpff, Dirk Eddelbuettel, Romain Francois, Douglas Bates
 Maintainer: Ching-Chuan Chen <zw12356@gmail.com>
 URL: https://github.com/Chingchuan-chen/RcppBlaze,
     https://bitbucket.org/blaze-lib/blaze
