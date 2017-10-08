@@ -95,7 +95,7 @@
 #' @keywords package interface
 #' @docType package
 #' @name RcppBlaze-package
-#' @useDynLib RcppBlaze
+#' @useDynLib RcppBlaze, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 #' @importClassesFrom Matrix dgCMatrix lgCMatrix dgRMatrix lgRMatrix
 NULL
