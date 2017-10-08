@@ -30,7 +30,6 @@ Description: 'Blaze' is an open-source, high-performance C++ math library
     'Blaze' has committed to 'C++14' commit to 'C++14' which does not used by most R users
     from version 3.0, we will use the version 2.6 of 'Blaze' which is 'C++98' compatible 
     to support the most compilers and system.
-SystemRequirements: GNU make
 Depends:
     R (>= 3.0.2)
 Imports:
