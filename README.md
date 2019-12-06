@@ -1,3 +1,5 @@
+The author do not maintain this project anymore. If you want to use Blaze, you can leverage [RcppBlaze3](https://github.com/ChingChuan-Chen/RcppBlaze3) to get what you want.
+
 ## RcppBlaze
 
 [![Build Status](https://travis-ci.org/ChingChuan-Chen/RcppBlaze.svg)](https://travis-ci.org/ChingChuan-Chen/RcppBlaze) [![Build status](https://ci.appveyor.com/api/projects/status/ip1s0avhreksvgd5?svg=true)](https://ci.appveyor.com/project/ChingChuan-Chen/rcppblaze) [![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](http://www.gnu.org/licenses/gpl-2.0.html) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
