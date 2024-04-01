@@ -28,7 +28,7 @@ using Rcpp::_;
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 // [[Rcpp::export]]
-Rcpp::List testAs(Rcpp::NumericVector x) {
+Rcpp::List testAs1(Rcpp::NumericVector x) {
   blaze::DynamicVector<double, blaze::columnVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::columnVector>>(x);
   Rcpp::Rcout << y << std::endl;
   return List::create(
@@ -39,6 +39,24 @@ Rcpp::List testAs(Rcpp::NumericVector x) {
 // [[Rcpp::export]]
 Rcpp::List testAs2(Rcpp::NumericVector x) {
   blaze::DynamicVector<double, blaze::rowVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::rowVector>>(x);
+  Rcpp::Rcout << y << std::endl;
+  return List::create(
+    _["test"] = true
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List testAs3(Rcpp::NumericMatrix x) {
+  blaze::DynamicMatrix<double, blaze::columnMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::columnMajor>>(x);
+  Rcpp::Rcout << y << std::endl;
+  return List::create(
+    _["test"] = true
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List testAs4(Rcpp::NumericMatrix x) {
+  blaze::DynamicMatrix<double, blaze::rowMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::rowMajor>>(x);
   Rcpp::Rcout << y << std::endl;
   return List::create(
     _["test"] = true
