@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsMatVecMultExpr.h
 //  \brief Header file for the IsMatVecMultExpr type trait class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
+#include <utility>
 #include <blaze/math/expressions/MatVecMultExpr.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -57,17 +55,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsMatVecMultExpr type trait.
+/*!\brief Auxiliary helper functions for the IsMatVecMultExpr type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsMatVecMultExprHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_base_of<MatVecMultExpr,T>::value && !boost::is_base_of<T,MatVecMultExpr>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+template< typename MT >
+TrueType isMatVecMultExpr_backend( const volatile MatVecMultExpr<MT>* );
+
+FalseType isMatVecMultExpr_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -79,24 +73,48 @@ struct IsMatVecMultExprHelper
 //
 // This type trait class tests whether or not the given type \a Type is a matrix/vector
 // multiplication expression template. In order to qualify as a valid matrix/vector
-// multiplication expression template, the given type has to derive (publicly or privately)
-// from the MatVecMultExpr base class. In case the given type is a valid matrix/vector
-// multiplication expression template, the \a value member enumeration is set to 1, the
-// nested type definition \a Type is \a TrueType, and the class derives from \a TrueType.
-// Otherwise \a value is set to 0, \a Type is \a FalseType, and the class derives from
+// multiplication expression template, the given type has to derive publicly from the
+// MatVecMultExpr base class. In case the given type is a valid matrix/vector multiplication
+// expression template, the \a value member constant is set to \a true, the nested type
+// definition \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise
+// \a value is set to \a false, \a Type is \a FalseType, and the class derives from
 // \a FalseType.
 */
 template< typename T >
-struct IsMatVecMultExpr : public IsMatVecMultExprHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsMatVecMultExprHelper<T>::value };
-   typedef typename IsMatVecMultExprHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsMatVecMultExpr
+   : public decltype( isMatVecMultExpr_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsMatVecMultExpr type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsMatVecMultExpr<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsMatVecMultExpr type trait.
+// \ingroup math_type_traits
+//
+// The IsMatVecMultExpr_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsMatVecMultExpr class template. For instance, given the type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsMatVecMultExpr<T>::value;
+   constexpr bool value2 = blaze::IsMatVecMultExpr_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsMatVecMultExpr_v = IsMatVecMultExpr<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

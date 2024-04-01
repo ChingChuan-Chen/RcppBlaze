@@ -3,7 +3,7 @@
 //  \file blaze/math/expressions/SVecTransExpr.h
 //  \brief Header file for the sparse vector transpose expression
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,34 +40,28 @@
 // Includes
 //*************************************************************************************************
 
-#include <iterator>
+#include <blaze/math/Aliases.h>
 #include <blaze/math/constraints/RequiresEvaluation.h>
 #include <blaze/math/constraints/SparseVector.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/Computation.h>
 #include <blaze/math/expressions/DVecTransposer.h>
 #include <blaze/math/expressions/Forward.h>
 #include <blaze/math/expressions/SparseVector.h>
 #include <blaze/math/expressions/SVecTransposer.h>
+#include <blaze/math/expressions/Transformation.h>
 #include <blaze/math/expressions/VecTransExpr.h>
-#include <blaze/math/traits/SubvectorExprTrait.h>
-#include <blaze/math/traits/SVecTransExprTrait.h>
-#include <blaze/math/traits/TransExprTrait.h>
-#include <blaze/math/traits/TSVecTransExprTrait.h>
-#include <blaze/math/typetraits/IsColumnVector.h>
 #include <blaze/math/typetraits/IsExpression.h>
-#include <blaze/math/typetraits/IsRowVector.h>
-#include <blaze/math/typetraits/IsSparseVector.h>
 #include <blaze/math/typetraits/RequiresEvaluation.h>
-#include <blaze/math/typetraits/Size.h>
+#include <blaze/system/MacroDisable.h>
 #include <blaze/util/Assert.h>
-#include <blaze/util/EmptyType.h>
 #include <blaze/util/EnableIf.h>
-#include <blaze/util/Exception.h>
+#include <blaze/util/FunctionTrace.h>
+#include <blaze/util/IntegralConstant.h>
 #include <blaze/util/InvalidType.h>
-#include <blaze/util/logging/FunctionTrace.h>
-#include <blaze/util/SelectType.h>
+#include <blaze/util/mpl/If.h>
 #include <blaze/util/Types.h>
-#include <blaze/util/typetraits/RemoveReference.h>
+#include <blaze/util/typetraits/GetMemberType.h>
 
 
 namespace blaze {
@@ -87,13 +81,14 @@ namespace blaze {
 */
 template< typename VT  // Type of the sparse vector
         , bool TF >    // Transpose flag
-class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
-                    , private VecTransExpr
-                    , private SelectType< IsComputation<VT>::value, Computation, EmptyType >::Type
+class SVecTransExpr
+   : public VecTransExpr< SparseVector< SVecTransExpr<VT,TF>, TF > >
+   , private If_t< IsComputation_v<VT>, Computation, Transformation >
 {
  private:
    //**Type definitions****************************************************************************
-   typedef typename VT::CompositeType  CT;  //!< Composite type of the sparse vector expression.
+   //! Definition of the GetConstIterator type trait.
+   BLAZE_CREATE_GET_TYPE_MEMBER_TYPE_TRAIT( GetConstIterator, ConstIterator, INVALID_TYPE );
    //**********************************************************************************************
 
    //**Serial evaluation strategy******************************************************************
@@ -104,172 +99,54 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
        set to 1 and the transposition expression will be evaluated via the \a assign function
        family. Otherwise \a useAssign will be set to 0 and the expression will be evaluated via
        the subscript operator. */
-   enum { useAssign = RequiresEvaluation<VT>::value };
+   static constexpr bool useAssign = RequiresEvaluation_v<VT>;
 
    /*! \cond BLAZE_INTERNAL */
-   //! Helper structure for the explicit application of the SFINAE principle.
+   //! Helper variable template for the explicit application of the SFINAE principle.
    template< typename VT2 >
-   struct UseAssign {
-      enum { value = useAssign };
-   };
+   static constexpr bool UseAssign_v = useAssign;
    /*! \endcond */
    //**********************************************************************************************
 
    //**Parallel evaluation strategy****************************************************************
    /*! \cond BLAZE_INTERNAL */
-   //! Helper structure for the explicit application of the SFINAE principle.
-   /*! The UseSMPAssign struct is a helper struct for the selection of the parallel evaluation
-       strategy. In case the target vector is SMP assignable and the sparse vector operand requires
-       an intermediate evaluation, \a value is set to 1 and the expression specific evaluation
-       strategy is selected. Otherwise \a value is set to 0 and the default strategy is chosen. */
+   //! Helper variable template for the explicit application of the SFINAE principle.
+   /*! This variable template is a helper for the selection of the parallel evaluation strategy.
+       In case the target vector is SMP assignable and the sparse vector operand requires an
+       intermediate evaluation, the variable is set to 1 and the expression specific evaluation
+       strategy is selected. Otherwise the variable is set to 0 and the default strategy is
+       chosen. */
    template< typename VT2 >
-   struct UseSMPAssign {
-      enum { value = VT2::smpAssignable && useAssign };
-   };
+   static constexpr bool UseSMPAssign_v = ( VT2::smpAssignable && useAssign );
    /*! \endcond */
    //**********************************************************************************************
 
  public:
    //**Type definitions****************************************************************************
-   typedef SVecTransExpr<VT,TF>        This;           //!< Type of this SVecTransExpr instance.
-   typedef typename VT::TransposeType  ResultType;     //!< Result type for expression template evaluations.
-   typedef typename VT::ResultType     TransposeType;  //!< Transpose type for expression template evaluations.
-   typedef typename VT::ElementType    ElementType;    //!< Resulting element type.
-   typedef typename VT::ReturnType     ReturnType;     //!< Return type for expression template evaluations.
+   //! Type of this SVecTransExpr instance.
+   using This = SVecTransExpr<VT,TF>;
+
+   //! Base type of this SVecTransExpr instance.
+   using BaseType = VecTransExpr< SparseVector<This,TF> >;
+
+   using ResultType    = TransposeType_t<VT>;  //!< Result type for expression template evaluations.
+   using TransposeType = ResultType_t<VT>;     //!< Transpose type for expression template evaluations.
+   using ElementType   = ElementType_t<VT>;    //!< Resulting element type.
+   using ReturnType    = ReturnType_t<VT>;     //!< Return type for expression template evaluations.
 
    //! Data type for composite expression templates.
-   typedef typename SelectType< useAssign, const ResultType, const SVecTransExpr& >::Type  CompositeType;
+   using CompositeType = If_t< useAssign, const ResultType, const SVecTransExpr& >;
+
+   //! Iterator over the elements of the dense vector.
+   using ConstIterator = GetConstIterator_t<VT>;
 
    //! Composite data type of the sparse vector expression.
-   typedef typename SelectType< IsExpression<VT>::value, const VT, const VT& >::Type  Operand;
+   using Operand = If_t< IsExpression_v<VT>, const VT, const VT& >;
    //**********************************************************************************************
 
    //**Compilation flags***************************************************************************
    //! Compilation switch for the expression template assignment strategy.
-   enum { smpAssignable = VT::smpAssignable };
-   //**********************************************************************************************
-
-   //**ConstIterator class definition**************************************************************
-   /*!\brief Iterator over the elements of the sparse vector absolute value expression.
-   */
-   class ConstIterator
-   {
-    public:
-      //**Type definitions*************************************************************************
-      //! Iterator type of the sparse vector expression.
-      typedef typename RemoveReference<Operand>::Type::ConstIterator  IteratorType;
-
-      typedef std::forward_iterator_tag                                     IteratorCategory;  //!< The iterator category.
-      typedef typename std::iterator_traits<IteratorType>::value_type       ValueType;         //!< Type of the underlying pointers.
-      typedef typename std::iterator_traits<IteratorType>::pointer          PointerType;       //!< Pointer return type.
-      typedef typename std::iterator_traits<IteratorType>::reference        ReferenceType;     //!< Reference return type.
-      typedef typename std::iterator_traits<IteratorType>::difference_type  DifferenceType;    //!< Difference between two iterators.
-
-      // STL iterator requirements
-      typedef IteratorCategory  iterator_category;  //!< The iterator category.
-      typedef ValueType         value_type;         //!< Type of the underlying pointers.
-      typedef PointerType       pointer;            //!< Pointer return type.
-      typedef ReferenceType     reference;          //!< Reference return type.
-      typedef DifferenceType    difference_type;    //!< Difference between two iterators.
-      //*******************************************************************************************
-
-      //**Constructor******************************************************************************
-      /*!\brief Constructor for the ConstIterator class.
-      */
-      inline ConstIterator( IteratorType it )
-         : it_( it )  // Iterator over the elements of the sparse vector expression
-      {}
-      //*******************************************************************************************
-
-      //**Prefix increment operator****************************************************************
-      /*!\brief Pre-increment operator.
-      //
-      // \return Reference to the incremented expression iterator.
-      */
-      inline ConstIterator& operator++() {
-         ++it_;
-         return *this;
-      }
-      //*******************************************************************************************
-
-      //**Element access operator******************************************************************
-      /*!\brief Direct access to the sparse vector element at the current iterator position.
-      //
-      // \return The current value of the sparse element.
-      */
-      inline const ValueType operator*() const {
-         return *it_;
-      }
-      //*******************************************************************************************
-
-      //**Element access operator******************************************************************
-      /*!\brief Direct access to the sparse vector element at the current iterator position.
-      //
-      // \return Reference to the sparse vector element at the current iterator position.
-      */
-      inline const ConstIterator* operator->() const {
-         return this;
-      }
-      //*******************************************************************************************
-
-      //**Value function***************************************************************************
-      /*!\brief Access to the current value of the sparse element.
-      //
-      // \return The current value of the sparse element.
-      */
-      inline ReturnType value() const {
-         return it_->value();
-      }
-      //*******************************************************************************************
-
-      //**Index function***************************************************************************
-      /*!\brief Access to the current index of the sparse element.
-      //
-      // \return The current index of the sparse element.
-      */
-      inline size_t index() const {
-         return it_->index();
-      }
-      //*******************************************************************************************
-
-      //**Equality operator************************************************************************
-      /*!\brief Equality comparison between two ConstIterator objects.
-      //
-      // \param rhs The right-hand side expression iterator.
-      // \return \a true if the iterators refer to the same element, \a false if not.
-      */
-      inline bool operator==( const ConstIterator& rhs ) const {
-         return it_ == rhs.it_;
-      }
-      //*******************************************************************************************
-
-      //**Inequality operator**********************************************************************
-      /*!\brief Inequality comparison between two ConstIterator objects.
-      //
-      // \param rhs The right-hand side expression iterator.
-      // \return \a true if the iterators don't refer to the same element, \a false if they do.
-      */
-      inline bool operator!=( const ConstIterator& rhs ) const {
-         return it_ != rhs.it_;
-      }
-      //*******************************************************************************************
-
-      //**Subtraction operator*********************************************************************
-      /*!\brief Calculating the number of elements between two expression iterators.
-      //
-      // \param rhs The right-hand side expression iterator.
-      // \return The number of elements between the two expression iterators.
-      */
-      inline DifferenceType operator-( const ConstIterator& rhs ) const {
-         return it_ - rhs.it_;
-      }
-      //*******************************************************************************************
-
-    private:
-      //**Member variables*************************************************************************
-      IteratorType it_;  //!< Iterator over the elements of the sparse vector expression.
-      //*******************************************************************************************
-   };
+   static constexpr bool smpAssignable = VT::smpAssignable;
    //**********************************************************************************************
 
    //**Constructor*********************************************************************************
@@ -277,7 +154,7 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    //
    // \param sv The sparse vector operand of the transposition expression.
    */
-   explicit inline SVecTransExpr( const VT& sv )
+   explicit inline SVecTransExpr( const VT& sv ) noexcept
       : sv_( sv )  // Sparse vector of the transposition expression
    {}
    //**********************************************************************************************
@@ -334,7 +211,7 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    //
    // \return The size of the vector.
    */
-   inline size_t size() const {
+   inline size_t size() const noexcept {
       return sv_.size();
    }
    //**********************************************************************************************
@@ -390,7 +267,7 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    //
    // \return The sparse vector operand.
    */
-   inline Operand operand() const {
+   inline Operand operand() const noexcept {
       return sv_;
    }
    //**********************************************************************************************
@@ -402,7 +279,7 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // \return \a true in case the expression can alias, \a false otherwise.
    */
    template< typename T >
-   inline bool canAlias( const T* alias ) const {
+   inline bool canAlias( const T* alias ) const noexcept {
       return sv_.canAlias( alias );
    }
    //**********************************************************************************************
@@ -414,7 +291,7 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // \return \a true in case an alias effect is detected, \a false otherwise.
    */
    template< typename T >
-   inline bool isAliased( const T* alias ) const {
+   inline bool isAliased( const T* alias ) const noexcept {
       return sv_.isAliased( alias );
    }
    //**********************************************************************************************
@@ -424,7 +301,7 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    //
    // \return \a true in case the expression can be used in SMP assignments, \a false if not.
    */
-   inline bool canSMPAssign() const {
+   inline bool canSMPAssign() const noexcept {
       return sv_.canSMPAssign();
    }
    //**********************************************************************************************
@@ -449,14 +326,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // the operand requires an intermediate evaluation.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseAssign<VT2> >::Type
-      assign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto assign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       assign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -477,14 +354,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // the operand requires an intermediate evaluation.
    */
    template< typename VT2 >  // Type of the target sparse vector
-   friend inline typename EnableIf< UseAssign<VT2> >::Type
-      assign( SparseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto assign( SparseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      SVecTransposer<VT2,!TF> tmp( ~lhs );
+      SVecTransposer<VT2,!TF> tmp( *lhs );
       assign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -505,14 +382,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // the operand requires an intermediate evaluation.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseAssign<VT2> >::Type
-      addAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto addAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       addAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -537,14 +414,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // operand requires an intermediate evaluation.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseAssign<VT2> >::Type
-      subAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto subAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       subAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -569,14 +446,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // requires an intermediate evaluation.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseAssign<VT2> >::Type
-      multAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto multAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       multAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -601,14 +478,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // expression specific parallel evaluation strategy is selected.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseSMPAssign<VT2> >::Type
-      smpAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto smpAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseSMPAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       smpAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -629,14 +506,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // expression specific parallel evaluation strategy is selected.
    */
    template< typename VT2 >  // Type of the target sparse vector
-   friend inline typename EnableIf< UseSMPAssign<VT2> >::Type
-      smpAssign( SparseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto smpAssign( SparseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseSMPAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      SVecTransposer<VT2,!TF> tmp( ~lhs );
+      SVecTransposer<VT2,!TF> tmp( *lhs );
       smpAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -657,14 +534,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // expression specific parallel evaluation strategy is selected.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseSMPAssign<VT2> >::Type
-      smpAddAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto smpAddAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseSMPAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       smpAddAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -689,14 +566,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // specific parallel evaluation strategy is selected.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseSMPAssign<VT2> >::Type
-      smpSubAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto smpSubAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseSMPAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       smpSubAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -722,14 +599,14 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
    // specific parallel evaluation strategy is selected.
    */
    template< typename VT2 >  // Type of the target dense vector
-   friend inline typename EnableIf< UseSMPAssign<VT2> >::Type
-      smpMultAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+   friend inline auto smpMultAssign( DenseVector<VT2,TF>& lhs, const SVecTransExpr& rhs )
+      -> EnableIf_t< UseSMPAssign_v<VT2> >
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == rhs.size(), "Invalid vector sizes" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == rhs.size(), "Invalid vector sizes" );
 
-      DVecTransposer<VT2,!TF> tmp( ~lhs );
+      DVecTransposer<VT2,!TF> tmp( *lhs );
       smpMultAssign( tmp, rhs.sv_ );
    }
    /*! \endcond */
@@ -777,123 +654,71 @@ class SVecTransExpr : public SparseVector< SVecTransExpr<VT,TF>, TF >
 */
 template< typename VT  // Type of the sparse vector
         , bool TF >    // Transpose flag
-inline const SVecTransExpr<VT,!TF> trans( const SparseVector<VT,TF>& sv )
+inline decltype(auto) trans( const SparseVector<VT,TF>& sv )
 {
    BLAZE_FUNCTION_TRACE;
 
-   return SVecTransExpr<VT,!TF>( ~sv );
+   using ReturnType = const SVecTransExpr<VT,!TF>;
+   return ReturnType( *sv );
 }
 //*************************************************************************************************
 
 
-
-
-//=================================================================================================
-//
-//  GLOBAL RESTRUCTURING FUNCTIONS
-//
-//=================================================================================================
-
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Calculating the transpose of a transpose sparse vector.
+/*!\brief Backend of the transTo() function for sparse vectors with different transpose flag.
 // \ingroup sparse_vector
 //
-// \param sv The sparse vector to be (re-)transposed.
-// \return The transpose of the transpose vector.
-//
-// This function implements a performance optimized treatment of the transpose operation on a
-// sparse vector transpose expression. It returns an expression representing the transpose of a
-// transpose sparse vector:
-
-   \code
-   using blaze::columnVector;
-
-   blaze::CompressedVector<double,columnVector> a, b;
-   // ... Resizing and initialization
-   b = trans( trans( a ) );
-   \endcode
+// \param sv The sparse vector to be transposed.
+// \return The transpose of the sparse vector.
 */
 template< typename VT  // Type of the sparse vector
         , bool TF >    // Transpose flag
-inline typename SVecTransExpr<VT,TF>::Operand trans( const SVecTransExpr<VT,TF>& sv )
+inline decltype(auto) transTo_backend( const SparseVector<VT,TF>& sv, FalseType )
 {
-   BLAZE_FUNCTION_TRACE;
-
-   return sv.operand();
+   return trans( *sv );
 }
 /*! \endcond */
 //*************************************************************************************************
 
 
-
-
-//=================================================================================================
-//
-//  SIZE SPECIALIZATIONS
-//
-//=================================================================================================
-
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-template< typename VT, bool TF >
-struct Size< SVecTransExpr<VT,TF> > : public Size<VT>
-{};
-/*! \endcond */
-//*************************************************************************************************
-
-
-
-
-//=================================================================================================
+/*!\brief Backend of the transTo() function for sparse vectors with matching transpose flag.
+// \ingroup sparse_vector
 //
-//  EXPRESSION TRAIT SPECIALIZATIONS
-//
-//=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-template< typename VT >
-struct SVecTransExprTrait< SVecTransExpr<VT,false> >
+// \param sv The sparse vector to be transposed.
+// \return The original sparse vector.
+*/
+template< typename VT  // Type of the sparse vector
+        , bool TF >    // Transpose flag
+inline const VT& transTo_backend( const SparseVector<VT,TF>& sv, TrueType )
 {
- public:
-   //**********************************************************************************************
-   typedef typename SelectType< IsSparseVector<VT>::value && IsRowVector<VT>::value
-                              , typename SVecTransExpr<VT,false>::Operand
-                              , INVALID_TYPE >::Type  Type;
-   //**********************************************************************************************
-};
+   return *sv;
+}
 /*! \endcond */
 //*************************************************************************************************
 
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-template< typename VT >
-struct TSVecTransExprTrait< SVecTransExpr<VT,true> >
+/*!\brief Conditional calculation of the transpose of the given sparse vector.
+// \ingroup sparse_vector
+//
+// \param sv The sparse vector to be transposed.
+// \return The sparse vector with the specified transpose flag.
+//
+// This function transposes the given sparse vector in case the target transpose flag is different
+// from the current transpose flag of the vector and performs no action if the two transpose flags
+// match. It returns an expression representing the the given sparse vector with the specified
+// transpose flag.
+*/
+template< bool TTF     // Target transpose flag
+        , typename VT  // Type of the sparse vector
+        , bool TF >    // Current transpose flag of the sparse vector
+inline decltype(auto) transTo( const SparseVector<VT,TF>& sv )
 {
- public:
-   //**********************************************************************************************
-   typedef typename SelectType< IsSparseVector<VT>::value && IsColumnVector<VT>::value
-                              , typename SVecTransExpr<VT,true>::Operand
-                              , INVALID_TYPE >::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-template< typename VT, bool TF, bool AF >
-struct SubvectorExprTrait< SVecTransExpr<VT,TF>, AF >
-{
- public:
-   //**********************************************************************************************
-   typedef typename TransExprTrait< typename SubvectorExprTrait<const VT,AF>::Type >::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
+   return transTo_backend( *sv, BoolConstant<TTF == TF>() );
+}
 //*************************************************************************************************
 
 } // namespace blaze

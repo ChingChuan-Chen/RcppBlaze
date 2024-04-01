@@ -3,7 +3,7 @@
 //  \file blaze/math/constraints/SparseVector.h
 //  \brief Constraint on the data type
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -41,8 +41,6 @@
 //*************************************************************************************************
 
 #include <blaze/math/typetraits/IsSparseVector.h>
-#include <blaze/util/constraints/ConstraintTest.h>
-#include <blaze/util/Suffix.h>
 
 
 namespace blaze {
@@ -54,33 +52,14 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup math_constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_BE_SPARSE_VECTOR_TYPE_FAILED;
-template<> struct CONSTRAINT_MUST_BE_SPARSE_VECTOR_TYPE_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup math_constraints
 //
-// In case the given data type \a T is not a sparse, N-dimensional vector type, a compilation
-// error is created.
+// In case the given data type \a T is not a sparse vector type (i.e. a type that is derived
+// from the SparseVector base class), a compilation error is created.
 */
 #define BLAZE_CONSTRAINT_MUST_BE_SPARSE_VECTOR_TYPE(T) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_BE_SPARSE_VECTOR_TYPE_FAILED< blaze::IsSparseVector<T>::value >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_BE_SPARSE_VECTOR_TYPE_TYPEDEF, __LINE__ )
+   static_assert( ::blaze::IsSparseVector_v<T>, "Non-sparse vector type detected" )
 //*************************************************************************************************
 
 
@@ -93,33 +72,14 @@ template<> struct CONSTRAINT_MUST_BE_SPARSE_VECTOR_TYPE_FAILED<true> { enum { va
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup math_constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_NOT_BE_SPARSE_VECTOR_TYPE_FAILED;
-template<> struct CONSTRAINT_MUST_NOT_BE_SPARSE_VECTOR_TYPE_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup math_constraints
 //
-// In case the given data type \a T is a sparse, N-dimensional vector type, a compilation
-// error is created.
+// In case the given data type \a T is a sparse vector type (i.e. a type that is derived from
+// the SparseVector base class), a compilation error is created.
 */
 #define BLAZE_CONSTRAINT_MUST_NOT_BE_SPARSE_VECTOR_TYPE(T) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_NOT_BE_SPARSE_VECTOR_TYPE_FAILED< !blaze::IsSparseVector<T>::value >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_NOT_BE_SPARSE_VECTOR_TYPE_TYPEDEF, __LINE__ )
+   static_assert( !::blaze::IsSparseVector_v<T>, "Sparse vector type detected" )
 //*************************************************************************************************
 
 } // namespace blaze

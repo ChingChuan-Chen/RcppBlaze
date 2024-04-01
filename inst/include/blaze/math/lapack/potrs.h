@@ -3,7 +3,7 @@
 //  \file blaze/math/lapack/potrs.h
 //  \brief Header file for the LAPACK positive definite backward substitution functions (potrs)
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,44 +40,24 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/cast.hpp>
+#include <blaze/math/Aliases.h>
 #include <blaze/math/constraints/Adaptor.h>
-#include <blaze/math/constraints/BlasCompatible.h>
+#include <blaze/math/constraints/BLASCompatible.h>
 #include <blaze/math/constraints/Computation.h>
+#include <blaze/math/constraints/ConstDataAccess.h>
+#include <blaze/math/constraints/Contiguous.h>
 #include <blaze/math/constraints/MutableDataAccess.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/DenseMatrix.h>
 #include <blaze/math/expressions/DenseVector.h>
+#include <blaze/math/lapack/clapack/potrs.h>
 #include <blaze/math/typetraits/IsRowMajorMatrix.h>
 #include <blaze/util/Assert.h>
-#include <blaze/util/Complex.h>
 #include <blaze/util/constraints/SameType.h>
-#include <blaze/util/Exception.h>
-#include <blaze/util/StaticAssert.h>
+#include <blaze/util/NumericCast.h>
 
 
 namespace blaze {
-
-//=================================================================================================
-//
-//  LAPACK FORWARD DECLARATIONS
-//
-//=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-extern "C" {
-
-void spotrs_( char* uplo, int* n, int* nrhs, float*  A, int* lda, float*  B, int* ldb, int* info );
-void dpotrs_( char* uplo, int* n, int* nrhs, double* A, int* lda, double* B, int* ldb, int* info );
-void cpotrs_( char* uplo, int* n, int* nrhs, float*  A, int* lda, float*  B, int* ldb, int* info );
-void zpotrs_( char* uplo, int* n, int* nrhs, double* A, int* lda, double* B, int* ldb, int* info );
-
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-
 
 //=================================================================================================
 //
@@ -88,184 +68,12 @@ void zpotrs_( char* uplo, int* n, int* nrhs, double* A, int* lda, double* B, int
 //*************************************************************************************************
 /*!\name LAPACK LLH-based substitution functions (potrs) */
 //@{
-inline void potrs( char uplo, int n, int nrhs, const float* A, int lda, float* B, int ldb, int* info );
-
-inline void potrs( char uplo, int n, int nrhs, const double* A, int lda, double* B, int ldb, int* info );
-
-inline void potrs( char uplo, int n, int nrhs, const complex<float>* A, int lda, complex<float>* B, int ldb, int* info );
-
-inline void potrs( char uplo, int n, int nrhs, const complex<double>* A, int lda, complex<double>* B, int ldb, int* info );
-
 template< typename MT, bool SO, typename VT, bool TF >
-inline void potrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo );
+void potrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo );
 
 template< typename MT1, bool SO1, typename MT2, bool SO2 >
-inline void potrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B, char uplo );
+void potrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B, char uplo );
 //@}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a positive definite single precision
-//        linear system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the single precision column-major square matrix.
-// \param lda The total number of elements between two columns of matrix \a A \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the single precision column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK spotrs() function to perform the substitution step to compute
-// the solution to the positive definite system of linear equations \f$ A*X=B \f$, where \a A is
-// a n-by-n matrix that has already been factorized by the spotrf() function and \a X and \a B
-// are column-major n-by-nrhs matrices.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the spotrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrs( char uplo, int n, int nrhs, const float* A, int lda, float* B, int ldb, int* info )
-{
-   spotrs_( &uplo, &n, &nrhs, const_cast<float*>( A ), &lda, B, &ldb, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a positive definite double precision
-//        linear system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the double precision column-major square matrix.
-// \param lda The total number of elements between two columns of matrix \a A \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the double precision column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK dpotrs() function to perform the substitution step to compute
-// the solution to the positive definite system of linear equations \f$ A*X=B \f$, where \a A is
-// a n-by-n matrix that has already been factorized by the dpotrf() function and \a X and \a B
-// are column-major n-by-nrhs matrices.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the dpotrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrs( char uplo, int n, int nrhs, const double* A, int lda, double* B, int ldb, int* info )
-{
-   dpotrs_( &uplo, &n, &nrhs, const_cast<double*>( A ), &lda, B, &ldb, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a positive definite single precision
-//        complex linear system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the single precision complex column-major square matrix.
-// \param lda The total number of elements between two columns of matrix \a A \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the single precision complex column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK cpotrs() function to perform the substitution step to compute
-// the solution to the positive definite system of linear equations \f$ A*X=B \f$, where \a A is
-// a n-by-n matrix that has already been factorized by the cpotrf() function and \a X and \a B
-// are column-major n-by-nrhs matrices.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the cpotrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrs( char uplo, int n, int nrhs, const complex<float>* A,
-                   int lda, complex<float>* B, int ldb, int* info )
-{
-   BLAZE_STATIC_ASSERT( sizeof( complex<float> ) == 2UL*sizeof( float ) );
-
-   cpotrs_( &uplo, &n, &nrhs, const_cast<float*>( reinterpret_cast<const float*>( A ) ),
-            &lda, reinterpret_cast<float*>( B ), &ldb, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a positive definite double precision
-//        complex linear system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the double precision complex column-major square matrix.
-// \param lda The total number of elements between two columns of matrix \a A \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the double precision complex column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK zpotrs() function to perform the substitution step to compute
-// the solution to the positive definite system of linear equations \f$ A*X=B \f$, where \a A is
-// a n-by-n matrix that has already been factorized by the zpotrf() function and \a X and \a B
-// are column-major n-by-nrhs matrices.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the zpotrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrs( char uplo, int n, int nrhs, const complex<double>* A,
-                   int lda, complex<double>* B, int ldb, int* info )
-{
-   BLAZE_STATIC_ASSERT( sizeof( complex<double> ) == 2UL*sizeof( double ) );
-
-   zpotrs_( &uplo, &n, &nrhs, const_cast<double*>( reinterpret_cast<const double*>( A ) ),
-            &lda, reinterpret_cast<double*>( B ), &ldb, info );
-}
 //*************************************************************************************************
 
 
@@ -279,6 +87,7 @@ inline void potrs( char uplo, int n, int nrhs, const complex<double>* A,
 // \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
 // \return void
 // \exception std::invalid_argument Invalid non-square matrix provided.
+// \exception std::invalid_argument Invalid right-hand side vector provided.
 // \exception std::invalid_argument Invalid uplo argument provided.
 //
 // This function uses the LAPACK potrs() functions to perform the substitution step to compute
@@ -287,9 +96,9 @@ inline void potrs( char uplo, int n, int nrhs, const complex<double>* A,
 //  - \f$ A  *x=b \f$ if \a A is column-major
 //  - \f$ A^T*x=b \f$ if \a A is row-major
 //
-// In this context the positive definite system matrix \a A is a n-by-n matrix that has already
-// been factorized by the potrf() functions and \a x and \a b are n-dimensional vectors. Note
-// that the function only works for general, non-adapted matrices with \c float, \c double,
+// In this context the positive definite system matrix \a A is a \a n-by-\a n matrix that has
+// already been factorized by the potrf() functions and \a x and \a b are n-dimensional vectors.
+// Note that the function only works for general, non-adapted matrices with \c float, \c double,
 // \c complex<float>, or \c complex<double> element type. The attempt to call the function with
 // adaptors or matrices of any other element type results in a compile time error!
 //
@@ -332,7 +141,7 @@ inline void potrs( char uplo, int n, int nrhs, const complex<double>* A,
    DynamicVector<double,columnVector> b( 2UL );   // The right-hand side vector b
    // ... Initialization
 
-   DynamicMatrix<double,rowMajor> D( A );      // Temporary matrix to be decomposed
+   DynamicMatrix<double,rowMajor>     D( A );  // Temporary matrix to be decomposed
    DynamicVector<double,columnVector> x( b );  // Temporary vector for the solution
 
    potrf( D, 'L' );
@@ -346,8 +155,9 @@ inline void potrs( char uplo, int n, int nrhs, const complex<double>* A,
 //
 //        http://www.netlib.org/lapack/explore-html/
 //
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
+// \note This function can only be used if a fitting LAPACK library, which supports this function,
+// is available and linked to the executable. Otherwise a call to this function will result in a
+// linker error.
 */
 template< typename MT  // Type of the system matrix
         , bool SO      // Storage order of the system matrix
@@ -355,42 +165,44 @@ template< typename MT  // Type of the system matrix
         , bool TF >    // Transpose flag of the right-hand side vector
 inline void potrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo )
 {
-   using boost::numeric_cast;
-
    BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( MT );
+   BLAZE_CONSTRAINT_MUST_HAVE_CONST_DATA_ACCESS( MT );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT> );
+
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( VT );
-   BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( MT );
    BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( VT );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT::ElementType );
-   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( typename MT::ElementType, typename VT::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( VT );
+   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( ElementType_t<MT>, ElementType_t<VT> );
 
-   typedef typename MT::OppositeType  OT;
-   typedef typename MT::ElementType   ET;
-
-   if( !isSquare( ~A ) ) {
+   if( !isSquare( *A ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid non-square matrix provided" );
+   }
+
+   if( (*b).size() != (*A).rows() ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid right-hand side vector provided" );
    }
 
    if( uplo != 'L' && uplo != 'U' ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid uplo argument provided" );
    }
 
-   int n   ( numeric_cast<int>( (~A).rows() ) );
-   int nrhs( 1 );
-   int lda ( numeric_cast<int>( (~A).spacing() ) );
-   int ldb ( numeric_cast<int>( (~b).size() ) );
-   int info( 0 );
+   blas_int_t n   ( numeric_cast<blas_int_t>( (*A).rows() ) );
+   blas_int_t nrhs( 1 );
+   blas_int_t lda ( numeric_cast<blas_int_t>( (*A).spacing() ) );
+   blas_int_t ldb ( numeric_cast<blas_int_t>( (*b).size() ) );
+   blas_int_t info( 0 );
 
    if( n == 0 ) {
       return;
    }
 
-   if( IsRowMajorMatrix<MT>::value ) {
+   if( IsRowMajorMatrix_v<MT> ) {
       ( uplo == 'L' )?( uplo = 'U' ):( uplo = 'L' );
    }
 
-   potrs( uplo, n, nrhs, (~A).data(), lda, (~b).data(), ldb, &info );
+   potrs( uplo, n, nrhs, (*A).data(), lda, (*b).data(), ldb, &info );
 
    BLAZE_INTERNAL_ASSERT( info == 0, "Invalid function argument" );
 }
@@ -407,8 +219,8 @@ inline void potrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo
 // \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
 // \return void
 // \exception std::invalid_argument Invalid non-square matrix provided.
+// \exception std::invalid_argument Invalid right-hand side matrix provided.
 // \exception std::invalid_argument Invalid uplo argument provided.
-// \exception std::invalid_argument Matrix sizes do not match.
 //
 // This function uses the LAPACK potrs() functions to perform the substitution step to compute
 // the solution to a system of positive definite linear equations:
@@ -418,12 +230,12 @@ inline void potrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo
 //  - \f$ A  *X^T=B^T \f$ if \a A is column-major and \a B is row-major
 //  - \f$ A^T*X^T=B^T \f$ if both \a A and \a B are row-major
 //
-// In this context the positive definite system matrix \a A is a n-by-n matrix that has already
-// been factorized by the potrf() functions and \a X and \a B are either row-major m-by-n matrices
-// or column-major n-by-m matrices. Note that the function only works for general, non-adapted
-// matrices with \c float, \c double, \c complex<float>, or \c complex<double> element type. The
-// attempt to call the function with adaptors or matrices of any other element type results in a
-// compile time error!
+// In this context the positive definite system matrix \a A is a \a n-by-\a n matrix that has
+// already been factorized by the potrf() functions and \a X and \a B are either row-major
+// \a m-by-\a n matrices or column-major \a n-by-\a m matrices. Note that the function only
+// works for general, non-adapted matrices with \c float, \c double, \c complex<float>, or
+// \c complex<double> element type. The attempt to call the function with adaptors or matrices
+// of any other element type results in a compile time error!
 //
 // If the function exits successfully, the matrix \a B contains the solution of the linear system
 // of equations. The function fails if ...
@@ -475,8 +287,9 @@ inline void potrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo
 //
 //        http://www.netlib.org/lapack/explore-html/
 //
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
+// \note This function can only be used if a fitting LAPACK library, which supports this function,
+// is available and linked to the executable. Otherwise a call to this function will result in a
+// linker error.
 */
 template< typename MT1  // Type of the system matrix
         , bool SO1      // Storage order of the system matrix
@@ -484,22 +297,19 @@ template< typename MT1  // Type of the system matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
 inline void potrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B, char uplo )
 {
-   using boost::numeric_cast;
-
    BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT1 );
-   BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( MT1 );
+   BLAZE_CONSTRAINT_MUST_HAVE_CONST_DATA_ACCESS( MT1 );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( MT1 );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT1> );
+
+   BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( MT2 );
-   BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( MT1 );
    BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( MT2 );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT1::ElementType );
-   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( typename MT1::ElementType, typename MT2::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( MT2 );
+   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( ElementType_t<MT1>, ElementType_t<MT2> );
 
-   typedef typename MT1::OppositeType  OT1;
-   typedef typename MT2::OppositeType  OT2;
-   typedef typename MT1::ElementType   ET1;
-
-   if( !isSquare( ~A ) ) {
+   if( !isSquare( *A ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid non-square matrix provided" );
    }
 
@@ -507,26 +317,26 @@ inline void potrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B, char 
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid uplo argument provided" );
    }
 
-   int n   ( numeric_cast<int>( (~A).rows() ) );
-   int mrhs( numeric_cast<int>( SO2 ? (~B).rows() : (~B).columns() ) );
-   int nrhs( numeric_cast<int>( SO2 ? (~B).columns() : (~B).rows() ) );
-   int lda ( numeric_cast<int>( (~A).spacing() ) );
-   int ldb ( numeric_cast<int>( (~B).spacing() ) );
-   int info( 0 );
+   blas_int_t n   ( numeric_cast<blas_int_t>( (*A).rows() ) );
+   blas_int_t mrhs( numeric_cast<blas_int_t>( SO2 ? (*B).rows() : (*B).columns() ) );
+   blas_int_t nrhs( numeric_cast<blas_int_t>( SO2 ? (*B).columns() : (*B).rows() ) );
+   blas_int_t lda ( numeric_cast<blas_int_t>( (*A).spacing() ) );
+   blas_int_t ldb ( numeric_cast<blas_int_t>( (*B).spacing() ) );
+   blas_int_t info( 0 );
 
    if( n != mrhs ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Matrix sizes do not match" );
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid right-hand side matrix provided" );
    }
 
    if( n == 0 ) {
       return;
    }
 
-   if( IsRowMajorMatrix<MT1>::value ) {
+   if( IsRowMajorMatrix_v<MT1> ) {
       ( uplo == 'L' )?( uplo = 'U' ):( uplo = 'L' );
    }
 
-   potrs( uplo, n, nrhs, (~A).data(), lda, (~B).data(), ldb, &info );
+   potrs( uplo, n, nrhs, (*A).data(), lda, (*B).data(), ldb, &info );
 
    BLAZE_INTERNAL_ASSERT( info == 0, "Invalid function argument" );
 }

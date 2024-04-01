@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/symmetricmatrix/SymmetricElement.h
 //  \brief Header file for the SymmetricElement class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,19 +40,22 @@
 // Includes
 //*************************************************************************************************
 
+#include <blaze/math/Aliases.h>
 #include <blaze/math/adaptors/symmetricmatrix/SymmetricValue.h>
-#include <blaze/math/constraints/Expression.h>
+#include <blaze/math/constraints/Computation.h>
 #include <blaze/math/constraints/Hermitian.h>
 #include <blaze/math/constraints/Lower.h>
+#include <blaze/math/constraints/Scalar.h>
 #include <blaze/math/constraints/SparseMatrix.h>
 #include <blaze/math/constraints/Symmetric.h>
+#include <blaze/math/constraints/Transformation.h>
 #include <blaze/math/constraints/Upper.h>
+#include <blaze/math/constraints/View.h>
 #include <blaze/math/shims/IsDefault.h>
 #include <blaze/math/sparse/SparseElement.h>
 #include <blaze/math/typetraits/IsRowMajorMatrix.h>
 #include <blaze/util/Assert.h>
 #include <blaze/util/constraints/Const.h>
-#include <blaze/util/constraints/Numeric.h>
 #include <blaze/util/constraints/Pointer.h>
 #include <blaze/util/constraints/Reference.h>
 #include <blaze/util/constraints/Volatile.h>
@@ -77,7 +80,7 @@ namespace blaze {
 // by means of a \f$ 3 \times 3 \f$ dense Hermitian matrix:
 
    \code
-   typedef blaze::SymmetricMatrix< blaze::CompressedMatrix<int> >  Symmetric;
+   using Symmetric = blaze::SymmetricMatrix< blaze::CompressedMatrix<int> >;
 
    // Creating a 3x3 symmetric sparse matrix
    //
@@ -101,21 +104,22 @@ namespace blaze {
    \endcode
 */
 template< typename MT >  // Type of the adapted matrix
-class SymmetricElement : private SparseElement
+class SymmetricElement
+   : private SparseElement
 {
  private:
    //**Type definitions****************************************************************************
-   typedef typename MT::ElementType  ElementType;   //!< Type of the represented matrix element.
-   typedef typename MT::Iterator     IteratorType;  //!< Type of the underlying sparse matrix iterators.
+   using ElementType  = ElementType_t<MT>;  //!< Type of the represented matrix element.
+   using IteratorType = Iterator_t<MT>;     //!< Type of the underlying sparse matrix iterators.
    //**********************************************************************************************
 
  public:
    //**Type definitions****************************************************************************
-   typedef SymmetricValue<MT>        ValueType;       //!< The value type of the value-index-pair.
-   typedef size_t                    IndexType;       //!< The index type of the value-index-pair.
-   typedef SymmetricValue<MT>        Reference;       //!< Reference return type.
-   typedef const SymmetricValue<MT>  ConstReference;  //!< Reference-to-const return type.
-   typedef SymmetricElement*         Pointer;         //!< Pointer return type.
+   using ValueType      = SymmetricValue<MT>;        //!< The value type of the value-index-pair.
+   using IndexType      = size_t;                    //!< The index type of the value-index-pair.
+   using Reference      = SymmetricValue<MT>;        //!< Reference return type.
+   using ConstReference = const SymmetricValue<MT>;  //!< Reference-to-const return type.
+   using Pointer        = SymmetricElement*;         //!< Pointer return type.
    //**********************************************************************************************
 
    //**Constructor*********************************************************************************
@@ -139,7 +143,7 @@ class SymmetricElement : private SparseElement
    //**Access operators****************************************************************************
    /*!\name Access operators */
    //@{
-   inline Pointer operator->();
+   inline Pointer operator->() noexcept;
    //@}
    //**********************************************************************************************
 
@@ -173,12 +177,14 @@ class SymmetricElement : private SparseElement
    BLAZE_CONSTRAINT_MUST_NOT_BE_POINTER_TYPE         ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_CONST                ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_VOLATILE             ( MT );
-   BLAZE_CONSTRAINT_MUST_NOT_BE_EXPRESSION_TYPE      ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_VIEW_TYPE            ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE     ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_TRANSFORMATION_TYPE  ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_SYMMETRIC_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_HERMITIAN_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_LOWER_MATRIX_TYPE    ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_UPPER_MATRIX_TYPE    ( MT );
-   BLAZE_CONSTRAINT_MUST_BE_NUMERIC_TYPE             ( ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_SCALAR_TYPE              ( ElementType );
    /*! \endcond */
    //**********************************************************************************************
 };
@@ -318,7 +324,7 @@ inline SymmetricElement<MT>& SymmetricElement<MT>::operator/=( const T& v )
 // \return Reference to the value of the Hermitian element.
 */
 template< typename MT >  // Type of the adapted matrix
-inline typename SymmetricElement<MT>::Pointer SymmetricElement<MT>::operator->()
+inline typename SymmetricElement<MT>::Pointer SymmetricElement<MT>::operator->() noexcept
 {
    return this;
 }
@@ -370,8 +376,8 @@ inline void SymmetricElement<MT>::sync()
    if( pos_->index() == index_ || isDefault( pos_->value() ) )
       return;
 
-   const size_t row   ( ( IsRowMajorMatrix<MT>::value )?( pos_->index() ):( index_ ) );
-   const size_t column( ( IsRowMajorMatrix<MT>::value )?( index_ ):( pos_->index() ) );
+   const size_t row   ( ( IsRowMajorMatrix_v<MT> )?( pos_->index() ):( index_ ) );
+   const size_t column( ( IsRowMajorMatrix_v<MT> )?( index_ ):( pos_->index() ) );
 
    matrix_->set( row, column, pos_->value() );
 }
@@ -386,8 +392,8 @@ inline void SymmetricElement<MT>::sync()
 template< typename MT >  // Type of the adapted matrix
 inline bool SymmetricElement<MT>::isSynced() const
 {
-   const size_t row   ( ( IsRowMajorMatrix<MT>::value )?( pos_->index() ):( index_ ) );
-   const size_t column( ( IsRowMajorMatrix<MT>::value )?( index_ ):( pos_->index() ) );
+   const size_t row   ( ( IsRowMajorMatrix_v<MT> )?( pos_->index() ):( index_ ) );
+   const size_t column( ( IsRowMajorMatrix_v<MT> )?( index_ ):( pos_->index() ) );
 
    const IteratorType pos2( matrix_->find( row, column ) );
    const IteratorType end( matrix_->end( pos_->index() ) );

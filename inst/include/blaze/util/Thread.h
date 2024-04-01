@@ -3,7 +3,7 @@
 //  \file blaze/util/Thread.h
 //  \brief Header file for the Thread class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <functional>
+#include <memory>
 #include <blaze/util/Assert.h>
 #include <blaze/util/NonCopyable.h>
 
@@ -103,15 +103,15 @@ template< typename TT, typename MT, typename LT, typename CT > class ThreadPool;
 // Examples:
 
    \code
-   typedef blaze::Thread< boost::thread
-                        , boost::mutex
-                        , boost::unique_lock<boost::mutex>
-                        , boost::condition_variable >  BoostThread;
+   using BoostThread = blaze::Thread< boost::thread
+                                    , boost::mutex
+                                    , boost::unique_lock<boost::mutex>
+                                    , boost::condition_variable >;
 
-   typedef blaze::Thread< std::thread
-                        , std::mutex
-                        , std::unique_lock<std::mutex>
-                        , std::condition_variable >  StdThread;
+   using StdThread = blaze::Thread< std::thread
+                                  , std::mutex
+                                  , std::unique_lock<std::mutex>
+                                  , std::condition_variable >;
    \endcode
 
 // For more information about the standard thread functionality, see [1] or [2] or the current
@@ -247,13 +247,14 @@ template< typename TT    // Type of the encapsulated thread
         , typename MT    // Type of the synchronization mutex
         , typename LT    // Type of the mutex lock
         , typename CT >  // Type of the condition variable
-class Thread : private NonCopyable
+class Thread
+   : private NonCopyable
 {
  private:
    //**Type definitions****************************************************************************
-   typedef TT                             ThreadType;      //!< Type of the encapsulated thread.
-   typedef ThreadPool<TT,MT,LT,CT>        ThreadPoolType;  //!< Type of the managing thread pool.
-   typedef boost::scoped_ptr<ThreadType>  ThreadHandle;    //!< Handle for a single thread.
+   using ThreadType     = TT;                           //!< Type of the encapsulated thread.
+   using ThreadPoolType = ThreadPool<TT,MT,LT,CT>;      //!< Type of the managing thread pool.
+   using ThreadHandle   = std::unique_ptr<ThreadType>;  //!< Handle for a single thread.
    //**********************************************************************************************
 
    //**Constructors********************************************************************************
@@ -267,23 +268,8 @@ class Thread : private NonCopyable
    //**Constructors********************************************************************************
    /*!\name Constructors */
    //@{
-   template< typename Callable >
-   explicit inline Thread( Callable func );
-
-   template< typename Callable, typename A1 >
-   explicit inline Thread( Callable func, A1 a1 );
-
-   template< typename Callable, typename A1, typename A2 >
-   explicit inline Thread( Callable func, A1 a1, A2 a2 );
-
-   template< typename Callable, typename A1, typename A2, typename A3 >
-   explicit inline Thread( Callable func, A1 a1, A2 a2, A3 a3 );
-
-   template< typename Callable, typename A1, typename A2, typename A3, typename A4 >
-   explicit inline Thread( Callable func, A1 a1, A2 a2, A3 a3, A4 a4 );
-
-   template< typename Callable, typename A1, typename A2, typename A3, typename A4, typename A5 >
-   explicit inline Thread( Callable func, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5 );
+   template< typename Callable, typename... Args >
+   explicit inline Thread( Callable func, Args&&... args );
    //@}
    //**********************************************************************************************
 
@@ -359,11 +345,11 @@ template< typename TT    // Type of the encapsulated thread
         , typename LT    // Type of the mutex lock
         , typename CT >  // Type of the condition variable
 Thread<TT,MT,LT,CT>::Thread( ThreadPoolType* pool )
-   : terminated_( false )  // Thread termination flag
-   , pool_      ( pool  )  // Handle to the managing thread pool
-   , thread_    ( 0     )  // Handle to the thread of execution
+   : terminated_( false   )  // Thread termination flag
+   , pool_      ( pool    )  // Handle to the managing thread pool
+   , thread_    ( nullptr )  // Handle to the thread of execution
 {
-   thread_.reset( new ThreadType( boost::bind( &Thread::run, this ) ) );
+   thread_.reset( new ThreadType( std::bind( &Thread::run, this ) ) );
 }
 //*************************************************************************************************
 
@@ -372,165 +358,22 @@ Thread<TT,MT,LT,CT>::Thread( ThreadPoolType* pool )
 /*!\brief Starting a thread of execution on the given zero argument function/functor.
 //
 // \param func The given function/functor.
+// \param args The arguments for the function/functor.
 //
 // This function creates a new thread of execution on the given function/functor. The given
 // function/functor must be copyable, must be callable without arguments and must return void.
 */
-template< typename TT          // Type of the encapsulated thread
-        , typename MT          // Type of the synchronization mutex
-        , typename LT          // Type of the mutex lock
-        , typename CT >        // Type of the condition variable
-template< typename Callable >  // Type of the function/functor
-inline Thread<TT,MT,LT,CT>::Thread( Callable func )
-   : pool_  ( 0 )  // Handle to the managing thread pool
-   , thread_( 0 )  // Handle to the thread of execution
+template< typename TT         // Type of the encapsulated thread
+        , typename MT         // Type of the synchronization mutex
+        , typename LT         // Type of the mutex lock
+        , typename CT >       // Type of the condition variable
+template< typename Callable   // Type of the function/functor
+        , typename... Args >  // Types of the function/functor arguments
+inline Thread<TT,MT,LT,CT>::Thread( Callable func, Args&&... args )
+   : pool_  ( nullptr )  // Handle to the managing thread pool
+   , thread_( nullptr )  // Handle to the thread of execution
 {
-   thread_.reset( new ThreadType( func ) );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Starting a thread of execution on the given unary function/functor.
-//
-// \param func The given function/functor.
-// \param a1 The first argument.
-//
-// This function creates a new thread of execution on the given function/functor. The given
-// function/functor must be copyable, must be callable with a single argument and must return
-// void.
-*/
-template< typename TT        // Type of the encapsulated thread
-        , typename MT        // Type of the synchronization mutex
-        , typename LT        // Type of the mutex lock
-        , typename CT >      // Type of the condition variable
-template< typename Callable  // Type of the function/functor
-        , typename A1 >      // Type of the first argument
-inline Thread<TT,MT,LT,CT>::Thread( Callable func, A1 a1 )
-   : pool_  ( 0 )  // Handle to the managing thread pool
-   , thread_( 0 )  // Handle to the thread of execution
-{
-   thread_.reset( new ThreadType( func, a1 ) );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Starting a thread of execution on the given binary function/functor.
-//
-// \param func The given function/functor.
-// \param a1 The first argument.
-// \param a2 The second argument.
-//
-// This function creates a new thread of execution on the given function/functor. The given
-// function/functor must be copyable, must be callable with two arguments and must return
-// void.
-*/
-template< typename TT        // Type of the encapsulated thread
-        , typename MT        // Type of the synchronization mutex
-        , typename LT        // Type of the mutex lock
-        , typename CT >      // Type of the condition variable
-template< typename Callable  // Type of the function/functor
-        , typename A1        // Type of the first argument
-        , typename A2 >      // Type of the second argument
-inline Thread<TT,MT,LT,CT>::Thread( Callable func, A1 a1, A2 a2 )
-   : pool_  ( 0 )  // Handle to the managing thread pool
-   , thread_( 0 )  // Handle to the thread of execution
-{
-   thread_.reset( new ThreadType( func, a1, a2 ) );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Starting a thread of execution on the given ternary function/functor.
-//
-// \param func The given function/functor.
-// \param a1 The first argument.
-// \param a2 The second argument.
-// \param a3 The third argument.
-//
-// This function creates a new thread of execution on the given function/functor. The given
-// function/functor must be copyable, must be callable with three arguments and must return
-// void.
-*/
-template< typename TT        // Type of the encapsulated thread
-        , typename MT        // Type of the synchronization mutex
-        , typename LT        // Type of the mutex lock
-        , typename CT >      // Type of the condition variable
-template< typename Callable  // Type of the function/functor
-        , typename A1        // Type of the first argument
-        , typename A2        // Type of the second argument
-        , typename A3 >      // Type of the third argument
-inline Thread<TT,MT,LT,CT>::Thread( Callable func, A1 a1, A2 a2, A3 a3 )
-   : pool_  ( 0 )  // Handle to the managing thread pool
-   , thread_( 0 )  // Handle to the thread of execution
-{
-   thread_.reset( new ThreadType( func, a1, a2, a3 ) );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Starting a thread of execution on the given four argument function/functor.
-//
-// \param func The given function/functor.
-// \param a1 The first argument.
-// \param a2 The second argument.
-// \param a3 The third argument.
-// \param a4 The fourth argument.
-//
-// This function creates a new thread of execution on the given function/functor. The given
-// function/functor must be copyable, must be callable with four arguments and must return
-// void.
-*/
-template< typename TT        // Type of the encapsulated thread
-        , typename MT        // Type of the synchronization mutex
-        , typename LT        // Type of the mutex lock
-        , typename CT >      // Type of the condition variable
-template< typename Callable  // Type of the function/functor
-        , typename A1        // Type of the first argument
-        , typename A2        // Type of the second argument
-        , typename A3        // Type of the third argument
-        , typename A4 >      // Type of the fourth argument
-inline Thread<TT,MT,LT,CT>::Thread( Callable func, A1 a1, A2 a2, A3 a3, A4 a4 )
-   : pool_  ( 0 )  // Handle to the managing thread pool
-   , thread_( 0 )  // Handle to the thread of execution
-{
-   thread_.reset( new ThreadType( func, a1, a2, a3, a4 ) );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Starting a thread of execution on the given five argument function/functor.
-//
-// \param func The given function/functor.
-// \param a1 The first argument.
-// \param a2 The second argument.
-// \param a3 The third argument.
-// \param a4 The fourth argument.
-// \param a5 The firth argument.
-//
-// This function creates a new thread of execution on the given function/functor. The given
-// function/functor must be copyable, must be callable with five arguments and must return
-// void.
-*/
-template< typename TT        // Type of the encapsulated thread
-        , typename MT        // Type of the synchronization mutex
-        , typename LT        // Type of the mutex lock
-        , typename CT >      // Type of the condition variable
-template< typename Callable  // Type of the function/functor
-        , typename A1        // Type of the first argument
-        , typename A2        // Type of the second argument
-        , typename A3        // Type of the third argument
-        , typename A4        // Type of the fourth argument
-        , typename A5 >      // Type of the fifth argument
-inline Thread<TT,MT,LT,CT>::Thread( Callable func, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5 )
-   : pool_  ( 0 )  // Handle to the managing thread pool
-   , thread_( 0 )  // Handle to the thread of execution
-{
-   thread_.reset( new ThreadType( func, a1, a2, a3, a4, a5 ) );
+   thread_.reset( new ThreadType( func, std::forward<Args>( args )... ) );
 }
 //*************************************************************************************************
 

@@ -3,7 +3,7 @@
 //  \file blaze/util/NonCreatable.h
 //  \brief Base class for non-creatable (static) classes
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -54,7 +54,7 @@ namespace blaze {
 // private and left undefinded in order to prohibit the instantiation of objects of derived
 // classes.\n
 //
-// \note: It is not necessary to publicly derive from this class. It is sufficient to derive
+// \note It is not necessary to publicly derive from this class. It is sufficient to derive
 // privately to prevent the instantiation of the derived class.
 
    \code
@@ -64,13 +64,13 @@ namespace blaze {
 */
 class NonCreatable
 {
- private:
+ protected:
    //**Constructors and copy assignment operator***************************************************
    /*!\name Constructors and copy assignment operator */
    //@{
-   NonCreatable();                                  //!< Constructor (private & undefined)
-   NonCreatable( const NonCreatable& );             //!< Copy constructor (private & undefined)
-   NonCreatable& operator=( const NonCreatable& );  //!< Copy assignment operator (private & undefined)
+   NonCreatable() = delete;                                  //!< Constructor (explicitly deleted)
+   NonCreatable( const NonCreatable& ) = delete;             //!< Copy constructor (explicitly deleted)
+   NonCreatable& operator=( const NonCreatable& ) = delete;  //!< Copy assignment operator (explicitly deleted)
    //@}
    //**********************************************************************************************
 };

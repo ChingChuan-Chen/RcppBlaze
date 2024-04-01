@@ -3,7 +3,7 @@
 //  \file blaze/util/constraints/Comparable.h
 //  \brief Constraint on the pointer relationship
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,6 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/constraints/ConstraintTest.h>
-#include <blaze/util/Suffix.h>
 #include <blaze/util/typetraits/IsConvertible.h>
 
 
@@ -54,33 +52,13 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_POINTER_MUST_BE_COMPARABLE_FAILED;
-template<> struct CONSTRAINT_POINTER_MUST_BE_COMPARABLE_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Constraint on the pointer relationship.
 // \ingroup constraints
 //
 // In case \a P1 is not comparable with \a P2, a compilation error is created.
 */
 #define BLAZE_CONSTRAINT_POINTER_MUST_BE_COMPARABLE(P1,P2) \
-   typedef \
-      ::blaze::CONSTRAINT_TEST< \
-         ::blaze::CONSTRAINT_POINTER_MUST_BE_COMPARABLE_FAILED< ::blaze::IsConvertible<P1,P2>::value || \
-                                                                ::blaze::IsConvertible<P2,P1>::value >::value > \
-      BLAZE_JOIN( CONSTRAINT_POINTER_MUST_BE_COMPARABLE_TYPEDEF, __LINE__ )
+   static_assert( ::blaze::IsConvertible_v<P1,P2> || ::blaze::IsConvertible_v<P2,P1>, "Incomparable pointer types detected" );
 //*************************************************************************************************
 
 } // namespace blaze

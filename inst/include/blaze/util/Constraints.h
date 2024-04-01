@@ -3,7 +3,7 @@
 //  \file blaze/util/Constraints.h
 //  \brief Header file for compile time constraints
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -42,32 +42,43 @@
 
 #include <blaze/util/constraints/Arithmetic.h>
 #include <blaze/util/constraints/Array.h>
+#include <blaze/util/constraints/Assignable.h>
 #include <blaze/util/constraints/BaseOf.h>
 #include <blaze/util/constraints/Boolean.h>
 #include <blaze/util/constraints/Builtin.h>
+#include <blaze/util/constraints/Character.h>
 #include <blaze/util/constraints/Class.h>
 #include <blaze/util/constraints/Comparable.h>
 #include <blaze/util/constraints/Complex.h>
 #include <blaze/util/constraints/ComplexDouble.h>
 #include <blaze/util/constraints/ComplexFloat.h>
 #include <blaze/util/constraints/Const.h>
+#include <blaze/util/constraints/Constructible.h>
 #include <blaze/util/constraints/Convertible.h>
 #include <blaze/util/constraints/DerivedFrom.h>
+#include <blaze/util/constraints/Destructible.h>
 #include <blaze/util/constraints/Double.h>
 #include <blaze/util/constraints/Empty.h>
+#include <blaze/util/constraints/Enum.h>
 #include <blaze/util/constraints/Float.h>
 #include <blaze/util/constraints/FloatingPoint.h>
+#include <blaze/util/constraints/GreaterThan.h>
 #include <blaze/util/constraints/Integer.h>
 #include <blaze/util/constraints/Integral.h>
+#include <blaze/util/constraints/LessThan.h>
+#include <blaze/util/constraints/Long.h>
 #include <blaze/util/constraints/LongDouble.h>
+#include <blaze/util/constraints/LValueReference.h>
 #include <blaze/util/constraints/Numeric.h>
 #include <blaze/util/constraints/Object.h>
 #include <blaze/util/constraints/Pod.h>
 #include <blaze/util/constraints/Pointer.h>
 #include <blaze/util/constraints/Rank.h>
 #include <blaze/util/constraints/Reference.h>
+#include <blaze/util/constraints/RValueReference.h>
 #include <blaze/util/constraints/SameSize.h>
 #include <blaze/util/constraints/SameType.h>
+#include <blaze/util/constraints/Short.h>
 #include <blaze/util/constraints/Signed.h>
 #include <blaze/util/constraints/Size.h>
 #include <blaze/util/constraints/Subscriptable.h>

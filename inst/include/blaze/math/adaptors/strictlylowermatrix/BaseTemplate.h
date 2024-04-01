@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/strictlylowermatrix/BaseTemplate.h
 //  \brief Header file for the implementation of the base template of the StrictlyLowerMatrix
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/IsColumnMajorMatrix.h>
 #include <blaze/math/typetraits/IsDenseMatrix.h>
+#include <blaze/math/typetraits/StorageOrder.h>
 
 
 namespace blaze {
@@ -68,8 +68,12 @@ namespace blaze {
 // matrix can be specified via the first template parameter:
 
    \code
+   namespace blaze {
+
    template< typename MT, bool SO, bool DF >
    class StrictlyLowerMatrix;
+
+   } // namespace blaze
    \endcode
 
 //  - MT: specifies the type of the matrix to be adapted. StrictlyLowerMatrix can be used
@@ -178,7 +182,7 @@ namespace blaze {
    using blaze::StrictlyLowerMatrix;
    using blaze::rowMajor;
 
-   typedef StrictlyLowerMatrix< CompressedMatrix<double,rowMajor> >  CompressedStrictlyLower;
+   using CompressedStrictlyLower = StrictlyLowerMatrix< CompressedMatrix<double,rowMajor> >;
 
    // Default constructed, row-major 3x3 strictly lower compressed matrix
    CompressedStrictlyLower A( 3 );
@@ -234,7 +238,7 @@ namespace blaze {
    using blaze::unpadded;
    using blaze::rowMajor;
 
-   typedef StrictlyLowerMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >  CustomStrictlyLower;
+   using CustomStrictlyLower = StrictlyLowerMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >;
 
    // Creating a 3x3 strictly lower custom matrix from a properly initialized array
    double array[9] = { 0.0, 0.0, 0.0,
@@ -412,19 +416,23 @@ namespace blaze {
    StrictlyLowerMatrix< HybridMatrix<float,3UL,3UL,rowMajor> > E;
    StrictlyLowerMatrix< StaticMatrix<float,3UL,3UL,columnMajor> > F;
 
-   E = A + B;   // Matrix addition and assignment to a row-major strictly lower matrix
-   F = C - D;   // Matrix subtraction and assignment to a column-major strictly lower matrix
-   F = A * D;   // Matrix multiplication between a dense and a sparse matrix
+   E = A + B;   // Matrix addition and assignment to a row-major strictly lower matrix (includes runtime check)
+   F = C - D;   // Matrix subtraction and assignment to a column-major strictly lower matrix (only compile time check)
+   F = A * D;   // Matrix multiplication between a dense and a sparse matrix (includes runtime check)
 
    C *= 2.0;      // In-place scaling of matrix C
-   E  = 2.0 * B;  // Scaling of matrix B
-   F  = C * 2.0;  // Scaling of matrix C
+   E  = 2.0 * B;  // Scaling of matrix B (includes runtime check)
+   F  = C * 2.0;  // Scaling of matrix C (only compile time check)
 
-   E += A - B;  // Addition assignment
-   F -= C + D;  // Subtraction assignment
-   F *= A * D;  // Multiplication assignment
+   E += A - B;  // Addition assignment (includes runtime check)
+   F -= C + D;  // Subtraction assignment (only compile time check)
+   F *= A * D;  // Multiplication assignment (includes runtime check)
    \endcode
 
+// Note that it is possible to assign any kind of matrix to a strictly lower matrix. In case the
+// matrix to be assigned is not strictly lower at compile time, a runtime check is performed.
+//
+//
 // \n \section strictlylowermatrix_block_structured Block-Structured Strictly Lower Matrices
 //
 // It is also possible to use block-structured strictly lower matrices:
@@ -442,9 +450,9 @@ namespace blaze {
 // manipulate elements in the upper part of the matrix:
 
    \code
-   const StaticMatrix<int,3UL,3UL> B( 1, -4,  5,
-                                      6,  8, -3,
-                                      2, -1,  2 )
+   const StaticMatrix<int,3UL,3UL> B( { { 1, -4,  5 },
+                                        { 6,  8, -3 },
+                                        { 2, -1,  2 } } )
 
    A.insert( 4, 2, B );  // Inserting the elements (4,2)
    A(2,4)(1,1) = -5;     // Invalid manipulation of upper matrix element; Results in an exception
@@ -548,9 +556,9 @@ namespace blaze {
    C = A * B;  // Results in a strictly lower matrix; no runtime overhead
    \endcode
 */
-template< typename MT                               // Type of the adapted matrix
-        , bool SO = IsColumnMajorMatrix<MT>::value  // Storage order of the adapted matrix
-        , bool DF = IsDenseMatrix<MT>::value >      // Density flag
+template< typename MT                      // Type of the adapted matrix
+        , bool SO = StorageOrder_v<MT>     // Storage order of the adapted matrix
+        , bool DF = IsDenseMatrix_v<MT> >  // Density flag
 class StrictlyLowerMatrix
 {};
 //*************************************************************************************************

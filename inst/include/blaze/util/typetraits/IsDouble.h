@@ -3,7 +3,7 @@
 //  \file blaze/util/typetraits/IsDouble.h
 //  \brief Header file for the IsDouble type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/FalseType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -57,31 +56,24 @@ namespace blaze {
 // \ingroup type_traits
 //
 // This type trait tests whether or not the given template parameter is of double type. In
-// case the type is double (ignoring the cv-qualifiers), the \a value member enumeration is
-// set to 1, the nested type definition \a Type is \a TrueType, and the class derives from
-// \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType, and the class
+// case the type is double (ignoring the cv-qualifiers), the \a value member constant is set
+// to \a true, the nested type definition \a Type is \a TrueType, and the class derives from
+// \a TrueType. Otherwise \a value is set to \a false, \a Type is \a FalseType, and the class
 // derives from \a FalseType.
 
    \code
-   blaze::IsDouble<double>::value          // Evaluates to 1
+   blaze::IsDouble<double>::value          // Evaluates to 'true'
    blaze::IsDouble<const double>::Type     // Results in TrueType
    blaze::IsDouble<const volatile double>  // Is derived from TrueType
-   blaze::IsDouble<float>::value           // Evaluates to 0
+   blaze::IsDouble<float>::value           // Evaluates to 'false'
    blaze::IsDouble<const int>::Type        // Results in FalseType
    blaze::IsDouble<volatile short>         // Is derived from FalseType
    \endcode
 */
 template< typename T >
-struct IsDouble : public FalseType
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = 0 };
-   typedef FalseType  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsDouble
+   : public FalseType
+{};
 //*************************************************************************************************
 
 
@@ -89,14 +81,9 @@ struct IsDouble : public FalseType
 /*! \cond BLAZE_INTERNAL */
 //! Specialization of the IsDouble type trait for the plain 'double' type.
 template<>
-struct IsDouble<double> : public TrueType
-{
- public:
-   //**********************************************************************************************
-   enum { value = 1 };
-   typedef TrueType  Type;
-   //**********************************************************************************************
-};
+struct IsDouble<double>
+   : public TrueType
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -105,14 +92,9 @@ struct IsDouble<double> : public TrueType
 /*! \cond BLAZE_INTERNAL */
 //! Specialization of the IsDouble type trait for 'const double'.
 template<>
-struct IsDouble<const double> : public TrueType
-{
- public:
-   //**********************************************************************************************
-   enum { value = 1 };
-   typedef TrueType  Type;
-   //**********************************************************************************************
-};
+struct IsDouble<const double>
+   : public TrueType
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -121,14 +103,9 @@ struct IsDouble<const double> : public TrueType
 /*! \cond BLAZE_INTERNAL */
 //! Specialization of the IsDouble type trait for 'volatile double'.
 template<>
-struct IsDouble<volatile double> : public TrueType
-{
- public:
-   //**********************************************************************************************
-   enum { value = 1 };
-   typedef TrueType  Type;
-   //**********************************************************************************************
-};
+struct IsDouble<volatile double>
+   : public TrueType
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -137,15 +114,28 @@ struct IsDouble<volatile double> : public TrueType
 /*! \cond BLAZE_INTERNAL */
 //! Specialization of the IsDouble type trait for 'const volatile double'.
 template<>
-struct IsDouble<const volatile double> : public TrueType
-{
- public:
-   //**********************************************************************************************
-   enum { value = 1 };
-   typedef TrueType  Type;
-   //**********************************************************************************************
-};
+struct IsDouble<const volatile double>
+   : public TrueType
+{};
 /*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsDouble type trait.
+// \ingroup type_traits
+//
+// The IsDouble_v variable template provides a convenient shortcut to access the nested \a value
+// of the IsDouble class template. For instance, given the type \a T the following two statements
+// are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsDouble<T>::value;
+   constexpr bool value2 = blaze::IsDouble_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsDouble_v = IsDouble<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

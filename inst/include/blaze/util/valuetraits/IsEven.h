@@ -3,7 +3,7 @@
 //  \file blaze/util/valuetraits/IsEven.h
 //  \brief Header file for the IsEven value trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,9 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -58,9 +56,9 @@ namespace blaze {
 // \ingroup value_traits
 //
 // This value trait tests whether the given integral value \a N is an even value. In case the
-// value is even, the \a value member enumeration is set to 1, the nested type definition
+// value is even, the \a value member enumeration is set to \a true, the nested type definition
 // \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set
-// to 0, \a Type is \a FalseType, and the class derives from \a FalseType.
+// to \a false, \a Type is \a FalseType, and the class derives from \a FalseType.
 
    \code
    blaze::IsEven<2>::value   // Evaluates to 1
@@ -72,16 +70,27 @@ namespace blaze {
    \endcode
 */
 template< size_t N >
-struct IsEven : public SelectType<N%2,FalseType,TrueType>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = ( N%2 )?( 0 ):( 1 ) };
-   typedef typename SelectType<N%2,FalseType,TrueType>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsEven
+   : public BoolConstant< N % 2UL == 0UL >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsEven value trait.
+// \ingroup value_traits
+//
+// The IsEven_v variable template provides a convenient shortcut to access the nested \a value
+// of the IsEven class template. For instance, given the compile time constant value \a N the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = IsEven<N>::value;
+   constexpr bool value2 = IsEven_v<N>;
+   \endcode
+*/
+template< size_t N >
+constexpr bool IsEven_v = IsEven<N>::value;
 //*************************************************************************************************
 
 } // namespace blaze

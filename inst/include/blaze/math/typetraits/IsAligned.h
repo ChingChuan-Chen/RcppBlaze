@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsAligned.h
 //  \brief Header file for the IsAligned type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/FalseType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -60,9 +59,9 @@ namespace blaze {
 // with respect to the requirements of the available instruction set. For instance, vectorizable
 // data types such as built-in and complex data types are required to be 16-bit aligned for SSE,
 // 32-bit aligned for AVX, and 64-bit aligned for MIC. In case the data type is properly aligned,
-// the \a value member enumeration is set to 1, the nested type definition \a Type is \a TrueType,
-// and the class derives from \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType,
-// and the class derives from \a FalseType. Examples:
+// the \a value member constant is set to \a true, the nested type definition \a Type is
+// \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to
+// \a false, \a Type is \a FalseType, and the class derives from \a FalseType. Examples:
 
    \code
    using blaze::StaticVector;
@@ -84,16 +83,9 @@ namespace blaze {
    \endcode
 */
 template< typename T >
-struct IsAligned : public FalseType
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = 0 };
-   typedef FalseType  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsAligned
+   : public FalseType
+{};
 //*************************************************************************************************
 
 
@@ -103,14 +95,9 @@ struct IsAligned : public FalseType
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsAligned< const T > : public IsAligned<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsAligned<T>::value };
-   typedef typename IsAligned<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsAligned< const T >
+   : public IsAligned<T>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -121,14 +108,9 @@ struct IsAligned< const T > : public IsAligned<T>::Type
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsAligned< volatile T > : public IsAligned<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsAligned<T>::value };
-   typedef typename IsAligned<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsAligned< volatile T >
+   : public IsAligned<T>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -139,15 +121,28 @@ struct IsAligned< volatile T > : public IsAligned<T>::Type
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsAligned< const volatile T > : public IsAligned<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsAligned<T>::value };
-   typedef typename IsAligned<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsAligned< const volatile T >
+   : public IsAligned<T>
+{};
 /*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsAligned type trait.
+// \ingroup math_type_traits
+//
+// The IsAligned_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsAligned class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsAligned<T>::value;
+   constexpr bool value2 = blaze::IsAligned_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsAligned_v = IsAligned<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

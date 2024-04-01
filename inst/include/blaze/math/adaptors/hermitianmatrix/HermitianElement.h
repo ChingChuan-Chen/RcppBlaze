@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/hermitianmatrix/HermitianElement.h
 //  \brief Header file for the HermitianElement class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,13 +40,18 @@
 // Includes
 //*************************************************************************************************
 
+#include <blaze/math/Aliases.h>
 #include <blaze/math/adaptors/hermitianmatrix/HermitianValue.h>
-#include <blaze/math/constraints/Expression.h>
+#include <blaze/math/constraints/Computation.h>
 #include <blaze/math/constraints/Hermitian.h>
 #include <blaze/math/constraints/Lower.h>
+#include <blaze/math/constraints/Scalar.h>
 #include <blaze/math/constraints/SparseMatrix.h>
 #include <blaze/math/constraints/Symmetric.h>
+#include <blaze/math/constraints/Transformation.h>
 #include <blaze/math/constraints/Upper.h>
+#include <blaze/math/constraints/View.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/shims/Conjugate.h>
 #include <blaze/math/shims/IsDefault.h>
 #include <blaze/math/shims/IsReal.h>
@@ -54,11 +59,9 @@
 #include <blaze/math/typetraits/IsRowMajorMatrix.h>
 #include <blaze/util/Assert.h>
 #include <blaze/util/constraints/Const.h>
-#include <blaze/util/constraints/Numeric.h>
 #include <blaze/util/constraints/Pointer.h>
 #include <blaze/util/constraints/Reference.h>
 #include <blaze/util/constraints/Volatile.h>
-#include <blaze/util/Exception.h>
 #include <blaze/util/Types.h>
 #include <blaze/util/typetraits/IsComplex.h>
 
@@ -81,8 +84,8 @@ namespace blaze {
 // by means of a \f$ 3 \times 3 \f$ dense Hermitian matrix:
 
    \code
-   typedef std::complex<double>  cplx;
-   typedef blaze::HermitianMatrix< blaze::CompressedMatrix<cplx> >  Hermitian;
+   using cplx = std::complex<double>;
+   using Hermitian = blaze::HermitianMatrix< blaze::CompressedMatrix<cplx> >;
 
    // Creating a 3x3 Hermitian dense matrix
    //
@@ -106,21 +109,22 @@ namespace blaze {
    \endcode
 */
 template< typename MT >  // Type of the adapted matrix
-class HermitianElement : private SparseElement
+class HermitianElement
+   : private SparseElement
 {
  private:
    //**Type definitions****************************************************************************
-   typedef typename MT::ElementType  ElementType;   //!< Type of the represented matrix element.
-   typedef typename MT::Iterator     IteratorType;  //!< Type of the underlying sparse matrix iterators.
+   using ElementType  = ElementType_t<MT>;  //!< Type of the represented matrix element.
+   using IteratorType = Iterator_t<MT>;     //!< Type of the underlying sparse matrix iterators.
    //**********************************************************************************************
 
  public:
    //**Type definitions****************************************************************************
-   typedef HermitianValue<MT>        ValueType;       //!< The value type of the value-index-pair.
-   typedef size_t                    IndexType;       //!< The index type of the value-index-pair.
-   typedef HermitianValue<MT>        Reference;       //!< Reference return type.
-   typedef const HermitianValue<MT>  ConstReference;  //!< Reference-to-const return type.
-   typedef HermitianElement*         Pointer;         //!< Pointer return type.
+   using ValueType      = HermitianValue<MT>;        //!< The value type of the value-index-pair.
+   using IndexType      = size_t;                    //!< The index type of the value-index-pair.
+   using Reference      = HermitianValue<MT>;        //!< Reference return type.
+   using ConstReference = const HermitianValue<MT>;  //!< Reference-to-const return type.
+   using Pointer        = HermitianElement*;         //!< Pointer return type.
    //**********************************************************************************************
 
    //**Constructor*********************************************************************************
@@ -144,7 +148,7 @@ class HermitianElement : private SparseElement
    //**Access operators****************************************************************************
    /*!\name Access operators */
    //@{
-   inline Pointer operator->();
+   inline Pointer operator->() noexcept;
    //@}
    //**********************************************************************************************
 
@@ -178,12 +182,14 @@ class HermitianElement : private SparseElement
    BLAZE_CONSTRAINT_MUST_NOT_BE_POINTER_TYPE         ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_CONST                ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_VOLATILE             ( MT );
-   BLAZE_CONSTRAINT_MUST_NOT_BE_EXPRESSION_TYPE      ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_VIEW_TYPE            ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE     ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_TRANSFORMATION_TYPE  ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_SYMMETRIC_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_HERMITIAN_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_LOWER_MATRIX_TYPE    ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_UPPER_MATRIX_TYPE    ( MT );
-   BLAZE_CONSTRAINT_MUST_BE_NUMERIC_TYPE             ( ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_SCALAR_TYPE              ( ElementType );
    /*! \endcond */
    //**********************************************************************************************
 };
@@ -235,7 +241,7 @@ template< typename MT >  // Type of the adapted matrix
 template< typename T >   // Type of the right-hand side value
 inline HermitianElement<MT>& HermitianElement<MT>::operator=( const T& v )
 {
-   if( IsComplex<ElementType>::value && pos_->index() == index_ && !isReal( v ) ) {
+   if( IsComplex_v<ElementType> && pos_->index() == index_ && !isReal( v ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to diagonal matrix element" );
    }
 
@@ -258,7 +264,7 @@ template< typename MT >  // Type of the adapted matrix
 template< typename T >   // Type of the right-hand side value
 inline HermitianElement<MT>& HermitianElement<MT>::operator+=( const T& v )
 {
-   if( IsComplex<ElementType>::value && pos_->index() == index_ && !isReal( v ) ) {
+   if( IsComplex_v<ElementType> && pos_->index() == index_ && !isReal( v ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to diagonal matrix element" );
    }
 
@@ -280,7 +286,7 @@ template< typename MT >  // Type of the adapted matrix
 template< typename T >   // Type of the right-hand side value
 inline HermitianElement<MT>& HermitianElement<MT>::operator-=( const T& v )
 {
-   if( IsComplex<ElementType>::value && pos_->index() == index_ && !isReal( v ) ) {
+   if( IsComplex_v<ElementType> && pos_->index() == index_ && !isReal( v ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to diagonal matrix element" );
    }
 
@@ -302,7 +308,7 @@ template< typename MT >  // Type of the adapted matrix
 template< typename T >   // Type of the right-hand side value
 inline HermitianElement<MT>& HermitianElement<MT>::operator*=( const T& v )
 {
-   if( IsComplex<ElementType>::value && pos_->index() == index_ && !isReal( v ) ) {
+   if( IsComplex_v<ElementType> && pos_->index() == index_ && !isReal( v ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to diagonal matrix element" );
    }
 
@@ -324,7 +330,7 @@ template< typename MT >  // Type of the adapted matrix
 template< typename T >   // Type of the right-hand side value
 inline HermitianElement<MT>& HermitianElement<MT>::operator/=( const T& v )
 {
-   if( IsComplex<ElementType>::value && pos_->index() == index_ && !isReal( v ) ) {
+   if( IsComplex_v<ElementType> && pos_->index() == index_ && !isReal( v ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to diagonal matrix element" );
    }
 
@@ -349,7 +355,7 @@ inline HermitianElement<MT>& HermitianElement<MT>::operator/=( const T& v )
 // \return Reference to the value of the Hermitian element.
 */
 template< typename MT >  // Type of the adapted matrix
-inline typename HermitianElement<MT>::Pointer HermitianElement<MT>::operator->()
+inline typename HermitianElement<MT>::Pointer HermitianElement<MT>::operator->() noexcept
 {
    return this;
 }
@@ -401,8 +407,8 @@ inline void HermitianElement<MT>::sync()
    if( pos_->index() == index_ || isDefault( pos_->value() ) )
       return;
 
-   const size_t row   ( ( IsRowMajorMatrix<MT>::value )?( pos_->index() ):( index_ ) );
-   const size_t column( ( IsRowMajorMatrix<MT>::value )?( index_ ):( pos_->index() ) );
+   const size_t row   ( ( IsRowMajorMatrix_v<MT> )?( pos_->index() ):( index_ ) );
+   const size_t column( ( IsRowMajorMatrix_v<MT> )?( index_ ):( pos_->index() ) );
 
    matrix_->set( row, column, conj( pos_->value() ) );
 }
@@ -417,8 +423,8 @@ inline void HermitianElement<MT>::sync()
 template< typename MT >  // Type of the adapted matrix
 inline bool HermitianElement<MT>::isSynced() const
 {
-   const size_t row   ( ( IsRowMajorMatrix<MT>::value )?( pos_->index() ):( index_ ) );
-   const size_t column( ( IsRowMajorMatrix<MT>::value )?( index_ ):( pos_->index() ) );
+   const size_t row   ( ( IsRowMajorMatrix_v<MT> )?( pos_->index() ):( index_ ) );
+   const size_t column( ( IsRowMajorMatrix_v<MT> )?( index_ ):( pos_->index() ) );
 
    const IteratorType pos2( matrix_->find( row, column ) );
    const IteratorType end( matrix_->end( pos_->index() ) );

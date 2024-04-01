@@ -3,7 +3,7 @@
 //  \file blaze/math/lapack/potrf.h
 //  \brief Header file for the LAPACK Cholesky decomposition functions (potrf)
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,42 +40,21 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/cast.hpp>
+#include <blaze/math/Aliases.h>
 #include <blaze/math/constraints/Adaptor.h>
-#include <blaze/math/constraints/BlasCompatible.h>
+#include <blaze/math/constraints/BLASCompatible.h>
 #include <blaze/math/constraints/Computation.h>
+#include <blaze/math/constraints/Contiguous.h>
 #include <blaze/math/constraints/MutableDataAccess.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/DenseMatrix.h>
+#include <blaze/math/lapack/clapack/potrf.h>
 #include <blaze/math/typetraits/IsRowMajorMatrix.h>
 #include <blaze/util/Assert.h>
-#include <blaze/util/Complex.h>
-#include <blaze/util/Exception.h>
-#include <blaze/util/StaticAssert.h>
+#include <blaze/util/NumericCast.h>
 
 
 namespace blaze {
-
-//=================================================================================================
-//
-//  LAPACK FORWARD DECLARATIONS
-//
-//=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-extern "C" {
-
-void spotrf_( char* uplo, int* n, float*  A, int* lda, int* info );
-void dpotrf_( char* uplo, int* n, double* A, int* lda, int* info );
-void cpotrf_( char* uplo, int* n, float*  A, int* lda, int* info );
-void zpotrf_( char* uplo, int* n, double* A, int* lda, int* info );
-
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-
 
 //=================================================================================================
 //
@@ -86,197 +65,9 @@ void zpotrf_( char* uplo, int* n, double* A, int* lda, int* info );
 //*************************************************************************************************
 /*!\name LAPACK LLH (Cholesky) decomposition functions (potrf) */
 //@{
-inline void potrf( char uplo, int n, float* A, int lda, int* info );
-
-inline void potrf( char uplo, int n, double* A, int lda, int* info );
-
-inline void potrf( char uplo, int n, complex<float>* A, int lda, int* info );
-
-inline void potrf( char uplo, int n, complex<double>* A, int lda, int* info );
-
 template< typename MT, bool SO >
-inline void potrf( DenseMatrix<MT,SO>& A, char uplo );
+void potrf( DenseMatrix<MT,SO>& A, char uplo );
 //@}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the Cholesky decomposition of the given dense positive definite
-//        single precision column-major matrix.
-// \ingroup lapack_decomposition
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the matrix \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the single precision column-major matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function performs the dense matrix Cholesky decomposition of a symmetric positive definite
-// single precision column-major matrix based on the LAPACK spotrf() function. The decomposition
-// has the form
-
-                      \f[ A = U^{T} U \texttt{ (if uplo = 'U'), or }
-                          A = L L^{T} \texttt{ (if uplo = 'L'), } \f]
-
-// where \c U is an upper triangular matrix and \c L is a lower triangular matrix. The resulting
-// decomposition is stored within \a A: In case \a uplo is set to \c 'L' the result is stored in
-// the lower part of the matrix and the upper part remains untouched, in case \a uplo is set to
-// \c 'U' the result is stored in the upper part and the lower part remains untouched.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The decomposition finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//   - > 0: If info = i, the leading minor of order i is not positive definite.
-//
-// For more information on the spotrf() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrf( char uplo, int n, float* A, int lda, int* info )
-{
-   spotrf_( &uplo, &n, A, &lda, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the Cholesky decomposition of the given dense positive definite
-//        double precision column-major matrix.
-// \ingroup lapack_decomposition
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the matrix \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the double precision column-major matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function performs the dense matrix Cholesky decomposition of a symmetric positive definite
-// double precision column-major matrix based on the LAPACK dpotrf() function. The decomposition
-// has the form
-
-                      \f[ A = U^{T} U \texttt{ (if uplo = 'U'), or }
-                          A = L L^{T} \texttt{ (if uplo = 'L'), } \f]
-
-// where \c U is an upper triangular matrix and \c L is a lower triangular matrix. The resulting
-// decomposition is stored within \a A: In case \a uplo is set to \c 'L' the result is stored in
-// the lower part of the matrix and the upper part remains untouched, in case \a uplo is set to
-// \c 'U' the result is stored in the upper part and the lower part remains untouched.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The decomposition finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//   - > 0: If info = i, the leading minor of order i is not positive definite.
-//
-// For more information on the dpotrf() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrf( char uplo, int n, double* A, int lda, int* info )
-{
-   dpotrf_( &uplo, &n, A, &lda, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the Cholesky decomposition of the given dense positive definite
-//        single precision complex column-major matrix.
-// \ingroup lapack_decomposition
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the matrix \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the single precision complex column-major matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function performs the dense matrix Cholesky decomposition of a symmetric positive
-// definite single precision complex column-major matrix based on the LAPACK cpotrf() function.
-// The decomposition has the form
-
-                      \f[ A = U^{H} U \texttt{ (if uplo = 'U'), or }
-                          A = L L^{H} \texttt{ (if uplo = 'L'), } \f]
-
-// where \c U is an upper triangular matrix and \c L is a lower triangular matrix. The resulting
-// decomposition is stored within \a A: In case \a uplo is set to \c 'L' the result is stored in
-// the lower part of the matrix and the upper part remains untouched, in case \a uplo is set to
-// \c 'U' the result is stored in the upper part and the lower part remains untouched.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The decomposition finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//   - > 0: If info = i, the leading minor of order i is not positive definite.
-//
-// For more information on the cpotrf() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrf( char uplo, int n, complex<float>* A, int lda, int* info )
-{
-   BLAZE_STATIC_ASSERT( sizeof( complex<float> ) == 2UL*sizeof( float ) );
-
-   cpotrf_( &uplo, &n, reinterpret_cast<float*>( A ), &lda, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the Cholesky decomposition of the given dense positive definite
-//        double precision complex column-major matrix.
-// \ingroup lapack_decomposition
-//
-// \param uplo \c 'L' to use the lower part of the matrix, \c 'U' to use the upper part.
-// \param n The number of rows/columns of the matrix \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the double precision complex column-major matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function performs the dense matrix Cholesky decomposition of a symmetric positive
-// definite double precision complex column-major matrix based on the LAPACK zpotrf() function.
-// The decomposition has the form
-
-                      \f[ A = U^{H} U \texttt{ (if uplo = 'U'), or }
-                          A = L L^{H} \texttt{ (if uplo = 'L'), } \f]
-
-// where \c U is an upper triangular matrix and \c L is a lower triangular matrix. The resulting
-// decomposition is stored within \a A: In case \a uplo is set to \c 'L' the result is stored in
-// the lower part of the matrix and the upper part remains untouched, in case \a uplo is set to
-// \c 'U' the result is stored in the upper part and the lower part remains untouched.
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The decomposition finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//   - > 0: If info = i, the leading minor of order i is not positive definite.
-//
-// For more information on the zpotrf() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void potrf( char uplo, int n, complex<double>* A, int lda, int* info )
-{
-   BLAZE_STATIC_ASSERT( sizeof( complex<double> ) == 2UL*sizeof( double ) );
-
-   zpotrf_( &uplo, &n, reinterpret_cast<double*>( A ), &lda, info );
-}
 //*************************************************************************************************
 
 
@@ -289,7 +80,7 @@ inline void potrf( char uplo, int n, complex<double>* A, int lda, int* info )
 // \return void
 // \exception std::invalid_argument Invalid non-square matrix provided.
 // \exception std::invalid_argument Invalid uplo argument provided.
-// \exception std::invalid_argument Decomposition of singular matrix failed.
+// \exception std::runtime_error Decomposition of singular matrix failed.
 //
 // This function performs the dense matrix Cholesky decomposition of a symmetric positive definite
 // matrix based on the LAPACK potrf() functions. Note that the function only works for general,
@@ -308,15 +99,16 @@ inline void potrf( char uplo, int n, complex<double>* A, int lda, int* info )
 //  - ... the given system matrix \a A is not a symmetric positive definite matrix;
 //  - ... the given \a uplo argument is neither \c 'L' nor \c 'U'.
 //
-// In all failure cases a \a std::invalid_argument exception is thrown.
+// In all failure cases an exception is thrown.
 //
 // For more information on the potrf() functions (i.e. spotrf(), dpotrf(), cpotrf(), and zpotrf())
 // see the LAPACK online documentation browser:
 //
 //        http://www.netlib.org/lapack/explore-html/
 //
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
+// \note This function can only be used if a fitting LAPACK library, which supports this function,
+// is available and linked to the executable. Otherwise a call to this function will result in a
+// linker error.
 //
 // \note This function does only provide the basic exception safety guarantee, i.e. in case of an
 // exception \a A may already have been modified.
@@ -325,14 +117,13 @@ template< typename MT  // Type of the dense matrix
         , bool SO >    // Storage order of the dense matrix
 inline void potrf( DenseMatrix<MT,SO>& A, char uplo )
 {
-   using boost::numeric_cast;
-
    BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( MT );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT> );
 
-   if( !isSquare( ~A ) ) {
+   if( !isSquare( *A ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid non-square matrix provided" );
    }
 
@@ -340,24 +131,24 @@ inline void potrf( DenseMatrix<MT,SO>& A, char uplo )
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid uplo argument provided" );
    }
 
-   int n   ( numeric_cast<int>( (~A).rows()    ) );
-   int lda ( numeric_cast<int>( (~A).spacing() ) );
-   int info( 0 );
+   blas_int_t n   ( numeric_cast<blas_int_t>( (*A).rows()    ) );
+   blas_int_t lda ( numeric_cast<blas_int_t>( (*A).spacing() ) );
+   blas_int_t info( 0 );
 
    if( n == 0 ) {
       return;
    }
 
-   if( IsRowMajorMatrix<MT>::value ) {
+   if( IsRowMajorMatrix_v<MT> ) {
       ( uplo == 'L' )?( uplo = 'U' ):( uplo = 'L' );
    }
 
-   potrf( uplo, n, (~A).data(), lda, &info );
+   potrf( uplo, n, (*A).data(), lda, &info );
 
    BLAZE_INTERNAL_ASSERT( info >= 0, "Invalid argument for Cholesky decomposition" );
 
    if( info > 0 ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Decomposition of non-positive-definite matrix failed" );
+      BLAZE_THROW_LAPACK_ERROR( "Decomposition of non-positive-definite matrix failed" );
    }
 }
 //*************************************************************************************************

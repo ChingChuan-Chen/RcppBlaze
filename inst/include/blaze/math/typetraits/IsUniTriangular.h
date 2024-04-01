@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsUniTriangular.h
 //  \brief Header file for the IsUniTriangular type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -42,9 +42,7 @@
 
 #include <blaze/math/typetraits/IsUniLower.h>
 #include <blaze/math/typetraits/IsUniUpper.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -56,42 +54,25 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsUniTriangular type trait.
-// \ingroup math_type_traits
-*/
-template< typename T >
-struct IsUniTriangularHelper
-{
-   //**********************************************************************************************
-   enum { value = IsUniLower<T>::value || IsUniUpper<T>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time check for unitriangular matrix types.
 // \ingroup math_type_traits
 //
 // This type trait tests whether or not the given template parameter is a lower or upper
 // unitriangular matrix type. In case the type is an unitriangular matrix type, the \a value
-// member enumeration is set to 1, the nested type definition \a Type is \a TrueType, and
-// the class derives from \a TrueType. Otherwise \a yes is set to 0, \a Type is \a FalseType,
-// and the class derives from \a FalseType.
+// member constant is set to \a true, the nested type definition \a Type is \a TrueType,
+// and the class derives from \a TrueType. Otherwise \a yes is set to \a false, \a Type is
+// \a FalseType, and the class derives from \a FalseType.
 
    \code
    using blaze::rowMajor;
 
-   typedef blaze::StaticMatrix<double,3UL,3UL,rowMajor>  StaticMatrixType;
-   typedef blaze::DynamicMatrix<float,rowMajor>          DynamicMatrixType;
-   typedef blaze::CompressedMatrix<int,rowMajor>         CompressedMatrixType;
+   using StaticMatrixType     = blaze::StaticMatrix<double,3UL,3UL,rowMajor>;
+   using DynamicMatrixType    = blaze::DynamicMatrix<float,rowMajor>;
+   using CompressedMatrixType = blaze::CompressedMatrix<int,rowMajor>;
 
-   typedef blaze::UniLowerMatrix<StaticMatrixType>      UniLowerStaticType;
-   typedef blaze::UniUpperMatrix<DynamicMatrixType>     UniUpperDynamicType;
-   typedef blaze::UniLowerMatrix<CompressedMatrixType>  UniLowerCompressedType;
+   using UniLowerStaticType     = blaze::UniLowerMatrix<StaticMatrixType>;
+   using UniUpperDynamicType    = blaze::UniUpperMatrix<DynamicMatrixType>;
+   using UniLowerCompressedType = blaze::UniLowerMatrix<CompressedMatrixType>;
 
    blaze::IsUniTriangular< UniLowerStaticType >::value        // Evaluates to 1
    blaze::IsUniTriangular< const UniUpperDynamicType >::Type  // Results in TrueType
@@ -102,16 +83,27 @@ struct IsUniTriangularHelper
    \endcode
 */
 template< typename T >
-struct IsUniTriangular : public IsUniTriangularHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsUniTriangularHelper<T>::value };
-   typedef typename IsUniTriangularHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsUniTriangular
+   : public BoolConstant< IsUniLower_v<T> || IsUniUpper_v<T> >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsUniTriangular type trait.
+// \ingroup math_type_traits
+//
+// The IsUniTriangular_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsUniTriangular class template. For instance, given the type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsUniTriangular<T>::value;
+   constexpr bool value2 = blaze::IsUniTriangular_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsUniTriangular_v = IsUniTriangular<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

@@ -3,7 +3,7 @@
 //  \file blaze/util/Types.h
 //  \brief Header file for basic type definitions
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -41,7 +41,7 @@
 //*************************************************************************************************
 
 #include <cstddef>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 
 namespace blaze {
@@ -71,11 +71,21 @@ using std::ptrdiff_t;
 
 
 //*************************************************************************************************
+/*!\brief Byte data type of the Blaze library.
+// \ingroup util
+//
+// The \a byte data type is guaranteed to be an integral data type of size 1.
+*/
+using byte_t = unsigned char;
+//*************************************************************************************************
+
+
+//*************************************************************************************************
 /*!\class blaze::int8_t
 // \brief 8-bit signed integer type of the Blaze library.
 // \ingroup util
 */
-using boost::int8_t;
+using std::int8_t;
 //*************************************************************************************************
 
 
@@ -84,7 +94,7 @@ using boost::int8_t;
 // \brief 8-bit unsigned integer type of the Blaze library.
 // \ingroup util
 */
-using boost::uint8_t;
+using std::uint8_t;
 //*************************************************************************************************
 
 
@@ -93,7 +103,7 @@ using boost::uint8_t;
 // \brief 16-bit signed integer type of the Blaze library.
 // \ingroup util
 */
-using boost::int16_t;
+using std::int16_t;
 //*************************************************************************************************
 
 
@@ -102,7 +112,7 @@ using boost::int16_t;
 // \brief 16-bit unsigned integer type of the Blaze library.
 // \ingroup util
 */
-using boost::uint16_t;
+using std::uint16_t;
 //*************************************************************************************************
 
 
@@ -111,7 +121,7 @@ using boost::uint16_t;
 // \brief 32-bit signed integer type of the Blaze library.
 // \ingroup util
 */
-using boost::int32_t;
+using std::int32_t;
 //*************************************************************************************************
 
 
@@ -120,7 +130,7 @@ using boost::int32_t;
 // \brief 32-bit unsigned integer type of the Blaze library.
 // \ingroup util
 */
-using boost::uint32_t;
+using std::uint32_t;
 //*************************************************************************************************
 
 
@@ -129,9 +139,7 @@ using boost::uint32_t;
 // \brief 64-bit signed integer type of the Blaze library.
 // \ingroup util
 */
-#ifndef BOOST_NO_INT64_T
-using boost::int64_t;
-#endif
+using std::int64_t;
 //*************************************************************************************************
 
 
@@ -140,9 +148,7 @@ using boost::int64_t;
 // \brief 64-bit unsigned integer type of the Blaze library.
 // \ingroup util
 */
-#ifndef BOOST_NO_INT64_T
-using boost::uint64_t;
-#endif
+using std::uint64_t;
 //*************************************************************************************************
 
 
@@ -150,11 +156,7 @@ using boost::uint64_t;
 /*!\brief The largest available signed integer data type.
 // \ingroup util
 */
-#ifndef BOOST_NO_INT64_T
-typedef int64_t  large_t;
-#else
-typedef int32_t  large_t;
-#endif
+using large_t = int64_t;
 //*************************************************************************************************
 
 
@@ -162,11 +164,7 @@ typedef int32_t  large_t;
 /*!\brief The largest available unsigned integer data type.
 // \ingroup util
 */
-#ifndef BOOST_NO_INT64_T
-typedef uint64_t  ularge_t;
-#else
-typedef uint32_t  ularge_t;
-#endif
+using ularge_t = uint64_t;
 //*************************************************************************************************
 
 
@@ -174,7 +172,43 @@ typedef uint32_t  ularge_t;
 /*!\brief Unsigned integer data type for integral IDs.
 // \ingroup util
 */
-typedef ularge_t  id_t;
+using id_t = ularge_t;
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Type of the hidden arguments of character type within a Fortran forward declaration.
+// \ingroup util
+*/
+#if BLAZE_GNU_COMPILER && BLAZE_GNU_MAJOR_VERSION <= 7
+using fortran_charlen_t = int;
+#else
+using fortran_charlen_t = size_t;
+#endif
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Type of single precision complex numbers within a Fortran forward declaration.
+// \ingroup util
+*/
+struct fortran_complex8
+{
+   float real;  //!< The real part of the complex number.
+   float imag;  //!< The imaginary part of the complex number.
+};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Type of double precision complex numbers within a Fortran forward declaration.
+// \ingroup util
+*/
+struct fortran_complex16
+{
+   double real;  //!< The real part of the complex number.
+   double imag;  //!< The imaginary part of the complex number.
+};
 //*************************************************************************************************
 
 } // namespace blaze

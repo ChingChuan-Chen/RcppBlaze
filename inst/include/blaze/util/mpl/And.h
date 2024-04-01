@@ -1,9 +1,9 @@
 //=================================================================================================
 /*!
 //  \file blaze/util/mpl/And.h
-//  \brief Header file for the And class template
+//  \brief Header file for the And_t alias template
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/mpl/Bool.h>
-#include <blaze/util/NullType.h>
+#include <blaze/util/IntegralConstant.h>
+#include <blaze/util/mpl/Bools.h>
+#include <blaze/util/typetraits/IsSame.h>
 
 
 namespace blaze {
@@ -53,85 +54,48 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*!\brief Compile time logical and evaluation.
+/*!\brief Compile time logical AND evaluation.
 // \ingroup mpl
 //
-// The And class template performs at compile time a logical and ('&&') evaluation of the up to
-// six given compile time conditions:
+// The And_t alias template performs at compile time a logical AND ('&&') evaluation of at
+// least two compile time conditions:
 
    \code
    using namespace blaze;
 
-   typedef int  Type;
+   using Type = int;
 
-   And< IsIntegral<Type>, IsSigned<Type>        >::value  // Evaluates to 1
-   And< IsIntegral<Type>, IsFloatingPoint<Type> >::value  // Evaluates to 0
-   And< IsFloat<Type>   , IsDouble<Type>        >::value  // Evaluates to 0
+   And_t< IsIntegral<Type>, IsSigned<Type>        >::value  // Evaluates to 1
+   And_t< IsIntegral<Type>, IsFloatingPoint<Type> >::value  // Evaluates to 0
+   And_t< IsFloat<Type>   , IsDouble<Type>        >::value  // Evaluates to 0
    \endcode
 */
-template< typename T1               // Type of the first operand
-        , typename T2               // Type of the second operand
-        , typename T3 = NullType    // Type of the third operand
-        , typename T4 = NullType    // Type of the fourth operand
-        , typename T5 = NullType    // Type of the fifth operand
-        , typename T6 = NullType >  // Type of the sixth operand
-struct And
-   : public Bool< ( T1::value && T2::value && T3::value && T4::value && T5::value && T6::value ) >
-{};
+template< typename T1       // Type of the first mandatory operand
+        , typename T2       // Type of the second mandatory operand
+        , typename... Ts >  // Types of the optional operands
+using And_t =
+   Bool_t< IsSame< Bools< true, T1::value, T2::value, (Ts::value)... >
+                 , Bools< T1::value, T2::value, (Ts::value)..., true > >::value >;
 //*************************************************************************************************
 
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-//! Specialization of the And class template for two operands.
-template< typename T1    // Type of the first operand
-        , typename T2 >  // Type of the second operand
-struct And<T1,T2,NullType,NullType,NullType,NullType>
-   : public Bool< ( T1::value && T2::value ) >
-{};
-/*! \endcond */
-//*************************************************************************************************
+/*!\brief Auxiliary variable template for the And_t alias.
+// \ingroup mpl
+//
+// The And_v variable template provides a convenient shortcut to access the nested \a value of
+// the And_t alias. For instance, given the types \a T1 and \a T2 the following two statements
+// are identical:
 
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-//! Specialization of the And class template for three operands.
-template< typename T1    // Type of the first operand
-        , typename T2    // Type of the second operand
-        , typename T3 >  // Type of the third operand
-struct And<T1,T2,T3,NullType,NullType,NullType>
-   : public Bool< ( T1::value && T2::value && T3::value ) >
-{};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-//! Specialization of the And class template for four operands.
-template< typename T1    // Type of the first operand
-        , typename T2    // Type of the second operand
-        , typename T3    // Type of the third operand
-        , typename T4 >  // Type of the fourth operand
-struct And<T1,T2,T3,T4,NullType,NullType>
-   : public Bool< ( T1::value && T2::value && T3::value && T4::value ) >
-{};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-//! Specialization of the And class template for five operands.
-template< typename T1    // Type of the first operand
-        , typename T2    // Type of the second operand
-        , typename T3    // Type of the third operand
-        , typename T4    // Type of the fourth operand
-        , typename T5 >  // Type of the fifth operand
-struct And<T1,T2,T3,T4,T5,NullType>
-   : public Bool< ( T1::value && T2::value && T3::value && T4::value && T5::value ) >
-{};
-/*! \endcond */
+   \code
+   constexpr bool value1 = And_t<T1,T2>::value;
+   constexpr bool value2 = And_v<T1,T2>;
+   \endcode
+*/
+template< typename T1       // Type of the first mandatory operand
+        , typename T2       // Type of the second mandatory operand
+        , typename... Ts >  // Types of the optional operands
+constexpr bool And_v = And_t<T1,T2,Ts...>::value;
 //*************************************************************************************************
 
 } // namespace blaze

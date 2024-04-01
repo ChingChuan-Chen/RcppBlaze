@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/uppermatrix/BaseTemplate.h
 //  \brief Header file for the implementation of the base template of the UpperMatrix
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/IsColumnMajorMatrix.h>
 #include <blaze/math/typetraits/IsDenseMatrix.h>
+#include <blaze/math/typetraits/StorageOrder.h>
 
 
 namespace blaze {
@@ -68,8 +68,12 @@ namespace blaze {
 // parameter:
 
    \code
+   namespace blaze {
+
    template< typename MT, bool SO, bool DF >
    class UpperMatrix;
+
+   } // namespace blaze
    \endcode
 
 //  - MT: specifies the type of the matrix to be adapted. UpperMatrix can be used with any
@@ -177,7 +181,7 @@ namespace blaze {
    using blaze::UpperMatrix;
    using blaze::rowMajor;
 
-   typedef UpperMatrix< CompressedMatrix<double,rowMajor> >  CompressedUpper;
+   using CompressedUpper = UpperMatrix< CompressedMatrix<double,rowMajor> >;
 
    // Default constructed, row-major 3x3 upper compressed matrix
    CompressedUpper A( 3 );
@@ -208,16 +212,16 @@ namespace blaze {
    A.erase( 0, 2 );  // Erasing the upper element (0,2)
 
    // Construction from an upper dense matrix
-   StaticMatrix<double,3UL,3UL> B( 3.0,  8.0, -2.0,
-                                   0.0,  0.0, -1.0,
-                                   0.0,  0.0,  4.0 );
+   StaticMatrix<double,3UL,3UL> B( { { 3.0,  8.0, -2.0 },
+                                     { 0.0,  0.0, -1.0 },
+                                     { 0.0,  0.0,  4.0 } } );
 
    UpperMatrix< DynamicMatrix<double,rowMajor> > C( B );  // OK
 
    // Assignment of a non-upper dense matrix
-   StaticMatrix<double,3UL,3UL> D(  3.0,  8.0, -2.0,
-                                    0.0,  0.0, -1.0,
-                                   -2.0,  0.0,  4.0 );
+   StaticMatrix<double,3UL,3UL> D( { {  3.0,  8.0, -2.0 },
+                                     {  0.0,  0.0, -1.0 },
+                                     { -2.0,  0.0,  4.0 } } );
 
    C = D;  // Throws an exception; upper matrix invariant would be violated!
    \endcode
@@ -232,7 +236,7 @@ namespace blaze {
    using blaze::unpadded;
    using blaze::rowMajor;
 
-   typedef UpperMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >  CustomUpper;
+   using CustomUpper = UpperMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >;
 
    // Creating a 3x3 upper custom matrix from a properly initialized array
    double array[9] = { 1.0, 2.0, 3.0,
@@ -411,19 +415,23 @@ namespace blaze {
    UpperMatrix< HybridMatrix<float,3UL,3UL,rowMajor> > E;
    UpperMatrix< StaticMatrix<float,3UL,3UL,columnMajor> > F;
 
-   E = A + B;     // Matrix addition and assignment to a row-major upper matrix
-   F = C - D;     // Matrix subtraction and assignment to a column-major upper matrix
-   F = A * D;     // Matrix multiplication between a dense and a sparse matrix
+   E = A + B;     // Matrix addition and assignment to a row-major upper matrix (includes runtime check)
+   F = C - D;     // Matrix subtraction and assignment to a column-major upper matrix (only compile time check)
+   F = A * D;     // Matrix multiplication between a dense and a sparse matrix (includes runtime check)
 
    C *= 2.0;      // In-place scaling of matrix C
-   E  = 2.0 * B;  // Scaling of matrix B
-   F  = C * 2.0;  // Scaling of matrix C
+   E  = 2.0 * B;  // Scaling of matrix B (includes runtime check)
+   F  = C * 2.0;  // Scaling of matrix C (only compile time check)
 
-   E += A - B;    // Addition assignment
-   F -= C + D;    // Subtraction assignment
-   F *= A * D;    // Multiplication assignment
+   E += A - B;    // Addition assignment (includes runtime check)
+   F -= C + D;    // Subtraction assignment (only compile time check)
+   F *= A * D;    // Multiplication assignment (includes runtime check)
    \endcode
 
+// Note that it is possible to assign any kind of matrix to an upper matrix. In case the matrix
+// to be assigned is not upper at compile time, a runtime check is performed.
+//
+//
 // \n \section uppermatrix_block_structured Block-Structured Upper Matrices
 //
 // It is also possible to use block-structured upper matrices:
@@ -441,9 +449,9 @@ namespace blaze {
 // elements in the lower part of the matrix:
 
    \code
-   const StaticMatrix<int,3UL,3UL> B( 1, -4,  5,
-                                      6,  8, -3,
-                                      2, -1,  2 )
+   const StaticMatrix<int,3UL,3UL> B( { { 1, -4,  5 },
+                                        { 6,  8, -3 },
+                                        { 2, -1,  2 } } )
 
    A.insert( 2, 4, B );  // Inserting the elements (2,4)
    A(4,2)(1,1) = -5;     // Invalid manipulation of lower matrix element; Results in an exception
@@ -543,9 +551,9 @@ namespace blaze {
    C = A * B;  // Results in an upper matrix; no runtime overhead
    \endcode
 */
-template< typename MT                               // Type of the adapted matrix
-        , bool SO = IsColumnMajorMatrix<MT>::value  // Storage order of the adapted matrix
-        , bool DF = IsDenseMatrix<MT>::value >      // Density flag
+template< typename MT                      // Type of the adapted matrix
+        , bool SO = StorageOrder_v<MT>     // Storage order of the adapted matrix
+        , bool DF = IsDenseMatrix_v<MT> >  // Density flag
 class UpperMatrix
 {};
 //*************************************************************************************************

@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/StorageOrder.h
 //  \brief Header file for the StorageOrder type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/StorageOrder.h>
-#include <blaze/math/typetraits/IsMatrix.h>
-#include <blaze/math/typetraits/IsRowMajorMatrix.h>
-#include <blaze/util/InvalidType.h>
-#include <blaze/util/mpl/If.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -65,8 +61,8 @@ namespace blaze {
 // given type is not a matrix type a compilation error is created.
 
    \code
-   typedef blaze::DynamicMatrix<int,blaze::rowMajor>     RowMajorMatrix;
-   typedef blaze::DynamicMatrix<int,blaze::columnMajor>  ColumnMajorMatrix;
+   using RowMajorMatrix    = blaze::DynamicMatrix<int,blaze::rowMajor>;
+   using ColumnMajorMatrix = blaze::DynamicMatrix<int,blaze::columnMajor>;
 
    blaze::StorageOrder<RowMajorMatrix>::value     // Evaluates to blaze::rowMajor
    blaze::StorageOrder<ColumnMajorMatrix>::value  // Evaluates to blaze::columnMajor
@@ -75,23 +71,26 @@ namespace blaze {
 */
 template< typename T >
 struct StorageOrder
-{
- private:
-   //**struct ValidType****************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   struct ValidType {
-      static const bool value = ( IsRowMajorMatrix<T>::value ? rowMajor : columnMajor );
-   };
-   /*! \endcond */
-   //**********************************************************************************************
+   : public BoolConstant< T::storageOrder >
+{};
+//*************************************************************************************************
 
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   static const bool value = If< IsMatrix<T>, ValidType, INVALID_TYPE >::Type::value;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the StorageOrder type trait.
+// \ingroup math_type_traits
+//
+// The StorageOrder_v variable template provides a convenient shortcut to access the nested
+// \a value of the StorageOrder class template. For instance, given the matrix type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::StorageOrder<T>::value;
+   constexpr bool value2 = blaze::StorageOrder_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool StorageOrder_v = T::storageOrder;
 //*************************************************************************************************
 
 } // namespace blaze

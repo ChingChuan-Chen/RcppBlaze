@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsMultExpr.h
 //  \brief Header file for the IsMultExpr type trait class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
+#include <utility>
 #include <blaze/math/expressions/MultExpr.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -57,17 +55,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsMultExpr type trait.
+/*!\brief Auxiliary helper functions for the IsMultExpr type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsMultExprHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_base_of<MultExpr,T>::value && !boost::is_base_of<T,MultExpr>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+template< typename U >
+TrueType isMultExpr_backend( const volatile MultExpr<U>* );
+
+FalseType isMultExpr_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -80,23 +74,46 @@ struct IsMultExprHelper
 // expression template (i.e. an expression representing an element-wise vector multiplication,
 // a matrix/vector multiplication, a vector/matrix multiplication, or a matrix multiplication).
 // In order to qualify as a valid multiplication expression template, the given type has to
-// derive (publicly or privately) from the MultExpr base class. In case the given type is a
-// valid multiplication expression template, the \a value member enumeration is set to 1, the
-// nested type definition \a Type is \a TrueType, and the class derives from \a TrueType.
-// Otherwise \a value is set to 0, \a Type is \a FalseType, and the class derives from
-// \a FalseType.
+// derive publicly from the MultExpr base class. In case the given type is a valid multiplication
+// expression template, the \a value member constant is set to \a true, the nested type definition
+// \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to
+// \a false, \a Type is \a FalseType, and the class derives from \a FalseType.
 */
 template< typename T >
-struct IsMultExpr : public IsMultExprHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsMultExprHelper<T>::value };
-   typedef typename IsMultExprHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsMultExpr
+   : public decltype( isMultExpr_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsMultExpr type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsMultExpr<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsMultExpr type trait.
+// \ingroup math_type_traits
+//
+// The IsMultExpr_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsMultExpr class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsMultExpr<T>::value;
+   constexpr bool value2 = blaze::IsMultExpr_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsMultExpr_v = IsMultExpr<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

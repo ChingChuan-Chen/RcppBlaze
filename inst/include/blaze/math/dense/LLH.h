@@ -3,7 +3,7 @@
 //  \file blaze/math/dense/LLH.h
 //  \brief Header file for the dense matrix in-place Cholesky (LLH) decomposition
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,18 +40,18 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/constraints/BlasCompatible.h>
+#include <blaze/math/Aliases.h>
+#include <blaze/math/constraints/BLASCompatible.h>
 #include <blaze/math/constraints/Hermitian.h>
 #include <blaze/math/constraints/StrictlyTriangular.h>
 #include <blaze/math/constraints/Symmetric.h>
 #include <blaze/math/constraints/UniTriangular.h>
 #include <blaze/math/constraints/Upper.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/DenseMatrix.h>
 #include <blaze/math/lapack/potrf.h>
-#include <blaze/math/traits/DerestrictTrait.h>
 #include <blaze/math/typetraits/IsResizable.h>
 #include <blaze/math/typetraits/IsRowMajorMatrix.h>
-#include <blaze/util/Exception.h>
 
 
 namespace blaze {
@@ -114,7 +114,7 @@ void llh( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& L );
 // \c complex<double> element type. The attempt to call the function with matrices of any other
 // element type results in a compile time error!
 //
-// \note This function can only be used if the fitting LAPACK library is available and linked to
+// \note This function can only be used if a fitting LAPACK library is available and linked to
 // the executable. Otherwise a call to this function will result in a linker error.
 //
 // \note This function does only provide the basic exception safety guarantee, i.e. in case of an
@@ -127,40 +127,40 @@ template< typename MT1  // Type of matrix A
 void llh( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& L )
 {
    BLAZE_CONSTRAINT_MUST_NOT_BE_STRICTLY_TRIANGULAR_MATRIX_TYPE( MT1 );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT1::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT1> );
 
    BLAZE_CONSTRAINT_MUST_NOT_BE_SYMMETRIC_MATRIX_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_HERMITIAN_MATRIX_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_UNITRIANGULAR_MATRIX_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_UPPER_MATRIX_TYPE( MT2 );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT2::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT2> );
 
-   if( !isSquare( ~A ) ) {
+   if( !isSquare( *A ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid non-square matrix provided" );
    }
 
-   const size_t n( (~A).rows() );
+   const size_t n( (*A).rows() );
 
-   if( ( !IsResizable<MT2>::value && ( (~L).rows() != n || (~L).columns() != n ) ) ) {
+   if( ( !IsResizable_v<MT2> && ( (*L).rows() != n || (*L).columns() != n ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Dimensions of fixed size matrix do not match" );
    }
 
-   typename DerestrictTrait<MT2>::Type l( derestrict( ~L ) );
+   decltype(auto) l( derestrict( *L ) );
 
-   resize( ~L, n, n );
+   resize( *L, n, n, false );
    reset( l );
 
-   if( IsRowMajorMatrix<MT2>::value ) {
+   if( IsRowMajorMatrix_v<MT2> ) {
       for( size_t i=0UL; i<n; ++i ) {
          for( size_t j=0UL; j<=i; ++j ) {
-            l(i,j) = (~A)(i,j);
+            l(i,j) = (*A)(i,j);
          }
       }
    }
    else {
       for( size_t j=0UL; j<n; ++j ) {
          for( size_t i=j; i<n; ++i ) {
-            l(i,j) = (~A)(i,j);
+            l(i,j) = (*A)(i,j);
          }
       }
    }

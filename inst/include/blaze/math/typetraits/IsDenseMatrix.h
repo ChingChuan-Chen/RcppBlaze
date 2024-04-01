@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsDenseMatrix.h
 //  \brief Header file for the IsDenseMatrix type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,12 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
-#include <blaze/math/expressions/DenseMatrix.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
-#include <blaze/util/typetraits/RemoveCV.h>
+#include <utility>
+#include <blaze/math/expressions/Forward.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -58,24 +55,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsDenseMatrix type trait.
+/*!\brief Auxiliary helper functions for the IsDenseMatrix type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsDenseMatrixHelper
-{
- private:
-   //**********************************************************************************************
-   typedef typename RemoveCV<T>::Type  T2;
-   //**********************************************************************************************
+template< typename MT, bool SO >
+TrueType isDenseMatrix_backend( const volatile DenseMatrix<MT,SO>* );
 
- public:
-   //**********************************************************************************************
-   enum { value = boost::is_base_of< DenseMatrix<T2,false>, T2 >::value ||
-                  boost::is_base_of< DenseMatrix<T2,true >, T2 >::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+FalseType isDenseMatrix_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -84,32 +70,58 @@ struct IsDenseMatrixHelper
 /*!\brief Compile time check for dense matrix types.
 // \ingroup math_type_traits
 //
-// This type trait tests whether or not the given template parameter is a dense, N-dimensional
-// matrix type. In case the type is a dense matrix type, the \a value member enumeration is
-// set to 1, the nested type definition \a Type is \a TrueType, and the class derives from
-// \a TrueType. Otherwise \a yes is set to 0, \a Type is \a FalseType, and the class derives
-// from \a FalseType.
+// This type trait tests whether or not the given template parameter is a dense matrix type
+// (i.e. whether \a T is derived from the DenseMatrix base class). In case the type is a dense
+// matrix type, the \a value member constant is set to \a true, the nested type definition
+// \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set
+// to \a false, \a Type is \a FalseType, and the class derives from \a FalseType.
 
    \code
-   blaze::IsDenseMatrix< DynamicMatrix<double,false> >::value     // Evaluates to 1
-   blaze::IsDenseMatrix< const DynamicMatrix<float,true> >::Type  // Results in TrueType
-   blaze::IsDenseMatrix< volatile DynamicMatrix<int,true> >       // Is derived from TrueType
-   blaze::IsDenseMatrix< CompressedMatrix<double,false>::value    // Evaluates to 0
-   blaze::IsDenseMatrix< CompressedVector<double,true> >::Type    // Results in FalseType
-   blaze::IsDenseMatrix< DynamicVector<double,true> >             // Is derived from FalseType
+   using namespace blaze;
+
+   IsDenseMatrix< DynamicMatrix<double> >::value      // Evaluates to 1
+   IsDenseMatrix< const DynamicMatrix<float> >::Type  // Results in TrueType
+   IsDenseMatrix< volatile DynamicMatrix<int> >       // Is derived from TrueType
+   IsDenseMatrix< CompressedMatrix<double>::value     // Evaluates to 0
+   IsDenseMatrix< CompressedVector<double> >::Type    // Results in FalseType
+   IsDenseMatrix< DynamicVector<double> >             // Is derived from FalseType
    \endcode
 */
 template< typename T >
-struct IsDenseMatrix : public IsDenseMatrixHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsDenseMatrixHelper<T>::value };
-   typedef typename IsDenseMatrixHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsDenseMatrix
+   : public decltype( isDenseMatrix_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsDenseMatrix type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsDenseMatrix<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsDenseMatrix type trait.
+// \ingroup math_type_traits
+//
+// The IsDenseMatrix_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsDenseMatrix class template. For instance, given the type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsDenseMatrix<T>::value;
+   constexpr bool value2 = blaze::IsDenseMatrix_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsDenseMatrix_v = IsDenseMatrix<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

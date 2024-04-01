@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsColumnVector.h
 //  \brief Header file for the IsColumnVector type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,13 +40,10 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
-#include <blaze/math/expressions/DenseVector.h>
-#include <blaze/math/expressions/SparseVector.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
-#include <blaze/util/typetraits/RemoveCV.h>
+#include <utility>
+#include <blaze/math/expressions/Forward.h>
+#include <blaze/math/TransposeFlag.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -59,24 +56,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsColumnVector type trait.
+/*!\brief Auxiliary helper functions for the IsColumnVector type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsColumnVectorHelper
-{
- private:
-   //**********************************************************************************************
-   typedef typename RemoveCV<T>::Type  T2;
-   //**********************************************************************************************
+template< typename VT >
+TrueType isColumnVector_backend( const volatile Vector<VT,columnVector>* );
 
- public:
-   //**********************************************************************************************
-   enum { value = boost::is_base_of< DenseVector <T2,false>, T2 >::value ||
-                  boost::is_base_of< SparseVector<T2,false>, T2 >::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+FalseType isColumnVector_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -87,9 +73,9 @@ struct IsColumnVectorHelper
 //
 // This type trait tests whether or not the given template argument is a column dense or sparse
 // vector type (i.e. a vector whose transposition flag is set to blaze::columnVector). In case
-// the type is a column vector type, the \a value member enumeration is set to 1, the nested
+// the type is a column vector type, the \a value member constant is set to \a true, the nested
 // type definition \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise
-// \a value is set to 0, \a Type is \a FalseType, and the class derives from \a FalseType.
+// \a value is set to \a false, \a Type is \a FalseType, and the class derives from \a FalseType.
 
    \code
    using blaze::columnVector;
@@ -104,16 +90,40 @@ struct IsColumnVectorHelper
    \endcode
 */
 template< typename T >
-struct IsColumnVector : public IsColumnVectorHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsColumnVectorHelper<T>::value };
-   typedef typename IsColumnVectorHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsColumnVector
+   : public decltype( isColumnVector_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsColumnVector type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsColumnVector<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsColumnVector type trait.
+// \ingroup math_type_traits
+//
+// The IsColumnVector_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsColumnVector class template. For instance, given the type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsColumnVector<T>::value;
+   constexpr bool value2 = blaze::IsColumnVector_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsColumnVector_v = IsColumnVector<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

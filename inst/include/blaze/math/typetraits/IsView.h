@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsView.h
 //  \brief Header file for the IsView type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,12 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
+#include <utility>
 #include <blaze/math/expressions/View.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
-#include <blaze/util/typetraits/RemoveCV.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -58,23 +55,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsView type trait.
+/*!\brief Auxiliary helper functions for the IsView type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsViewHelper
-{
- private:
-   //**********************************************************************************************
-   typedef typename RemoveCV<T>::Type  T2;
-   //**********************************************************************************************
+template< typename U >
+TrueType isView_backend( const volatile View<U>* );
 
- public:
-   //**********************************************************************************************
-   enum { value = boost::is_base_of<View,T2>::value && !boost::is_base_of<T2,View>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+FalseType isView_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -84,20 +71,23 @@ struct IsViewHelper
 // \ingroup math_type_traits
 //
 // This type trait tests whether or not the given template parameter is a view (i.e. subvector,
-// submatrix, row, column, ...). In case the type is a view, the \a value member enumeration is
-// set to 1, the nested type definition \a Type is \a TrueType, and the class derives from
-// \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType, and the class derives
-// from \a FalseType.
+// submatrix, row, column, ...). In case the type is a view, the \a value member constant is
+// set to \a true, the nested type definition \a Type is \a TrueType, and the class derives from
+// \a TrueType. Otherwise \a value is set to \a false, \a Type is \a FalseType, and the class
+// derives from \a FalseType.
 
    \code
-   using blaze::columnVector;
+   using blaze::aligned;
 
-   typedef blaze::DynamicVector<double,columnVector>  VectorType;
-   typedef blaze::DenseSubvector<VectorType>          SubvectorType;
+   using VectorType = blaze::StaticVector<int,10UL>;
+   using MatrixType = blaze::DynamicMatrix<double>;
 
-   typedef blaze::CompressedMatrix<int,rowMajor>  MatrixType;
-   typedef blaze::Row<MatrixType>                 RowType;
-   typedef blaze::Column<MatrixType>              ColumnType;
+   VectorType a;
+   MatrixType A( 100UL, 200UL );
+
+   using SubvectorType = decltype( blaze::subvector( a, 2UL, 8UL ) );
+   using RowType       = decltype( blaze::row( A, 8UL ) );
+   using ColumnType    = decltype( blaze::column( A, 5UL ) );
 
    blaze::IsView< SubvectorType >::value    // Evaluates to 1
    blaze::IsView< const RowType >::Type     // Results in TrueType
@@ -108,16 +98,40 @@ struct IsViewHelper
    \endcode
 */
 template< typename T >
-struct IsView : public IsViewHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsViewHelper<T>::value };
-   typedef typename IsViewHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsView
+   : public decltype( isView_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsView type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsView<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsView type trait.
+// \ingroup math_type_traits
+//
+// The IsView_v variable template provides a convenient shortcut to access the nested \a value
+// of the IsView class template. For instance, given the type \a T the following two statements
+// are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsView<T>::value;
+   constexpr bool value2 = blaze::IsView_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsView_v = IsView<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

@@ -3,7 +3,7 @@
 //  \file blaze/util/typetraits/IsConvertible.h
 //  \brief Header file for the IsConvertible type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,10 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_convertible.hpp>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <type_traits>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -55,31 +53,15 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsConvertible type trait.
-// \ingroup type_traits
-*/
-template< typename From, typename To >
-struct IsConvertibleHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_convertible<From,To>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time pointer relationship constraint.
 // \ingroup type_traits
 //
 // This type traits tests whether the first given template argument can be converted to the
-// second template argument via copy construction. If the first argument can be converted to
-// the second argument, the \a value member enumeration is set to 1, the nested type definition
-// \a type is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set
-// to 0, \a type is \a FalseType, and the class derives from \a FalseType.
+// second template argument via copy construction. If the first argument can be converted
+// to the second argument, the \a value member constnt is set to \a true, the nested type
+// definition \a type is \a TrueType, and the class derives from \a TrueType. Otherwise
+// \a value is set to \a false, \a type is \a FalseType, and the class derives from
+// \a FalseType.
 
    \code
    struct A {};
@@ -90,28 +72,39 @@ struct IsConvertibleHelper
       D( const C& c ) {}
    };
 
-   blaze::IsConvertible<int,unsigned int>::value    // Evaluates to 1
-   blaze::IsConvertible<float,const double>::value  // Evaluates to 1
+   blaze::IsConvertible<int,unsigned int>::value    // Evaluates to 'true'
+   blaze::IsConvertible<float,const double>::value  // Evaluates to 'true'
    blaze::IsConvertible<B,A>::Type                  // Results in TrueType
    blaze::IsConvertible<B*,A*>::Type                // Results in TrueType
    blaze::IsConvertible<C,D>                        // Is derived from TrueType
    blaze::IsConvertible<char*,std::string>          // Is derived from TrueType
-   blaze::IsConvertible<std::string,char*>::value   // Evaluates to 0
+   blaze::IsConvertible<std::string,char*>::value   // Evaluates to 'false'
    blaze::IsConvertible<A,B>::Type                  // Results in FalseType
    blaze::IsConvertible<A*,B*>                      // Is derived from FalseType
    \endcode
 */
 template< typename From, typename To >
-struct IsConvertible : public IsConvertibleHelper<From,To>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsConvertibleHelper<From,To>::value };
-   typedef typename IsConvertibleHelper<From,To>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsConvertible
+   : public BoolConstant< std::is_convertible<From,To>::value >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsConvertible type trait.
+// \ingroup type_traits
+//
+// The IsConvertible_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsConvertible class template. For instance, given the types \a T1 and \a T2
+// the following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsConvertible<T1,T2>::value;
+   constexpr bool value2 = blaze::IsConvertible_v<T1,T2>;
+   \endcode
+*/
+template< typename From, typename To >
+constexpr bool IsConvertible_v = IsConvertible<From,To>::value;
 //*************************************************************************************************
 
 } // namespace blaze

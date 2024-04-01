@@ -3,7 +3,7 @@
 //  \file blaze/math/BLAS.h
 //  \brief Header file for BLAS functionality
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,9 +40,13 @@
 // Includes
 //*************************************************************************************************
 
+#include <blaze/math/blas/axpy.h>
+#include <blaze/math/blas/dotc.h>
+#include <blaze/math/blas/dotu.h>
 #include <blaze/math/blas/gemm.h>
 #include <blaze/math/blas/gemv.h>
 #include <blaze/math/blas/trmm.h>
 #include <blaze/math/blas/trmv.h>
+#include <blaze/math/blas/trsm.h>
 
 #endif

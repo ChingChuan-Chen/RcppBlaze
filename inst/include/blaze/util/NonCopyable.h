@@ -3,7 +3,7 @@
 //  \file blaze/util/NonCopyable.h
 //  \brief Base class for non-copyable class instances
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -49,10 +49,10 @@ namespace blaze {
 // \ingroup util
 //
 // The NonCopyable class is intended to work as a base class for non-copyable classes. Both the
-// copy constructor and the copy assignment operator are declared private and left undefined in
-// order to prohibit copy operations of the derived classes.\n
+// copy constructor and the copy assignment operator are explicitly deleted in order to prohibit
+// copy operations of the derived classes.\n
 //
-// \note: It is not necessary to publicly derive from this class. It is sufficient to derive
+// \note It is not necessary to publicly derive from this class. It is sufficient to derive
 // privately to prevent copy operations on the derived class.
 
    \code
@@ -71,12 +71,11 @@ class NonCopyable
    //@}
    //**********************************************************************************************
 
- private:
    //**Copy constructor and copy assignment operator***********************************************
    /*!\name Copy constructor and copy assignment operator */
    //@{
-   NonCopyable( const NonCopyable& );             //!< Copy constructor (private & undefined)
-   NonCopyable& operator=( const NonCopyable& );  //!< Copy assignment operator (private & undefined)
+   NonCopyable( const NonCopyable& ) = delete;             //!< Copy constructor (explicitly deleted)
+   NonCopyable& operator=( const NonCopyable& ) = delete;  //!< Copy assignment operator (explicitly deleted)
    //@}
    //**********************************************************************************************
 };

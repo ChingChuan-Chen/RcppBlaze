@@ -3,7 +3,7 @@
 //  \file blaze/util/MemoryPool.h
 //  \brief Header file for the memory pool class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -42,7 +42,6 @@
 
 #include <vector>
 #include <blaze/util/Assert.h>
-#include <blaze/util/Byte.h>
 #include <blaze/util/NonCopyable.h>
 #include <blaze/util/Types.h>
 
@@ -66,15 +65,16 @@ namespace blaze {
 // specified number of objects. The memory of these blocks is managed as a single free list.
 */
 template< typename Type, size_t Blocksize >
-class MemoryPool : private NonCopyable
+class MemoryPool
+   : private NonCopyable
 {
  private:
    //**union FreeObject****************************************************************************
    /*!\brief A single element of the free list of the memory pool.
    */
    union FreeObject {
-      FreeObject* next_;            //!< Pointer to the next free object.
-      byte dummy_[ sizeof(Type) ];  //!< Dummy array to create an object of the appropriate size.
+      FreeObject* next_;              //!< Pointer to the next free object.
+      byte_t dummy_[ sizeof(Type) ];  //!< Dummy array to create an object of the appropriate size.
    };
    //**********************************************************************************************
 
@@ -104,7 +104,7 @@ class MemoryPool : private NonCopyable
    //**********************************************************************************************
 
    //**Type definitions****************************************************************************
-   typedef std::vector<Block> Blocks;  //!< Vector of memory blocks.
+   using Blocks = std::vector<Block>;  //!< Vector of memory blocks.
    //**********************************************************************************************
 
  public:
@@ -277,8 +277,8 @@ inline bool MemoryPool<Type,Blocksize>::checkMemory( FreeObject* toRelease ) con
       if( toRelease >= it->rawMemory_ && toRelease < it->rawMemory_+Blocksize )
       {
          // Alignment check
-         const byte* const ptr1( reinterpret_cast<const byte*>(toRelease) );
-         const byte* const ptr2( reinterpret_cast<const byte*>(it->rawMemory_) );
+         const byte_t* const ptr1( reinterpret_cast<const byte_t*>(toRelease) );
+         const byte_t* const ptr2( reinterpret_cast<const byte_t*>(it->rawMemory_) );
 
          if( ( ptr1 - ptr2 ) % sizeof(FreeObject) != 0 ) return false;
 

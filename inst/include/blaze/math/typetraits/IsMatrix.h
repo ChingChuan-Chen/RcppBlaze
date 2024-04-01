@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsMatrix.h
 //  \brief Header file for the IsMatrix type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/IsDenseMatrix.h>
-#include <blaze/math/typetraits/IsSparseMatrix.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <utility>
+#include <blaze/math/expressions/Forward.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -57,17 +55,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsMatrix type trait.
+/*!\brief Auxiliary helper functions for the IsMatrix type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsMatrixHelper
-{
-   //**********************************************************************************************
-   enum { value = IsDenseMatrix<T>::value || IsSparseMatrix<T>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+template< typename MT, bool SO >
+TrueType isMatrix_backend( const volatile Matrix<MT,SO>* );
+
+FalseType isMatrix_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -76,32 +70,58 @@ struct IsMatrixHelper
 /*!\brief Compile time check for matrix types.
 // \ingroup math_type_traits
 //
-// This type trait tests whether or not the given template parameter is a N-dimensional dense
-// or sparse matrix type. In case the type is a matrix type, the \a value member enumeration
-// is set to 1, the nested type definition \a Type is \a TrueType, and the class derives from
-// \a TrueType. Otherwise \a yes is set to 0, \a Type is \a FalseType, and the class derives
-// from \a FalseType.
+// This type trait tests whether or not the given template parameter is a dense or sparse matrix
+// type (i.e. whether \a T is derived from the Matrix base class). In case the type is a matrix
+// type, the \a value member constant is set to \a true, the nested type definition \a Type is
+// \a TrueType, and the class derives from \a TrueType. Otherwise \a yes is set to \a false,
+// \a Type is \a FalseType, and the class derives from \a FalseType.
 
    \code
-   blaze::IsMatrix< StaticMatrix<float,3U,3U,false> >::value  // Evaluates to 1
-   blaze::IsMatrix< const DynamicMatrix<double,true> >::Type  // Results in TrueType
-   blaze::IsMatrix< volatile CompressedMatrix<int,true> >     // Is derived from TrueType
-   blaze::IsMatrix< StaticVector<float,3U,false> >::value     // Evaluates to 0
-   blaze::IsMatrix< const DynamicVector<double,true> >::Type  // Results in FalseType
-   blaze::IsMatrix< volatile CompressedVector<int,true> >     // Is derived from FalseType
+   using namespace blaze;
+
+   IsMatrix< StaticMatrix<float,3U,3U> >::value   // Evaluates to 1
+   IsMatrix< const DynamicMatrix<double> >::Type  // Results in TrueType
+   IsMatrix< volatile CompressedMatrix<int> >     // Is derived from TrueType
+   IsMatrix< StaticVector<float,3U> >::value      // Evaluates to 0
+   IsMatrix< const DynamicVector<double> >::Type  // Results in FalseType
+   IsMatrix< volatile CompressedVector<int> >     // Is derived from FalseType
    \endcode
 */
 template< typename T >
-struct IsMatrix : public IsMatrixHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsMatrixHelper<T>::value };
-   typedef typename IsMatrixHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsMatrix
+   : public decltype( isMatrix_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsMatrix type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsMatrix<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsMatrix type trait.
+// \ingroup math_type_traits
+//
+// The IsMatrix_v variable template provides a convenient shortcut to access the nested \a value
+// of the IsMatrix class template. For instance, given the type \a T the following two statements
+// are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsMatrix<T>::value;
+   constexpr bool value2 = blaze::IsMatrix_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsMatrix_v = IsMatrix<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

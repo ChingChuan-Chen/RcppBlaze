@@ -3,7 +3,7 @@
 //  \file blaze/util/typetraits/IsConst.h
 //  \brief Header file for the IsConst type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,10 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_const.hpp>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <type_traits>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -55,52 +53,46 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsConst type trait.
-// \ingroup type_traits
-*/
-template< typename T >
-struct IsConstHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_const<T>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time check for constant data types.
 // \ingroup type_traits
 //
 // The IsConst type trait tests whether or not the given template parameter is a (top level)
 // const-qualified data type. In case the given data type is const-qualified, the \a value
-// member enumeration is set to 1, the nested type definition \a Type is \a TrueType, and
-// the class derives from \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType,
-// and the class derives from \a FalseType.
+// member constant is set to \a true, the nested type definition \a Type is \a TrueType, and
+// the class derives from \a TrueType. Otherwise \a value is set to \a false, \a Type is
+// \a FalseType, and the class derives from \a FalseType.
 
    \code
-   blaze::IsConst<const int>::value          // Evaluates to 1
+   blaze::IsConst<const int>::value          // Evaluates to 'true'
    blaze::IsConst<const volatile int>::Type  // Results in TrueType
    blaze::IsConst<int* const>                // Is derived from TrueType
-   blaze::IsConst<int>::value                // Evaluates to 0
+   blaze::IsConst<int>::value                // Evaluates to 'false'
    blaze::IsConst<const int*>::Type          // Results in FalseType (the const-qualifier is not at the top level)
    blaze::IsConst<const int* volatile>       // Is derived from FalseType
    \endcode
 */
 template< typename T >
-struct IsConst : public IsConstHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsConstHelper<T>::value };
-   typedef typename IsConstHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsConst
+   : public BoolConstant< std::is_const<T>::value >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsConst type trait.
+// \ingroup type_traits
+//
+// The IsConst_v variable template provides a convenient shortcut to access the nested \a value
+// of the IsConst class template. For instance, given the type \a T the following two statements
+// are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsConst<T>::value;
+   constexpr bool value2 = blaze::IsConst_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsConst_v = IsConst<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

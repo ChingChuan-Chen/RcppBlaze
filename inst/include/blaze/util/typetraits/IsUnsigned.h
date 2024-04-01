@@ -3,7 +3,7 @@
 //  \file blaze/util/typetraits/IsUnsigned.h
 //  \brief Header file for the IsUnsigned type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,10 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_unsigned.hpp>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <type_traits>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -55,54 +53,48 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsUnsigned type trait.
-// \ingroup type_traits
-*/
-template< typename T >
-struct IsUnsignedHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_unsigned<T>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time check for unsigned data types.
 // \ingroup type_traits
 //
 // This type trait tests whether or not the given template parameter is an unsigned, integral
 // data type. In case the type is an unsigned (possibly cv-qualified) data type, the \a value
-// member enumeration is set to 1, the nested type definition \a Type is \a TrueType, and the
-// class derives from \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType,
-// and the class derives from \a FalseType.
+// member constant is set to \a true, the nested type definition \a Type is \a TrueType, and
+// the class derives from \a TrueType. Otherwise \a value is set to \a false, \a Type is
+// \a FalseType, and the class derives from \a FalseType.
 
    \code
    class MyClass {};
 
-   blaze::IsUnsigned<unsigned short>::value     // Evaluates to 1
+   blaze::IsUnsigned<unsigned short>::value     // Evaluates to 'true'
    blaze::IsUnsigned<const unsigned int>::Type  // Results in TrueType
    blaze::IsUnsigned<volatile unsigned long>    // Is derived from TrueType
-   blaze::IsUnsigned<float>::value              // Evaluates to 0
+   blaze::IsUnsigned<float>::value              // Evaluates to 'false'
    blaze::IsUnsigned<const volatile int>::Type  // Results in FalseType
    blaze::IsUnsigned<MyClass>                   // Is derived from FalseType
    \endcode
 */
 template< typename T >
-struct IsUnsigned : public IsUnsignedHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsUnsignedHelper<T>::value };
-   typedef typename IsUnsignedHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsUnsigned
+   : public BoolConstant< std::is_unsigned<T>::value >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsUnsigned type trait.
+// \ingroup type_traits
+//
+// The IsUnsigned_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsUnsigned class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsUnsigned<T>::value;
+   constexpr bool value2 = blaze::IsUnsigned_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsUnsigned_v = IsUnsigned<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

@@ -3,7 +3,7 @@
 //  \file blaze/math/sparse/VectorAccessProxy.h
 //  \brief Header file for the VectorAccessProxy class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,18 +40,17 @@
 // Includes
 //*************************************************************************************************
 
-#include <algorithm>
+#include <utility>
+#include <blaze/math/Aliases.h>
 #include <blaze/math/constraints/SparseVector.h>
+#include <blaze/math/InitializerList.h>
 #include <blaze/math/proxy/Proxy.h>
+#include <blaze/math/RelaxationFlag.h>
 #include <blaze/math/shims/Clear.h>
-#include <blaze/math/shims/Conjugate.h>
 #include <blaze/math/shims/IsDefault.h>
-#include <blaze/math/shims/IsNaN.h>
 #include <blaze/math/shims/IsOne.h>
 #include <blaze/math/shims/IsReal.h>
 #include <blaze/math/shims/IsZero.h>
-#include <blaze/math/shims/Reset.h>
-#include <blaze/math/traits/ConjExprTrait.h>
 #include <blaze/util/Assert.h>
 #include <blaze/util/Types.h>
 
@@ -97,19 +96,21 @@ namespace blaze {
 //
 */
 template< typename VT >  // Type of the sparse vector
-class VectorAccessProxy : public Proxy< VectorAccessProxy<VT>, typename VT::ElementType >
+class VectorAccessProxy
+   : public Proxy< VectorAccessProxy<VT>, ElementType_t<VT> >
 {
  public:
    //**Type definitions****************************************************************************
-   typedef typename VT::ElementType  RepresentedType;  //!< Type of the represented sparse vector element.
-   typedef RepresentedType&          RawReference;     //!< Raw reference to the represented element.
+   using RepresentedType = ElementType_t<VT>;  //!< Type of the represented sparse vector element.
+   using RawReference    = RepresentedType&;   //!< Raw reference to the represented element.
    //**********************************************************************************************
 
    //**Constructors********************************************************************************
    /*!\name Constructors */
    //@{
    explicit inline VectorAccessProxy( VT& sv, size_t i );
-            inline VectorAccessProxy( const VectorAccessProxy& vap );
+
+   VectorAccessProxy( const VectorAccessProxy& ) = default;
    //@}
    //**********************************************************************************************
 
@@ -123,27 +124,35 @@ class VectorAccessProxy : public Proxy< VectorAccessProxy<VT>, typename VT::Elem
    //**Operators***********************************************************************************
    /*!\name Operators */
    //@{
-                          inline const VectorAccessProxy& operator= ( const VectorAccessProxy& vap ) const;
+   inline const VectorAccessProxy& operator=( const VectorAccessProxy& vap ) const;
+
+   template< typename T >
+   inline const VectorAccessProxy& operator=( initializer_list<T> list ) const;
+
+   template< typename T >
+   inline const VectorAccessProxy& operator=( initializer_list< initializer_list<T> > list ) const;
+
    template< typename T > inline const VectorAccessProxy& operator= ( const T& value ) const;
    template< typename T > inline const VectorAccessProxy& operator+=( const T& value ) const;
    template< typename T > inline const VectorAccessProxy& operator-=( const T& value ) const;
    template< typename T > inline const VectorAccessProxy& operator*=( const T& value ) const;
    template< typename T > inline const VectorAccessProxy& operator/=( const T& value ) const;
+   template< typename T > inline const VectorAccessProxy& operator%=( const T& value ) const;
    //@}
    //**********************************************************************************************
 
    //**Utility functions***************************************************************************
    /*!\name Utility functions */
    //@{
-   inline RawReference get()          const;
-   inline bool         isRestricted() const;
+   inline RawReference get()          const noexcept;
+   inline bool         isRestricted() const noexcept;
    //@}
    //**********************************************************************************************
 
    //**Conversion operator*************************************************************************
    /*!\name Conversion operator */
    //@{
-   inline operator RawReference() const;
+   inline operator RawReference() const noexcept;
    //@}
    //**********************************************************************************************
 
@@ -191,24 +200,9 @@ inline VectorAccessProxy<VT>::VectorAccessProxy( VT& sv, size_t i )
    : sv_( sv )  // Reference to the accessed sparse vector
    , i_ ( i  )  // Index of the accessed sparse vector element
 {
-   const typename VT::Iterator element( sv_.find( i_ ) );
+   const Iterator_t<VT> element( sv_.find( i_ ) );
    if( element == sv_.end() )
-      sv_.insert( i_, RepresentedType() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief The copy constructor for VectorAccessProxy.
-//
-// \param vap Sparse vector access proxy to be copied.
-*/
-template< typename VT >  // Type of the sparse vector
-inline VectorAccessProxy<VT>::VectorAccessProxy( const VectorAccessProxy& vap )
-   : sv_( vap.sv_ )  // Reference to the accessed sparse vector
-   , i_ ( vap.i_  )  // Index of the accessed sparse vector element
-{
-   BLAZE_INTERNAL_ASSERT( sv_.find( i_ ) != sv_.end(), "Missing vector element detected" );
+      sv_.insert( i_, RepresentedType{} );
 }
 //*************************************************************************************************
 
@@ -227,8 +221,8 @@ inline VectorAccessProxy<VT>::VectorAccessProxy( const VectorAccessProxy& vap )
 template< typename VT >  // Type of the sparse vector
 inline VectorAccessProxy<VT>::~VectorAccessProxy()
 {
-   const typename VT::Iterator element( sv_.find( i_ ) );
-   if( element != sv_.end() && isDefault( element->value() ) )
+   const Iterator_t<VT> element( sv_.find( i_ ) );
+   if( element != sv_.end() && isDefault<strict>( element->value() ) )
       sv_.erase( element );
 }
 //*************************************************************************************************
@@ -251,7 +245,44 @@ inline VectorAccessProxy<VT>::~VectorAccessProxy()
 template< typename VT >  // Type of the sparse vector
 inline const VectorAccessProxy<VT>& VectorAccessProxy<VT>::operator=( const VectorAccessProxy& vap ) const
 {
-   get() = vap.get();
+   const Iterator_t<VT> element( vap.sv_.find( vap.i_ ) );
+   const auto& source( element != vap.sv_.end() ? element->value() : RepresentedType{} );
+
+   get() = source;
+   return *this;
+}
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Initializer list assignment to the accessed sparse vector element.
+//
+// \param list The list to be assigned to the sparse vector element.
+// \return Reference to the assigned access proxy.
+*/
+template< typename VT >  // Type of the sparse vector
+template< typename T >   // Type of the right-hand side elements
+inline const VectorAccessProxy<VT>&
+   VectorAccessProxy<VT>::operator=( initializer_list<T> list ) const
+{
+   get() = list;
+   return *this;
+}
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Initializer list assignment to the accessed sparse vector element.
+//
+// \param list The list to be assigned to the sparse vector element.
+// \return Reference to the assigned access proxy.
+*/
+template< typename VT >  // Type of the sparse vector
+template< typename T >   // Type of the right-hand side elements
+inline const VectorAccessProxy<VT>&
+   VectorAccessProxy<VT>::operator=( initializer_list< initializer_list<T> > list ) const
+{
+   get() = list;
    return *this;
 }
 //*************************************************************************************************
@@ -337,6 +368,26 @@ inline const VectorAccessProxy<VT>& VectorAccessProxy<VT>::operator/=( const T& 
 //*************************************************************************************************
 
 
+//*************************************************************************************************
+/*!\brief Modulo assignment to the accessed sparse vector element.
+//
+// \param value The right-hand side value for the modulo operation.
+// \return Reference to the assigned access proxy.
+//
+// If the access proxy represents an element of numeric type, this function performs a modulo
+// assignment, if the proxy represents a dense or sparse vector, a cross product is computed,
+// and if the proxy represents a dense or sparse matrix, a Schur product is computed.
+*/
+template< typename VT >  // Type of the sparse vector
+template< typename T >   // Type of the right-hand side value
+inline const VectorAccessProxy<VT>& VectorAccessProxy<VT>::operator%=( const T& value ) const
+{
+   get() %= value;
+   return *this;
+}
+//*************************************************************************************************
+
+
 
 
 //=================================================================================================
@@ -351,9 +402,11 @@ inline const VectorAccessProxy<VT>& VectorAccessProxy<VT>::operator/=( const T& 
 // \return Direct/raw reference to the accessed sparse vector element.
 */
 template< typename VT >  // Type of the sparse vector
-inline typename VectorAccessProxy<VT>::RawReference VectorAccessProxy<VT>::get() const
+inline typename VectorAccessProxy<VT>::RawReference VectorAccessProxy<VT>::get() const noexcept
 {
-   const typename VT::Iterator element( sv_.find( i_ ) );
+   Iterator_t<VT> element( sv_.find( i_ ) );
+   if( element == sv_.end() )
+      element = sv_.insert( i_, RepresentedType{} );
    BLAZE_INTERNAL_ASSERT( element != sv_.end(), "Missing vector element detected" );
    return element->value();
 }
@@ -366,7 +419,7 @@ inline typename VectorAccessProxy<VT>::RawReference VectorAccessProxy<VT>::get()
 // \return \a true in case access to the sparse vector element is restricted, \a false if not.
 */
 template< typename VT >  // Type of the sparse vector
-inline bool VectorAccessProxy<VT>::isRestricted() const
+inline bool VectorAccessProxy<VT>::isRestricted() const noexcept
 {
    return false;
 }
@@ -387,7 +440,7 @@ inline bool VectorAccessProxy<VT>::isRestricted() const
 // \return Direct/raw reference to the accessed sparse vector element.
 */
 template< typename VT >  // Type of the sparse vector
-inline VectorAccessProxy<VT>::operator RawReference() const
+inline VectorAccessProxy<VT>::operator RawReference() const noexcept
 {
    return get();
 }
@@ -406,197 +459,14 @@ inline VectorAccessProxy<VT>::operator RawReference() const
 /*!\name VectorAccessProxy global functions */
 //@{
 template< typename VT >
-inline typename ConjExprTrait< typename VectorAccessProxy<VT>::RepresentedType >::Type
-   conj( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline void reset( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline void clear( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline bool isDefault( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline bool isReal( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline bool isZero( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline bool isOne( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline bool isnan( const VectorAccessProxy<VT>& proxy );
-
-template< typename VT >
-inline void swap( const VectorAccessProxy<VT>& a, const VectorAccessProxy<VT>& b ) /* throw() */;
+void swap( const VectorAccessProxy<VT>& a, const VectorAccessProxy<VT>& b ) noexcept;
 
 template< typename VT, typename T >
-inline void swap( const VectorAccessProxy<VT>& a, T& b ) /* throw() */;
+void swap( const VectorAccessProxy<VT>& a, T& b ) noexcept;
 
 template< typename T, typename VT >
-inline void swap( T& a, const VectorAccessProxy<VT>& v ) /* throw() */;
+void swap( T& a, const VectorAccessProxy<VT>& v ) noexcept;
 //@}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Computing the complex conjugate of the represented element.
-// \ingroup sparse_vector
-//
-// \param proxy The given proxy instance.
-// \return The complex conjugate of the represented element.
-//
-// This function computes the complex conjugate of the element represented by the access proxy.
-// In case the proxy represents a vector- or matrix-like data structure the function returns an
-// expression representing the complex conjugate of the vector/matrix.
-*/
-template< typename VT >
-inline typename ConjExprTrait< typename VectorAccessProxy<VT>::RepresentedType >::Type
-   conj( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::conj;
-
-   return conj( (~proxy).get() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Resetting the represented element to the default initial values.
-// \ingroup sparse_vector
-//
-// \param proxy The given access proxy.
-// \return void
-*/
-template< typename VT >
-inline void reset( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::reset;
-
-   reset( proxy.get() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Clearing the represented element.
-// \ingroup sparse_vector
-//
-// \param proxy The given access proxy.
-// \return void
-*/
-template< typename VT >
-inline void clear( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::clear;
-
-   clear( proxy.get() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Returns whether the represented element is in default state.
-// \ingroup sparse_vector
-//
-// \param proxy The given access proxy.
-// \return \a true in case the represented element is in default state, \a false otherwise.
-//
-// This function checks whether the element represented by the access proxy is in default state.
-// In case it is in default state, the function returns \a true, otherwise it returns \a false.
-*/
-template< typename VT >
-inline bool isDefault( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::isDefault;
-
-   return isDefault( proxy.get() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Returns whether the vector element represents a real number.
-// \ingroup sparse_vector
-//
-// \param proxy The given access proxy.
-// \return \a true in case the vector element represents a real number, \a false otherwise.
-//
-// This function checks whether the element represented by the access proxy represents the a
-// real number. In case the element is of built-in type, the function returns \a true. In case
-// the element is of complex type, the function returns \a true if the imaginary part is equal
-// to 0. Otherwise it returns \a false.
-*/
-template< typename VT >
-inline bool isReal( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::isReal;
-
-   return isReal( proxy.get() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Returns whether the represented element is 0.
-// \ingroup sparse_vector
-//
-// \param proxy The given access proxy.
-// \return \a true in case the represented element is 0, \a false otherwise.
-//
-// This function checks whether the element represented by the access proxy represents the numeric
-// value 0. In case it is 0, the function returns \a true, otherwise it returns \a false.
-*/
-template< typename VT >
-inline bool isZero( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::isZero;
-
-   return isZero( proxy.get() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Returns whether the represented element is 1.
-// \ingroup sparse_vector
-//
-// \param proxy The given access proxy.
-// \return \a true in case the represented element is 1, \a false otherwise.
-//
-// This function checks whether the element represented by the access proxy represents the numeric
-// value 1. In case it is 1, the function returns \a true, otherwise it returns \a false.
-*/
-template< typename VT >
-inline bool isOne( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::isOne;
-
-   return isOne( proxy.get() );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Returns whether the represented element is not a number.
-// \ingroup sparse_vector
-//
-// \param proxy The given access proxy.
-// \return \a true in case the represented element is in not a number, \a false otherwise.
-//
-// This function checks whether the element represented by the access proxy is not a number (NaN).
-// In case it is not a number, the function returns \a true, otherwise it returns \a false.
-*/
-template< typename VT >
-inline bool isnan( const VectorAccessProxy<VT>& proxy )
-{
-   using blaze::isnan;
-
-   return isnan( proxy.get() );
-}
 //*************************************************************************************************
 
 
@@ -607,10 +477,9 @@ inline bool isnan( const VectorAccessProxy<VT>& proxy )
 // \param a The first access proxy to be swapped.
 // \param b The second access proxy to be swapped.
 // \return void
-// \exception no-throw guarantee.
 */
 template< typename VT >
-inline void swap( const VectorAccessProxy<VT>& a, const VectorAccessProxy<VT>& b ) /* throw() */
+inline void swap( const VectorAccessProxy<VT>& a, const VectorAccessProxy<VT>& b ) noexcept
 {
    using std::swap;
 
@@ -626,10 +495,9 @@ inline void swap( const VectorAccessProxy<VT>& a, const VectorAccessProxy<VT>& b
 // \param a The access proxy to be swapped.
 // \param b The other element to be swapped.
 // \return void
-// \exception no-throw guarantee.
 */
 template< typename VT, typename T >
-inline void swap( const VectorAccessProxy<VT>& a, T& b ) /* throw() */
+inline void swap( const VectorAccessProxy<VT>& a, T& b ) noexcept
 {
    using std::swap;
 
@@ -645,10 +513,9 @@ inline void swap( const VectorAccessProxy<VT>& a, T& b ) /* throw() */
 // \param a The other element to be swapped.
 // \param b The access proxy to be swapped.
 // \return void
-// \exception no-throw guarantee.
 */
 template< typename T, typename VT >
-inline void swap( T& a, const VectorAccessProxy<VT>& b ) /* throw() */
+inline void swap( T& a, const VectorAccessProxy<VT>& b ) noexcept
 {
    using std::swap;
 

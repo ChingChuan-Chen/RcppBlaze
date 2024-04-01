@@ -3,12 +3,12 @@
 //  \file blaze/util/typetraits/AddCV.h
 //  \brief Header file for the AddCV type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
 //  forms, with or without modification, are permitted provided that the following conditions
-//  are met:
+//  are met:g
 //
 //  1. Redistributions of source code must retain the above copyright notice, this list of
 //     conditions and the following disclaimer.
@@ -40,7 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/add_cv.hpp>
+#include <type_traits>
 
 
 namespace blaze {
@@ -72,10 +72,28 @@ struct AddCV
  public:
    //**********************************************************************************************
    /*! \cond BLAZE_INTERNAL */
-   typedef typename boost::add_cv<T>::type  Type;
+   using Type = typename std::add_cv<T>::type;
    /*! \endcond */
    //**********************************************************************************************
 };
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary alias declaration for the AddCV type trait.
+// \ingroup type_traits
+//
+// The AddCV_t alias declaration provides a convenient shortcut to access the nested \a Type
+// of the AddCV class template. For instance, given the type \a T the following two type
+// definitions are identical:
+
+   \code
+   using Type1 = typename blaze::AddCV<T>::Type;
+   using Type2 = blaze::AddCV_t<T>;
+   \endcode
+*/
+template< typename T >
+using AddCV_t = typename AddCV<T>::Type;
 //*************************************************************************************************
 
 } // namespace blaze
