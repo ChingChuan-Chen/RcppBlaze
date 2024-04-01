@@ -1,6 +1,6 @@
 ## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
 ## Copyright (C) 2014        Dirk Eddelbuettel
-## Copyright (C) 2017        Chingchuan Chen
+## Copyright (C) 2017 - 2024 Ching-Chuan Chen
 ##
 ## This file is based on flags.R and inline.R from RcppArmadillo and RcppEigen.
 ## This file is part of RcppBlaze.
@@ -24,11 +24,10 @@ LdFlags <- function() {}
 inlineCxxPlugin <-  function() {
   getSettings <- Rcpp.plugin.maker(
     include.before = "#include <RcppBlaze.h>",
-    libs = "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)",
-    package = c("BH", "RcppBlaze")
+    libs = "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)",
+    package = c("RcppBlaze")
   )
   settings <- getSettings()
-  settings$env$PKG_CXXFLAGS <- "$(SHLIB_OPENMP_CXXFLAGS)"
   settings$env$PKG_LIBS <- paste(settings$env$PKG_LIBS, LdFlags())
   return(settings)
 }

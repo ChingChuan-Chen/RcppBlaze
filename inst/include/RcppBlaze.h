@@ -1,6 +1,6 @@
 // Copyright (C)  2010 - 2016  Dirk Eddelbuettel, Romain Francois and Douglas Bates
 // Copyright (C)  2011         Douglas Bates, Dirk Eddelbuettel and Romain Francois
-// Copyright (C)  2017         Chingchuan Chen
+// Copyright (C)  2017 - 2024  Ching-Chuan Chen
 //
 // This file is based on RcppArmadillo.h and RcppEigen.h from
 // RcppArmadillo and RcppEigen.

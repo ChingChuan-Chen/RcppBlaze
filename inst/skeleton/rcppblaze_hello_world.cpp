@@ -1,6 +1,6 @@
 // Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
 // Copyright (C) 2014        Dirk Eddelbuettel
-// Copyright (C) 2017        Chingchuan Chen
+// Copyright (C)  2017 - 2024  Ching-Chuan Chen
 //
 // This file is based rcppeigen_hello_world.cpp and
 // rcpparma_hello_world.cpp from RcppArmadillo and RcppEigen.

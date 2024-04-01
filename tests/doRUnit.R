@@ -1,7 +1,7 @@
 ## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
 ## Copyright (C) 2014        Dirk Eddelbuettel
 ## Earlier copyrights Gregor Gorjanc, Martin Maechler and Murray Stokely as detailed below
-## Copyright (C) 2017 Chingchuan Chen
+## Copyright (C) 2017 - 2024 Ching-Chuan Chen
 ##
 ## This file is based on doUnit.R from RcppArmadillo and RcppEigen.
 ## This file is part of RcppBlaze.

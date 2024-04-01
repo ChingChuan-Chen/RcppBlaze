@@ -1,4 +1,4 @@
-## Copyright (C)       2017 Chingchuan Chen
+## Copyright (C) 2017 - 2024 Ching-Chuan Chen
 ##
 ## This file is part of RcppBlaze.
 ##

@@ -1,3 +1,9 @@
+# RcppBlaze v1.0.0
+
+* Update Blaze-lib to 3.8.2 since Rcpp supports C++14 / C++17 since 4.2.0.
+* Support `dgTMatrix` thanks to robinsonjj's contribution.
+* Enable C++11 Threads when compiling `fastLm`.
+
 # RcppBlaze v0.2.2
 
 * Fix building problem on windows.

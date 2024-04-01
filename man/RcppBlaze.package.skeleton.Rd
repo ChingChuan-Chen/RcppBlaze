@@ -4,14 +4,20 @@
 \alias{RcppBlaze.package.skeleton}
 \title{Create a skeleton for a new package that intends to use RcppBlaze}
 \usage{
-RcppBlaze.package.skeleton(name = "anRpackage", list = character(),
-  environment = .GlobalEnv, path = ".", force = FALSE,
-  code_files = character(), example_code = TRUE)
+RcppBlaze.package.skeleton(
+  name = "anRpackage",
+  list = character(),
+  environment = .GlobalEnv,
+  path = ".",
+  force = FALSE,
+  code_files = character(),
+  example_code = TRUE
+)
 }
 \arguments{
 \item{name, list, environment, path, force, code_files}{see \link[utils]{package.skeleton}.}
 
-\item{example_code}{If TRUE, example c++ code using RcppBlaze is added to the package.}
+\item{example_code}{If \code{TRUE}, example c++ code using \strong{RcppBlaze} is added to the package.}
 }
 \value{
 Nothing, used for its side effects.
@@ -46,7 +52,7 @@ eventually by removed from the generated package.
 }
 \examples{
 \dontrun{
-RcppBlaze.package.skeleton( "foobar" )
+RcppBlaze.package.skeleton("foobar")
 }
 }
 \references{

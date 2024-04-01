@@ -1,4 +1,4 @@
-// Copyright (C)  2017         Chingchuan Chen
+// Copyright (C)  2017 - 2024  Ching-Chuan Chen
 // Copyright (C)  2010 - 2016  Dirk Eddelbuettel, Romain Francois and Douglas Bates
 // Copyright (C)  2011         Douglas Bates, Dirk Eddelbuettel and Romain Francois
 //
@@ -24,81 +24,109 @@
 
 using Rcpp::List;
 using Rcpp::_;
-using blaze::DynamicMatrix;
-using blaze::DynamicVector;
 
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
-Rcpp::List QRsolver(const blaze::DynamicMatrix<double> &X, const blaze::DynamicVector<double> &y) {
-  DynamicMatrix<double> Q;
-  DynamicMatrix<double> R;
-  qr( X, Q, R );
-
-  DynamicMatrix<double> S( R );
-  blaze::invert( S );
-  DynamicVector<double> coef( S * blaze::trans(Q) * y );
-
-  DynamicVector<double> fitted = X * coef;
-  DynamicVector<double> resid  = y - fitted;
-  double s = std::sqrt( ( resid, resid ) / ( (double)X.rows() - (double)R.rows() ) );
-
-  DynamicVector<double> se( S.rows() );
-  for( size_t i=0UL; i<S.rows(); ++i )
-    se[i] = std::sqrt( ( row(S, i), row(S, i) ) ) * s;
-
-  return List::create(_["coefficients"]  = coef,
-                      _["se"]            = se,
-                      _["rank"]          = (unsigned int)R.rows(),
-                      _["df.residual"]   = (unsigned int)X.rows() - (unsigned int)R.rows(),
-                      _["residuals"]     = resid,
-                      _["s"]             = s,
-                      _["fitted.values"] = fitted );
+// [[Rcpp::export]]
+Rcpp::List testAs(Rcpp::NumericVector x) {
+  blaze::DynamicVector<double, blaze::columnVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::columnVector>>(x);
+  Rcpp::Rcout << y << std::endl;
+  return List::create(
+    _["test"] = true
+  );
 }
 
-Rcpp::List LDLTSolver(const blaze::DynamicMatrix<double> &X, const blaze::DynamicVector<double> &y) {
-  DynamicMatrix<double> XTXinv( blaze::trans(X) * X );
-  blaze::invert<blaze::byLDLT>( XTXinv );
-
-  DynamicVector<double> coef( XTXinv * blaze::trans(X) * y );
-
-  DynamicVector<double> fitted = X * coef;
-  DynamicVector<double> resid  = y - fitted;
-  double s = std::sqrt( ( resid, resid ) / ( (double)X.rows() - (double)XTXinv.columns() ) );
-
-  DynamicVector<double> se( XTXinv.columns() );
-  for( size_t i=0UL; i<XTXinv.columns(); ++i )
-    se[i] = std::sqrt( XTXinv(i, i) ) * s;
-
-  return List::create(_["coefficients"]  = coef,
-                      _["se"]            = se,
-                      _["rank"]          = (unsigned int)XTXinv.columns(),
-                      _["df.residual"]   = (unsigned int)X.rows() - (unsigned int)XTXinv.columns(),
-                      _["residuals"]     = resid,
-                      _["s"]             = s,
-                      _["fitted.values"] = fitted );
+// [[Rcpp::export]]
+Rcpp::List testAs2(Rcpp::NumericVector x) {
+  blaze::DynamicVector<double, blaze::rowVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::rowVector>>(x);
+  Rcpp::Rcout << y << std::endl;
+  return List::create(
+    _["test"] = true
+  );
 }
 
-Rcpp::List LLTSolver(const blaze::DynamicMatrix<double> &X, const blaze::DynamicVector<double> &y) {
-  DynamicMatrix<double> XTXinv( blaze::trans(X) * X );
-  blaze::invert<blaze::byLLH>( XTXinv );
 
-  DynamicVector<double> coef( XTXinv * blaze::trans(X) * y );
 
-  DynamicVector<double> fitted = X * coef;
-  DynamicVector<double> resid  = y - fitted;
-  double s = std::sqrt( ( resid, resid ) / ( (double)X.rows() - (double)XTXinv.columns() ) );
+/*
+Rcpp::List QRsolver(const blaze::DynamicMatrix<double>& X, const blaze::DynamicVector<double>& y) {
+  blaze::DynamicMatrix<double> Q;
+  blaze::DynamicMatrix<double> R;
+  qr(X, Q, R);
 
-  DynamicVector<double> se( XTXinv.columns() );
-  for( size_t i=0UL; i<XTXinv.columns(); ++i )
+  blaze::DynamicMatrix<double> S(R);
+  blaze::invert(S);
+  blaze::DynamicVector<double> coef(S * blaze::trans(Q) * y);
+
+  blaze::DynamicVector<double> fitted = X * coef;
+  blaze::DynamicVector<double> resid  = y - fitted;
+  double s = std::sqrt((resid, resid ) / ((double) X.rows() - (double) R.rows()));
+
+  blaze::DynamicVector<double> se(S.rows());
+  for (size_t i=0UL; i<S.rows(); ++i) {
+    se[i] = std::sqrt((row(S, i), row(S, i))) * s;
+  }
+
+  return List::create(
+    _["coefficients"]  = coef,
+    _["se"]            = se,
+    _["rank"]          = (unsigned int) R.rows(),
+    _["df.residual"]   = (unsigned int) X.rows() - (unsigned int) R.rows(),
+    _["residuals"]     = resid,
+    _["s"]             = s,
+    _["fitted.values"] = fitted
+  );
+}
+
+Rcpp::List LDLTSolver(const blaze::DynamicMatrix<double>& X, const blaze::DynamicVector<double>& y) {
+  blaze::DynamicMatrix<double> XTXinv(blaze::trans(X) * X);
+  blaze::invert<blaze::byLDLT>(XTXinv);
+
+  blaze::DynamicVector<double> coef(XTXinv * blaze::trans(X) * y);
+
+  blaze::DynamicVector<double> fitted = X * coef;
+  blaze::DynamicVector<double> resid  = y - fitted;
+  double s = std::sqrt((resid, resid) / ((double) X.rows() - (double) XTXinv.columns()));
+
+  blaze::DynamicVector<double> se(XTXinv.columns());
+  for (size_t i=0UL; i<XTXinv.columns(); ++i) {
     se[i] = std::sqrt( XTXinv(i, i) ) * s;
+  }
 
-  return List::create(_["coefficients"]  = coef,
-                      _["se"]            = se,
-                      _["rank"]          = (unsigned int)XTXinv.columns(),
-                      _["df.residual"]   = (unsigned int)X.rows() - (unsigned int)XTXinv.columns(),
-                      _["residuals"]     = resid,
-                      _["s"]             = s,
-                      _["fitted.values"] = fitted );
+  return List::create(
+    _["coefficients"]  = coef,
+    _["se"]            = se,
+    _["rank"]          = (unsigned int) XTXinv.columns(),
+    _["df.residual"]   = (unsigned int) X.rows() - (unsigned int) XTXinv.columns(),
+    _["residuals"]     = resid,
+    _["s"]             = s,
+    _["fitted.values"] = fitted
+  );
+}
+
+Rcpp::List LLTSolver(const blaze::DynamicMatrix<double>& X, const blaze::DynamicVector<double>& y) {
+  blaze::DynamicMatrix<double> XTXinv(blaze::trans(X) * X);
+  blaze::invert<blaze::byLLH>(XTXinv);
+
+  blaze::DynamicVector<double> coef(XTXinv * blaze::trans(X) * y);
+
+  blaze::DynamicVector<double> fitted = X * coef;
+  blaze::DynamicVector<double> resid  = y - fitted;
+  double s = std::sqrt( ( resid, resid ) / ((double) X.rows() - (double) XTXinv.columns()));
+
+  blaze::DynamicVector<double> se(XTXinv.columns());
+  for (size_t i=0UL; i<XTXinv.columns(); ++i) {
+    se[i] = std::sqrt(XTXinv(i, i)) * s;
+  }
+
+  return List::create(
+    _["coefficients"]  = coef,
+    _["se"]            = se,
+    _["rank"]          = (unsigned int) XTXinv.columns(),
+    _["df.residual"]   = (unsigned int) X.rows() - (unsigned int) XTXinv.columns(),
+    _["residuals"]     = resid,
+    _["s"]             = s,
+    _["fitted.values"] = fitted
+  );
 }
 
 //' linear model fitting function based on RcppBlaze
@@ -120,19 +148,22 @@ Rcpp::List LLTSolver(const blaze::DynamicMatrix<double> &X, const blaze::Dynamic
 //' print(flm)
 //' @export
 // [[Rcpp::export]]
-List fastLmPure( blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, int type ) {
-  if ( X.rows() != y.size() )
+List fastLmPure(blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, int type) {
+  if (X.rows() != y.size()) {
     throw std::invalid_argument("size mismatch");
+  }
 
   switch(type) {
-  case QRSolverType:
-    return QRsolver(X, y);
-  case LLTSolverType:
-    return LLTSolver(X, y);
-  case LDLTSolverType:
-    return LDLTSolver(X, y);
+    case QRSolverType:
+      return QRsolver(X, y);
+    case LLTSolverType:
+      return LLTSolver(X, y);
+    case LDLTSolverType:
+      return LDLTSolver(X, y);
+    default:
+      throw std::invalid_argument("invalid type");
   }
-  throw std::invalid_argument("invalid type");
-  return QRsolver(X, y);
 }
+
+ */
 
