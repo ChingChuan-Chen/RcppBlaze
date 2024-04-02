@@ -40,27 +40,15 @@ namespace Rcpp {
     template<typename VT, bool TF>
     SEXP blaze_wrap(const blaze::DenseVector<VT, TF>& x) {
       typedef typename VT::ElementType ET;
-      const int RTYPE = ::Rcpp::traits::r_sexptype_traits<ET>::rtype;
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
       const ET* data_pointer = blaze::data(*x);
-      ::Rcpp::Vector<RTYPE> out = ::Rcpp::wrap(data_pointer, data_pointer + (*x).size());
+      Rcpp::Vector<RTYPE> out = Rcpp::wrap(data_pointer, data_pointer + (*x).size());
       return out;
     }
 
 
 /*
 
-    template<typename T>
-    SEXP blaze_wrap2(const T& input) {
-      ::Rcpp::RObject x = ::Rcpp::wrap(blaze::data(input), blaze::data(input) + input.size());
-      return x;
-    }
-
-    template<typename T>
-    SEXP blaze_wrap2(const T& input, const ::Rcpp::Dimension& dim) {
-      ::Rcpp::RObject x = ::Rcpp::wrap(blaze::data(input), blaze::data(input) + input.size());
-      x.attr("dim") = dim;
-      return x;
-    }
      template<typename MT, bool SO>
      SEXP blaze_wrap(const blaze::SparseMatrix<MT,SO>& sm)
      {

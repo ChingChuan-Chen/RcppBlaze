@@ -34,9 +34,10 @@ Rcpp::List testAs1(Rcpp::NumericVector x) {
   );
 }
 
-
 // [[Rcpp::export]]
 Rcpp::List testWrap1() {
+  using namespace std::complex_literals;
+
   blaze::DynamicVector<int> dv_int(3);
   dv_int[0] = 1;
   dv_int[1] = 2;
@@ -46,6 +47,11 @@ Rcpp::List testWrap1() {
   dv_double[0] = 1.5;
   dv_double[1] = 2.5;
   dv_double[2] = 4.5;
+
+  blaze::DynamicVector<std::complex<double>> dv_cmpl(3);
+  dv_cmpl[0] = 1.5 + 0.2i;
+  dv_cmpl[1] = 0.75 + 0.3i;
+  dv_cmpl[2] = 3.0 + 0.1i;
 
   blaze::StaticVector<double, 3> sv_double;
   sv_double[0] = 1.5;
@@ -63,20 +69,35 @@ Rcpp::List testWrap1() {
   cv_ua_up_double[1] = 2.5;
   cv_ua_up_double[2] = 4.5;
 
-  /*
-  std::unique_ptr<double[]> cv_al_up_double_mem(new double[4]);
-  blaze::CustomVector<double, blaze::aligned, blaze::unpadded> cv_al_up_double(cv_al_up_double_mem.get(), 3UL, 4UL);
+  std::unique_ptr<double[]> cv_ua_pa_double_mem(new double[4]);
+  blaze::CustomVector<double, blaze::unaligned, blaze::padded> cv_ua_pa_double(cv_ua_pa_double_mem.get(), 3UL, 4UL);
+  cv_ua_pa_double[0] = 1.5;
+  cv_ua_pa_double[1] = 2.5;
+  cv_ua_pa_double[2] = 4.5;
+
+
+  std::unique_ptr<double[], blaze::Deallocate> cv_al_up_double_mem(blaze::allocate<double>(3UL));
+  blaze::CustomVector<double, blaze::aligned, blaze::unpadded> cv_al_up_double(cv_al_up_double_mem.get(), 3UL);
   cv_al_up_double[0] = 1.5;
   cv_al_up_double[1] = 2.5;
   cv_al_up_double[2] = 4.5;
-  */
+
+  std::unique_ptr<double[], blaze::Deallocate> cv_al_pa_double_mem(blaze::allocate<double>(4UL));
+  blaze::CustomVector<double, blaze::aligned, blaze::padded> cv_al_pa_double(cv_al_pa_double_mem.get(), 3UL, 4UL);
+  cv_al_pa_double[0] = 1.5;
+  cv_al_pa_double[1] = 2.5;
+  cv_al_pa_double[2] = 4.5;
 
   return Rcpp::List::create(
     _["dv_int"] = dv_int,
     _["dv_double"] = dv_double,
+    _["dv_cmpl"] = dv_cmpl,
     _["sv_double"] = sv_double,
     _["hv_double"] = hv_double,
-    _["cv_ua_up_double"] = cv_ua_up_double
+    _["cv_ua_up_double"] = cv_ua_up_double,
+    _["cv_ua_pa_double"] = cv_ua_pa_double,
+    _["cv_al_up_double"] = cv_al_up_double,
+    _["cv_al_pa_double"] = cv_al_pa_double
   );
 }
 
