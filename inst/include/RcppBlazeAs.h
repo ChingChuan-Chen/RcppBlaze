@@ -24,7 +24,7 @@
 #ifndef RcppBlaze__RcppBlazeAs__h
 #define RcppBlaze__RcppBlazeAs__h
 
-#include <RcppBlazeForward.h>
+#include "RcppBlazeForward.h"
 #include <Rcpp.h>
 
 // most code are modified from the Exporter class definition in Rcpp / RcppArmadillo / RcppEigen
@@ -33,12 +33,12 @@ namespace Rcpp {
   namespace traits {
 
     template <typename T, typename value_type>
-    class VectorExporterForBlaze {
+    class BlazeVectorExporter {
     public:
       typedef value_type r_export_type;
 
-      VectorExporterForBlaze(SEXP x) : object(x){}
-      ~VectorExporterForBlaze(){}
+      BlazeVectorExporter(SEXP x) : object(x){}
+      ~BlazeVectorExporter(){}
 
       T get() {
         R_xlen_t n = ::Rf_xlength(object);
@@ -53,9 +53,88 @@ namespace Rcpp {
     };
 
     template <typename Type, bool TF>
-    class Exporter< blaze::DynamicVector<Type, TF> > : public VectorExporterForBlaze<blaze::DynamicVector<Type, TF>, Type> {
+    class Exporter< blaze::DynamicVector<Type, TF> > : public BlazeVectorExporter<blaze::DynamicVector<Type, TF>, Type> {
     public:
-      Exporter(SEXP x) : VectorExporterForBlaze<blaze::DynamicVector<Type, TF>, Type>(x){}
+      Exporter(SEXP x) : BlazeVectorExporter<blaze::DynamicVector<Type, TF>, Type>(x){}
+    };
+
+    template <typename Type, size_t N, bool TF>
+    class Exporter< blaze::HybridVector<Type, N, TF> > : public BlazeVectorExporter<blaze::HybridVector<Type, N, TF>, Type> {
+    public:
+      Exporter(SEXP x) : BlazeVectorExporter<blaze::HybridVector<Type, N, TF>, Type>(x){}
+    };
+
+    template <typename T, typename value_type>
+    class BlazeStaticVectorExporter {
+    public:
+      typedef value_type r_export_type;
+
+      BlazeStaticVectorExporter(SEXP x) : object(x){}
+      ~BlazeStaticVectorExporter(){}
+
+      T get() {
+        T result;
+        value_type* data = blaze::data(result);
+        ::Rcpp::internal::export_indexing<value_type*, value_type>(object, data);
+        return result;
+      }
+
+    private:
+      SEXP object;
+    };
+
+    template <typename Type, size_t N, bool TF>
+    class Exporter< blaze::StaticVector<Type, N, TF> > : public BlazeStaticVectorExporter<blaze::StaticVector<Type, N, TF>, Type> {
+    public:
+      Exporter(SEXP x) : BlazeStaticVectorExporter<blaze::StaticVector<Type, N, TF>, Type>(x){}
+    };
+
+    template <typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+    class Exporter< blaze::StaticVector<Type, N, TF, AF, PF> > : public BlazeStaticVectorExporter<blaze::StaticVector<Type, N, TF, AF, PF>, Type> {
+    public:
+      Exporter(SEXP x) : BlazeStaticVectorExporter<blaze::StaticVector<Type, N, TF, AF, PF>, Type>(x){}
+    };
+
+    template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
+    class BlazeCustomVectorExporter {
+    public:
+      typedef Type r_export_type;
+
+      BlazeCustomVectorExporter(SEXP x) : object(x){}
+      ~BlazeCustomVectorExporter(){}
+
+      blaze::CustomVector<Type, AF, PF, TF> get() {
+        size_t N = (size_t) ::Rf_xlength(object);
+        size_t SIMDSIZE = blaze::SIMDTrait<Type>::size;
+        size_t NN = (PF == blaze::padded)?blaze::nextMultiple<Type>(N, SIMDSIZE):N;
+        if ((PF == blaze::unpadded) && (AF == blaze::unaligned)) {
+          std::vector<Type> vec(N);
+          blaze::CustomVector<Type, AF, PF, TF> result(&vec[0], N);
+          ::Rcpp::internal::export_indexing<Type*, Type>(object, &vec[0]);
+          return result;
+        } else if ((PF == blaze::padded) && (AF == blaze::unaligned)) {
+          typedef typename std::unique_ptr<Type[]> paddedDataType;
+          paddedDataType data(new Type[NN]);
+          blaze::CustomVector<Type, AF, PF, TF> result(data, N, NN);
+          ::Rcpp::internal::export_indexing<paddedDataType, Type>(object, data);
+          return result;
+        } else {
+          typedef typename std::unique_ptr<Type[], blaze::Deallocate> alignedDataType;
+          alignedDataType data(blaze::allocate<Type>(NN));
+          blaze::CustomVector<Type, AF, PF, TF> result(data, N, NN);
+          ::Rcpp::internal::export_indexing<alignedDataType, Type>(object, data);
+          return result;
+        }
+      }
+
+    private:
+      SEXP object;
+    };
+
+    template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
+    class Exporter< blaze::CustomVector<Type, AF, PF, TF> > : public BlazeCustomVectorExporter<Type, AF, PF, TF> {
+    public:
+      Exporter(SEXP x) : BlazeCustomVectorExporter<Type, AF, PF, TF>(x){}
     };
 
     template <typename T, typename value_type>

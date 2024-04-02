@@ -9,15 +9,7 @@ testAs1 <- function(x) {
     .Call(`_RcppBlaze_testAs1`, x)
 }
 
-testAs2 <- function(x) {
-    .Call(`_RcppBlaze_testAs2`, x)
-}
-
-testAs3 <- function(x) {
-    .Call(`_RcppBlaze_testAs3`, x)
-}
-
-testAs4 <- function(x) {
-    .Call(`_RcppBlaze_testAs4`, x)
+testWrap1 <- function() {
+    .Call(`_RcppBlaze_testWrap1`)
 }
 

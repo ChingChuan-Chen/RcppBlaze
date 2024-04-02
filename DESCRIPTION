@@ -29,7 +29,7 @@ LinkingTo:
 Suggests:
     MatrixExtra,
     microbenchmark,
-    RUnit,
+    tinytest,
     pkgKitten
 LazyLoad: yes
 Encoding: UTF-8

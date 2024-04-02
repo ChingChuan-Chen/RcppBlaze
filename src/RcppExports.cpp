@@ -33,36 +33,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// testAs2
-Rcpp::List testAs2(Rcpp::NumericVector x);
-RcppExport SEXP _RcppBlaze_testAs2(SEXP xSEXP) {
+// testWrap1
+Rcpp::List testWrap1();
+RcppExport SEXP _RcppBlaze_testWrap1() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(testAs2(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// testAs3
-Rcpp::List testAs3(Rcpp::NumericMatrix x);
-RcppExport SEXP _RcppBlaze_testAs3(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(testAs3(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// testAs4
-Rcpp::List testAs4(Rcpp::NumericMatrix x);
-RcppExport SEXP _RcppBlaze_testAs4(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(testAs4(x));
+    rcpp_result_gen = Rcpp::wrap(testWrap1());
     return rcpp_result_gen;
 END_RCPP
 }

@@ -21,8 +21,6 @@
 // along with RcppBlaze.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <RcppBlaze.h>
-
-using Rcpp::List;
 using Rcpp::_;
 
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
@@ -31,38 +29,56 @@ enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 Rcpp::List testAs1(Rcpp::NumericVector x) {
   blaze::DynamicVector<double, blaze::columnVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::columnVector>>(x);
   Rcpp::Rcout << y << std::endl;
-  return List::create(
+  return Rcpp::List::create(
     _["test"] = true
   );
 }
+
 
 // [[Rcpp::export]]
-Rcpp::List testAs2(Rcpp::NumericVector x) {
-  blaze::DynamicVector<double, blaze::rowVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::rowVector>>(x);
-  Rcpp::Rcout << y << std::endl;
-  return List::create(
-    _["test"] = true
+Rcpp::List testWrap1() {
+  blaze::DynamicVector<int> dv_int(3);
+  dv_int[0] = 1;
+  dv_int[1] = 2;
+  dv_int[2] = 4;
+
+  blaze::DynamicVector<double> dv_double(3);
+  dv_double[0] = 1.5;
+  dv_double[1] = 2.5;
+  dv_double[2] = 4.5;
+
+  blaze::StaticVector<double, 3> sv_double;
+  sv_double[0] = 1.5;
+  sv_double[1] = 2.5;
+  sv_double[2] = 4.5;
+
+  blaze::HybridVector<double, 3> hv_double(3);
+  hv_double[0] = 1.5;
+  hv_double[1] = 2.5;
+  hv_double[2] = 4.5;
+
+  std::vector<double> vec(3UL);
+  blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> cv_ua_up_double(&vec[0], 3UL);
+  cv_ua_up_double[0] = 1.5;
+  cv_ua_up_double[1] = 2.5;
+  cv_ua_up_double[2] = 4.5;
+
+  /*
+  std::unique_ptr<double[]> cv_al_up_double_mem(new double[4]);
+  blaze::CustomVector<double, blaze::aligned, blaze::unpadded> cv_al_up_double(cv_al_up_double_mem.get(), 3UL, 4UL);
+  cv_al_up_double[0] = 1.5;
+  cv_al_up_double[1] = 2.5;
+  cv_al_up_double[2] = 4.5;
+  */
+
+  return Rcpp::List::create(
+    _["dv_int"] = dv_int,
+    _["dv_double"] = dv_double,
+    _["sv_double"] = sv_double,
+    _["hv_double"] = hv_double,
+    _["cv_ua_up_double"] = cv_ua_up_double
   );
 }
-
-// [[Rcpp::export]]
-Rcpp::List testAs3(Rcpp::NumericMatrix x) {
-  blaze::DynamicMatrix<double, blaze::columnMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::columnMajor>>(x);
-  Rcpp::Rcout << y << std::endl;
-  return List::create(
-    _["test"] = true
-  );
-}
-
-// [[Rcpp::export]]
-Rcpp::List testAs4(Rcpp::NumericMatrix x) {
-  blaze::DynamicMatrix<double, blaze::rowMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::rowMajor>>(x);
-  Rcpp::Rcout << y << std::endl;
-  return List::create(
-    _["test"] = true
-  );
-}
-
 
 
 /*
