@@ -17,34 +17,19 @@
 
 cppFile <- "test-vectors.cpp"
 if (file.exists(file.path("cpp", cppFile))) {
-  sourceCpp(file.path( "cpp", cppFile))
+  Rcpp::sourceCpp(file.path("cpp", cppFile))
 } else {
-  sourceCpp(system.file("unitTests", "cpp", cppFile, package = "RcppBlaze"))
+  Rcpp::sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
 }
 
-testVectors <- function(){
-  x <- 1:3
-  z <- 1:3 + 2i
-  sv_col <- Matrix::sparseMatrix(i = c(3, 4), j = c(1, 1), x = c(8, 9), dims = c(6, 1))
-  sv_row <- Matrix::sparseMatrix(i = c(1, 1), j = c(3, 4), x = c(8, 9), dims = c(1, 6))
-
-  checkEquals(x, test_StaticVector_dbl_len3(x), msg = "wrap/as double StaticVector")
-  checkEquals(z, test_StaticVector_cpl_len3(z), msg = "wrap/as complex StaticVector")
-  checkEquals(x, test_HybridVector_dbl_len3(x), msg = "wrap/as double HybridVector")
-  checkEquals(z, test_HybridVector_cpl_len3(z), msg = "wrap/as complex HybridVector")
-  checkEquals(x, test_DynamicVector_dbl(x), msg = "wrap/as double DynamicVector")
-  checkEquals(z, test_DynamicVector_cpl(z), msg = "wrap/as complex DynamicVector")
-
-  checkEquals(x, test_CustomVector1_dbl(x), msg = "wrap/as double CustomVector type 1")
-  checkEquals(x, test_CustomVector2_dbl(x), msg = "wrap/as double CustomVector type 2")
-  checkEquals(x, test_CustomVector3_dbl(x), msg = "wrap/as double CustomVector type 3")
-  checkEquals(x, test_CustomVector4_dbl(x), msg = "wrap/as double CustomVector type 4")
-  checkEquals(z, test_CustomVector1_cpl(z), msg = "wrap/as complex CustomVector type 1")
-  checkEquals(z, test_CustomVector2_cpl(z), msg = "wrap/as complex CustomVector type 2")
-  checkEquals(z, test_CustomVector3_cpl(z), msg = "wrap/as complex CustomVector type 3")
-  checkEquals(z, test_CustomVector4_cpl(z), msg = "wrap/as complex CustomVector type 4")
-
-  checkEquals(sv_col, test_CompressedVector_dbl_col(sv_col), msg = "wrap/as column CompressedVector")
-  checkEquals(sv_row, test_CompressedVector_dbl_row(sv_row), msg = "wrap/as row CompressedVector")
-}
-
+vector_wrap_res <- vector_wrap_test()
+expect_dbl_vec <- c(1.5, 2.5, 4.5)
+expect_equal(vector_wrap_res[["dv_int"]], c(1L, 2L, 4L), info = "dv_int")
+expect_equal(vector_wrap_res[["dv_cmpl"]], c(1.5+0.2*1i, 0.75+0.3*1i, 3+0.1*1i), info = "dv_cmpl")
+expect_equal(vector_wrap_res[["dv_double"]], expect_dbl_vec, info = "dv_double")
+expect_equal(vector_wrap_res[["sv_double"]], expect_dbl_vec, info = "sv_double")
+expect_equal(vector_wrap_res[["hv_double"]], expect_dbl_vec, info = "hv_double")
+expect_equal(vector_wrap_res[["cv_ua_up_double"]], expect_dbl_vec, info = "cv_ua_up_double")
+expect_equal(vector_wrap_res[["cv_ua_pa_double"]], expect_dbl_vec, info = "cv_ua_pa_double")
+expect_equal(vector_wrap_res[["cv_al_up_double"]], expect_dbl_vec, info = "cv_al_up_double")
+expect_equal(vector_wrap_res[["cv_al_pa_double"]], expect_dbl_vec, info = "cv_al_pa_double")

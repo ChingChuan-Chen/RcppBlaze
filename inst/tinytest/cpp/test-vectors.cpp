@@ -17,6 +17,76 @@
 
 // [[Rcpp::depends(RcppBlaze)]]
 #include <RcppBlaze.h>
+using Rcpp::_;
+using namespace std::complex_literals;
+
+// [[Rcpp::export]]
+Rcpp::List vector_wrap_test() {
+
+  blaze::DynamicVector<int> dv_int(3);
+  dv_int[0] = 1;
+  dv_int[1] = 2;
+  dv_int[2] = 4;
+
+  blaze::DynamicVector<std::complex<double>> dv_cmpl(3);
+  dv_cmpl[0] = 1.5 + 0.2i;
+  dv_cmpl[1] = 0.75 + 0.3i;
+  dv_cmpl[2] = 3.0 + 0.1i;
+
+  blaze::DynamicVector<double> dv_double(3);
+  dv_double[0] = 1.5;
+  dv_double[1] = 2.5;
+  dv_double[2] = 4.5;
+
+  blaze::StaticVector<double, 3> sv_double;
+  sv_double[0] = 1.5;
+  sv_double[1] = 2.5;
+  sv_double[2] = 4.5;
+
+  blaze::HybridVector<double, 3> hv_double(3);
+  hv_double[0] = 1.5;
+  hv_double[1] = 2.5;
+  hv_double[2] = 4.5;
+
+  std::vector<double> vec(3UL);
+  blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> cv_ua_up_double(&vec[0], 3UL);
+  cv_ua_up_double[0] = 1.5;
+  cv_ua_up_double[1] = 2.5;
+  cv_ua_up_double[2] = 4.5;
+
+  std::unique_ptr<double[]> cv_ua_pa_double_mem(new double[4]);
+  blaze::CustomVector<double, blaze::unaligned, blaze::padded> cv_ua_pa_double(cv_ua_pa_double_mem.get(), 3UL, 4UL);
+  cv_ua_pa_double[0] = 1.5;
+  cv_ua_pa_double[1] = 2.5;
+  cv_ua_pa_double[2] = 4.5;
+
+
+  std::unique_ptr<double[], blaze::Deallocate> cv_al_up_double_mem(blaze::allocate<double>(3UL));
+  blaze::CustomVector<double, blaze::aligned, blaze::unpadded> cv_al_up_double(cv_al_up_double_mem.get(), 3UL);
+  cv_al_up_double[0] = 1.5;
+  cv_al_up_double[1] = 2.5;
+  cv_al_up_double[2] = 4.5;
+
+  std::unique_ptr<double[], blaze::Deallocate> cv_al_pa_double_mem(blaze::allocate<double>(4UL));
+  blaze::CustomVector<double, blaze::aligned, blaze::padded> cv_al_pa_double(cv_al_pa_double_mem.get(), 3UL, 4UL);
+  cv_al_pa_double[0] = 1.5;
+  cv_al_pa_double[1] = 2.5;
+  cv_al_pa_double[2] = 4.5;
+
+  // TODO: CompressedVector, ZeroVector
+
+  return Rcpp::List::create(
+    _["dv_int"] = dv_int,
+    _["dv_cmpl"] = dv_cmpl,
+    _["dv_double"] = dv_double,
+    _["sv_double"] = sv_double,
+    _["hv_double"] = hv_double,
+    _["cv_ua_up_double"] = cv_ua_up_double,
+    _["cv_ua_pa_double"] = cv_ua_pa_double,
+    _["cv_al_up_double"] = cv_al_up_double,
+    _["cv_al_pa_double"] = cv_al_pa_double
+  );
+}
 
 /*
 
