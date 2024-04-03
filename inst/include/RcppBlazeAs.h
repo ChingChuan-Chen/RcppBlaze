@@ -209,6 +209,7 @@ namespace Rcpp {
         int* dims_ = INTEGER(dims);
         T result(dims_[0], dims_[1]);
         value_type* data = blaze::data(result);
+        bool SO = T::storageOrder;
         if (SO == blaze::columnMajor) {
           Rcpp::internal::export_indexing<value_type*, value_type>(object, data);
         } else {
@@ -255,6 +256,7 @@ namespace Rcpp {
         }
 
         value_type* data = blaze::data(result);
+        bool SO = T::storageOrder;
         if (SO == blaze::columnMajor) {
           Rcpp::internal::export_indexing<value_type*, value_type>(object, data);
         } else {

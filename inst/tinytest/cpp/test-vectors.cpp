@@ -113,8 +113,8 @@ void vector_sv_error(Rcpp::NumericVector x) {
 }
 
 // [[Rcpp::export]]
-void vector_hv_error(Rcpp::NumericVector) {
-  blaze::HybridVector<double, 3> sv_double = Rcpp::as<blaze::HybridVector<double, 3>>(x);
+void vector_hv_error(Rcpp::NumericVector x) {
+  blaze::HybridVector<double, 3> hv_double = Rcpp::as<blaze::HybridVector<double, 3>>(x);
 }
 
 // [[Rcpp::export]]
