@@ -113,30 +113,6 @@ namespace Rcpp {
       }
     };
 
-    // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> export
-    template<typename Type, bool TF >
-    class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::unpadded,TF> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      Rcpp::Vector<RTYPE> vec;
-
-    public:
-      typedef Type r_export_type;
-      Exporter(SEXP x) : vec(x) {}
-      blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> get() {
-        Rcpp::stop("Aligned CustomVector is not supported");
-
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        size_t n = (size_t) vec.size();
-        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(n));
-
-        blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> result(data.get(), n);
-        for (size_t i=0UL; i < (size_t) vec.size(); ++i) {
-          result[i] = ::Rcpp::internal::caster<value_t, Type>(vec[i]);
-        }
-        return result;
-      }
-    };
-
     // Provides only blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> export
     template<typename Type, bool TF >
     class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> > {
@@ -161,8 +137,32 @@ namespace Rcpp {
       }
     };
 
+    // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> export (not supported)
+    template<typename Type, bool TF >
+    class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::unpadded,TF> > {
+      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      Rcpp::Vector<RTYPE> vec;
 
-    // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> export
+    public:
+      typedef Type r_export_type;
+      Exporter(SEXP x) : vec(x) {}
+      blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> get() {
+        Rcpp::stop("Aligned CustomVector is not supported");
+
+        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+        size_t n = (size_t) vec.size();
+        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(n));
+
+        blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> result(data.get(), n);
+        for (size_t i=0UL; i < (size_t) vec.size(); ++i) {
+          result[i] = ::Rcpp::internal::caster<value_t, Type>(vec[i]);
+        }
+        return result;
+      }
+    };
+
+
+    // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> export (not supported)
     template<typename Type, bool TF >
     class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> > {
       const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
