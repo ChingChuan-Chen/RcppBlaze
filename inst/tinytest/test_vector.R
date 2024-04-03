@@ -41,3 +41,10 @@ expect_equal(vector_as_res[["dv_double_sum"]], expect_double_sum, info = "dv_dou
 expect_equal(vector_as_res[["sv_double_sum"]], expect_double_sum, info = "sv_double_sum")
 expect_equal(vector_as_res[["hv_double_sum"]], expect_double_sum, info = "hv_double_sum")
 
+vector_as_res <- custom_vector_as_test(list(c(1L, 3L, 6L), c(1.5,2.5,4.5)))
+expect_equal(vector_as_res[["iCustomVectorUU"]], 10L, info = "iCustomVectorUU")
+expect_equal(vector_as_res[["dCustomVectorUU"]], expect_double_sum, info = "dCustomVectorUU")
+expect_equal(vector_as_res[["dCustomVectorUP"]], expect_double_sum, info = "dCustomVectorUP")
+# expect_equal(vector_as_res[["dCustomVectorAU"]], expect_double_sum, info = "dCustomVectorAU")
+# expect_equal(vector_as_res[["dCustomVectorAP"]], expect_double_sum, info = "dCustomVectorAP")
+
