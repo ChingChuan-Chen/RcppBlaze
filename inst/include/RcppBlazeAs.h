@@ -127,6 +127,8 @@ namespace Rcpp {
       typedef Type r_export_type;
       Exporter(SEXP x) : vec(x) {}
       blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> get() {
+        Rcpp::stop("Padded CustomVector is not supported");
+
         typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
         size_t n = (size_t) vec.size();
         size_t simdTypeSize = blaze::SIMDTrait<Type>::size;
@@ -175,7 +177,7 @@ namespace Rcpp {
       typedef Type r_export_type;
       Exporter(SEXP x) : vec(x) {}
       blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> get() {
-        Rcpp::stop("Aligned CustomVector is not supported");
+        Rcpp::stop("Aligned and padded CustomVector is not supported");
 
         typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
         size_t n = (size_t) vec.size();
