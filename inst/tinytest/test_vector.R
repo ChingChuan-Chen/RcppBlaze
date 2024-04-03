@@ -39,7 +39,9 @@ expect_double_sum <- 8.5
 expect_equal(vector_as_res[["dv_int_sum"]], 10L, info = "dv_int_sum")
 expect_equal(vector_as_res[["dv_double_sum"]], expect_double_sum, info = "dv_double_sum")
 expect_equal(vector_as_res[["sv_double_sum"]], expect_double_sum, info = "sv_double_sum")
+expect_equal(vector_as_res[["sv_double_aligned_sum"]], expect_double_sum, info = "sv_double_aligned_sum")
 expect_equal(vector_as_res[["hv_double_sum"]], expect_double_sum, info = "hv_double_sum")
+expect_equal(vector_as_res[["hv_double_aligned_sum"]], expect_double_sum, info = "hv_double_aligned_sum")
 
 vector_as_res <- custom_vector_as_test(list(c(1L, 3L, 6L), c(1.5,2.5,4.5)))
 expect_equal(vector_as_res[["iCustomVectorUU"]], 10L, info = "iCustomVectorUU")

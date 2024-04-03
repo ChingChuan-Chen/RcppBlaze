@@ -94,11 +94,16 @@ Rcpp::List vector_as_test(Rcpp::List input_list) {
   blaze::StaticVector<double, 3> sv_double = input_list[1];
   blaze::HybridVector<double, 3> hv_double = input_list[1];
 
+  blaze::StaticVector<double, 3, blaze::rowVector, blaze::aligned> sv_double_aligned = input_list[1];
+  blaze::HybridVector<double, 3, blaze::rowVector, blaze::aligned> hv_double_aligned = input_list[1];
+
   return Rcpp::List::create(
     _["dv_int_sum"] = blaze::sum(dv_int),
     _["dv_double_sum"] = blaze::sum(dv_double),
-    _["sv_double_sum"] = blaze::sum(dv_double),
-    _["hv_double_sum"] = blaze::sum(dv_double)
+    _["sv_double_sum"] = blaze::sum(sv_double),
+    _["sv_double_aligned_sum"] = blaze::sum(sv_double_aligned),
+    _["hv_double_sum"] = blaze::sum(dv_double),
+    _["hv_double_aligned_sum"] = blaze::sum(hv_double_aligned)
   );
 }
 
@@ -113,15 +118,15 @@ Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
   iCustomVectorUU cv_int = input_list[0];
   dCustomVectorUU cv_double1 = input_list[1];
   dCustomVectorUP cv_double2 = input_list[1];
-  // dCustomVectorAU cv_double3 = input_list[0];
-  // dCustomVectorAP cv_double4 = input_list[0];
+  // dCustomVectorAU cv_double3 = input_list[1];
+  // dCustomVectorAP cv_double4 = input_list[1];
 
   return Rcpp::List::create(
     Rcpp::_["iCustomVectorUU"] = blaze::sum(cv_int),
     Rcpp::_["dCustomVectorUU"] = blaze::sum(cv_double1),
-    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_double2),
+    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_double2)
     // Rcpp::_["dCustomVectorAU"] = blaze::sum(cv_double3),
-  //  Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_double4)
+    // Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_double4)
   );
 }
 

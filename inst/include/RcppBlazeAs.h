@@ -105,7 +105,7 @@ namespace Rcpp {
         size_t n = (size_t) vec.size();
         std::vector<Type> data(n);
 
-        blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> result(&data[0], n);
+        blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> result(data.data(), n);
         for (size_t i=0UL; i < (size_t) vec.size(); ++i) {
           result[i] = ::Rcpp::internal::caster<value_t, Type>(vec[i]);
         }
@@ -123,6 +123,8 @@ namespace Rcpp {
       typedef Type r_export_type;
       Exporter(SEXP x) : vec(x) {}
       blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> get() {
+        Rcpp::stop("Aligned CustomVector is not supported");
+
         typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
         size_t n = (size_t) vec.size();
         std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(n));
@@ -170,6 +172,8 @@ namespace Rcpp {
       typedef Type r_export_type;
       Exporter(SEXP x) : vec(x) {}
       blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> get() {
+        Rcpp::stop("Aligned CustomVector is not supported");
+
         typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
         size_t n = (size_t) vec.size();
         size_t simdTypeSize = blaze::SIMDTrait<Type>::size;
