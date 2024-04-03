@@ -76,6 +76,10 @@ namespace Rcpp {
 
       T get() {
         T result;
+        R_xlen_t n = ::Rf_xlength(object);
+        if (result.size() != n) {
+          throw std::invalid_argument("Mismatched size of StaticVector.");
+        }
         value_type* data = blaze::data(result);
         ::Rcpp::internal::export_indexing<value_type*, value_type>(object, data);
         return result;
@@ -161,7 +165,6 @@ namespace Rcpp {
       }
     };
 
-
     // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> export (not supported)
     template<typename Type, bool TF >
     class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> > {
@@ -188,36 +191,7 @@ namespace Rcpp {
       }
     };
 
-
-    /*
-    template <typename T, typename value_type>
-    class BlazeCustomVectorExporter {
-    public:
-      typedef value_type r_export_type;
-
-      BlazeCustomVectorExporter(SEXP x) : object(x){}
-      ~BlazeCustomVectorExporter(){}
-
-      T get() {
-        size_t n = (size_t) ::Rf_xlength(object);
-        std::vector<value_type> vec = Rcpp::as< std::vector<value_type> >(object);
-        T result(&vec[0], n);
-        return result;
-      }
-
-    private:
-      SEXP object;
-    };
-
-    template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
-    class Exporter< blaze::CustomVector<Type, AF, PF, TF> > : public BlazeCustomVectorExporter<blaze::CustomVector<Type, AF, PF, TF>, Type> {
-    public:
-      Exporter(SEXP x) : BlazeCustomVectorExporter<blaze::CustomVector<Type, AF, PF, TF>, Type>(x){}
-    };
-     */
-
-
-
+    // ---------------------------- Matrix Exporter ----------------------------
     // exporter for DynamicMatrix/HybridMatrix
     template <typename T, typename value_type>
     class MatrixExporterForBlaze {
@@ -235,7 +209,11 @@ namespace Rcpp {
         int* dims_ = INTEGER(dims);
         T result(dims_[0], dims_[1]);
         value_type* data = blaze::data(result);
-        ::Rcpp::internal::export_indexing<value_type*, value_type>(object, data);
+        if (SO == blaze::columnMajor) {
+          Rcpp::internal::export_indexing<value_type*, value_type>(object, data);
+        } else {
+          // do copying for rowMajor
+        }
         return result;
       }
 
@@ -255,9 +233,224 @@ namespace Rcpp {
       Exporter(SEXP x) : MatrixExporterForBlaze<blaze::HybridMatrix<Type, M, N, SO, AF, PF>, Type>(x){}
     };
 
+    // exporter for StaticVector since its constructor does not need size
+    template <typename T, typename value_type>
+    class BlazeStaticMatrixExporter {
+    public:
+      typedef value_type r_export_type;
+
+      BlazeStaticMatrixExporter(SEXP x) : object(x){}
+      ~BlazeStaticMatrixExporter(){}
+
+      T get() {
+        Shield<SEXP> dims(::Rf_getAttrib( object, R_DimSymbol));
+        if (Rf_isNull(dims) || ::Rf_length(dims) != 2) {
+          throw ::Rcpp::not_a_matrix();
+        }
+        int* dims_ = INTEGER(dims);
+
+        T result;
+        if ((dims_[0] != result.rows()) || ((size_t) dims_[1] != result.columns())) {
+          throw std::invalid_argument("Mismatched dimensions of StaticMatrix.");
+        }
+
+        value_type* data = blaze::data(result);
+        if (SO == blaze::columnMajor) {
+          Rcpp::internal::export_indexing<value_type*, value_type>(object, data);
+        } else {
+          // do copying for rowMajor
+        }
+        return result;
+      }
+
+    private:
+      SEXP object;
+    };
+
+    template <typename Type, size_t M, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+    class Exporter< blaze::StaticMatrix<Type, M, N, TF, AF, PF> > : public BlazeStaticMatrixExporter<blaze::StaticMatrix<Type, M, N, TF, AF, PF>, Type> {
+    public:
+      Exporter(SEXP x) : BlazeStaticMatrixExporter<blaze::StaticMatrix<Type, M, N, TF, AF, PF>, Type>(x){}
+    };
+
     /*
 
+    // Provides only blaze::StaticMatrix<Type,M,N,SO> export
+    template<typename Type, size_t M, size_t N, bool SO >
+    class Exporter< blaze::StaticMatrix<Type, M, N, SO> > {
+      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      ::Rcpp::Matrix<RTYPE> mat;
 
+    public:
+      Exporter(SEXP x) : mat(x) {
+        if ((size_t) mat.nrow() != M && (size_t) mat.ncol() != N) {
+          throw std::invalid_argument("Dimension of matrix is not match.");
+        }
+      }
+
+      blaze::StaticMatrix<Type, M, N, SO> get() {
+        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+        blaze::StaticMatrix<Type, M, N, SO> result;
+        if (SO == blaze::rowMajor) {
+          for (size_t i=0UL; i<result.rows(); ++i) {
+            for( size_t j=0UL; j<result.columns(); ++j) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
+            }
+          }
+        } else {
+          for (size_t j=0UL; j<result.columns(); ++j) {
+            for (size_t i=0UL; i<result.rows(); ++i) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
+            }
+          }
+        }
+        return result ;
+      }
+    };
+
+
+    // Provides only blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded,SO> export
+    template<typename Type, bool SO >
+    class Exporter< blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded,SO> > {
+      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      ::Rcpp::Matrix<RTYPE> mat;
+
+    public:
+      Exporter(SEXP x) : mat(x) {}
+      blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded, SO> get() {
+        blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded, SO> result(
+            reinterpret_cast<Type*>(mat.begin()),
+            (size_t) mat.nrow(),
+            (size_t) mat.ncol()
+        );
+        return result ;
+      }
+    };
+
+    // Provides only blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> export
+    template<typename Type, bool SO >
+    class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> > {
+      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      ::Rcpp::Matrix<RTYPE> mat;
+
+    public:
+      Exporter(SEXP x) : mat(x) {}
+      blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> get() {
+        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+        if (SO == blaze::rowMajor) {
+          size_t actualCols = (size_t) mat.ncol() + Type::size - (size_t) mat.ncol() % Type::size;
+          blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> result(
+              blaze::allocate<Type>( actualCols * (size_t)mat.nrow() ), (size_t) mat.nrow(),
+              (size_t) mat.ncol(), actualCols, blaze::Deallocate() );
+          for (size_t i=0UL; i<result.rows(); ++i) {
+            for (size_t j=0UL; j<result.columns(); ++j) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
+            }
+          }
+          return result;
+        } else {
+          size_t actualRows = (size_t) mat.nrow() + Type::size - (size_t) mat.nrow() % Type::size;
+          blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> result(
+              blaze::allocate<Type>( actualRows * (size_t)mat.ncol() ), (size_t) mat.nrow(),
+              (size_t) mat.ncol(), actualRows, blaze::Deallocate() );
+          for (size_t j=0UL; j<result.columns(); ++j) {
+            for (size_t i=0UL; i<result.rows(); ++i) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
+            }
+          }
+          return result;
+        }
+      }
+    };
+
+    // Provides only blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> export
+    template<typename Type, bool SO >
+    class Exporter< blaze::CustomMatrix<Type, blaze::unaligned, blaze::padded, SO> > {
+      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      ::Rcpp::Matrix<RTYPE> mat;
+
+    public:
+      Exporter(SEXP x) : mat(x) {}
+      blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> get() {
+        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+        if (SO == blaze::rowMajor) {
+          size_t actualCols = (size_t) mat.ncol() + Type::size - (size_t) mat.ncol() % Type::size;
+          blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> result(
+              new Type[actualCols * (size_t)mat.nrow()],
+                      (size_t) mat.nrow(),
+                      (size_t) mat.ncol(),
+                      actualCols,
+                      blaze::ArrayDelete()
+          );
+          for (size_t i=0UL; i<result.rows(); ++i) {
+            for (size_t j=0UL; j<result.columns(); ++j) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
+            }
+          }
+          return result;
+        } else {
+          size_t actualRows = (size_t) mat.nrow() + Type::size - (size_t) mat.nrow() % Type::size;
+          blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> result(
+              new Type[actualRows * (size_t)mat.ncol()],
+                      (size_t) mat.nrow(),
+                      (size_t) mat.ncol(),
+                      actualRows,
+                      blaze::ArrayDelete()
+          );
+          for (size_t j=0UL; j<result.columns(); ++j) {
+            for (size_t i=0UL; i<result.rows(); ++i) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
+            }
+          }
+          return result;
+        }
+      }
+    };
+
+    // Provides only blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> export
+    template<typename Type, bool SO >
+    class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::padded, SO> > {
+      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      ::Rcpp::Matrix<RTYPE> mat;
+
+    public:
+      Exporter(SEXP x) : mat(x) {}
+      blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> get() {
+        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+        if (SO == blaze::rowMajor) {
+          size_t actualCols = (size_t) mat.ncol() + Type::size - (size_t) mat.ncol() % Type::size;
+          blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> result(
+              blaze::allocate<Type>( actualCols * (size_t)mat.nrow() ),
+              (size_t) mat.nrow(),
+              (size_t) mat.ncol(), actualCols, blaze::Deallocate()
+          );
+          for (size_t i=0UL; i<result.rows(); ++i) {
+            for (size_t j=0UL; j<result.columns(); ++j) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
+            }
+          }
+          return result;
+        } else {
+          size_t actualRows = (size_t) mat.nrow() + Type::size - (size_t) mat.nrow() % Type::size;
+          blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> result(
+              blaze::allocate<Type>(actualRows * (size_t)mat.ncol()),
+              (size_t) mat.nrow(),
+              (size_t) mat.ncol(), actualRows, blaze::Deallocate()
+          );
+          for (size_t j=0UL; j<result.columns(); ++j) {
+            for (size_t i=0UL; i<result.rows(); ++i) {
+              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
+            }
+          }
+          return result;
+        }
+      }
+    };
+     */
+
+    // ---------------------------- Compressed Type Exporter ----------------------------
+
+    /*
     // Provides only blaze::CompressedVector<Type,blaze::rowVector> export
     template<typename Type>
     class Exporter< blaze::CompressedVector<Type, blaze::rowVector> > {
@@ -412,242 +605,6 @@ namespace Rcpp {
           Rcpp::stop(spMatClassStr + " is not supported.");
         }
         return result;
-      }
-    };
-
-    */
-
-    // Provides only blaze::DynamicMatrix<Type,SO> export
-    /*
-    template<typename Type, bool SO >
-    class Exporter< blaze::DynamicMatrix<Type, SO> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      ::Rcpp::Matrix<RTYPE> mat;
-
-    public:
-      Exporter(SEXP x) : mat(x) {}
-      blaze::DynamicMatrix<Type,SO> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        blaze::DynamicMatrix<Type,SO> result( (size_t) mat.nrow(), (size_t) mat.ncol() );
-        if (SO == blaze::rowMajor) {
-          for (size_t i=0UL; i<result.rows(); ++i) {
-            for (size_t j=0UL; j<result.columns(); ++j)
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-          }
-        } else {
-          for (size_t j=0UL; j<result.columns(); ++j) {
-            for (size_t i=0UL; i<result.rows(); ++i)
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-          }
-        }
-        return result ;
-      }
-    };
-     */
-
-    /*
-
-    // Provides only blaze::StaticMatrix<Type,M,N,SO> export
-    template<typename Type, size_t M, size_t N, bool SO >
-    class Exporter< blaze::StaticMatrix<Type, M, N, SO> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      ::Rcpp::Matrix<RTYPE> mat;
-
-    public:
-      Exporter(SEXP x) : mat(x) {
-        if ((size_t) mat.nrow() != M && (size_t) mat.ncol() != N) {
-          throw std::invalid_argument("Dimension of matrix is not match.");
-        }
-      }
-
-      blaze::StaticMatrix<Type, M, N, SO> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        blaze::StaticMatrix<Type, M, N, SO> result;
-        if (SO == blaze::rowMajor) {
-          for (size_t i=0UL; i<result.rows(); ++i) {
-            for( size_t j=0UL; j<result.columns(); ++j) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-            }
-          }
-        } else {
-          for (size_t j=0UL; j<result.columns(); ++j) {
-            for (size_t i=0UL; i<result.rows(); ++i) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-            }
-          }
-        }
-        return result ;
-      }
-    };
-
-    // Provides only blaze::HybridMatrix<Type,M,N,SO> export
-    template<typename Type, size_t M, size_t N, bool SO >
-    class Exporter< blaze::HybridMatrix<Type, M, N, SO> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      ::Rcpp::Matrix<RTYPE> mat;
-
-    public:
-      Exporter(SEXP x) : mat(x) {
-        if ((size_t) mat.nrow() != M && (size_t) mat.ncol() != N) {
-          throw std::invalid_argument("Dimension of matrix is not match.");
-        }
-      }
-
-      blaze::HybridMatrix<Type, M, N, SO> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        blaze::HybridMatrix<Type, M, N, SO> result((size_t) mat.nrow(), (size_t) mat.ncol());
-        if (SO == blaze::rowMajor) {
-          for (size_t i=0UL; i<result.rows(); ++i) {
-            for (size_t j=0UL; j<result.columns(); ++j) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-            }
-          }
-        } else {
-          for (size_t j=0UL; j<result.columns(); ++j) {
-            for (size_t i=0UL; i<result.rows(); ++i) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-            }
-          }
-        }
-        return result ;
-      }
-    };
-
-    // Provides only blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded,SO> export
-    template<typename Type, bool SO >
-    class Exporter< blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded,SO> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      ::Rcpp::Matrix<RTYPE> mat;
-
-    public:
-      Exporter(SEXP x) : mat(x) {}
-      blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded, SO> get() {
-        blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded, SO> result(
-            reinterpret_cast<Type*>(mat.begin()),
-            (size_t) mat.nrow(),
-            (size_t) mat.ncol()
-        );
-        return result ;
-      }
-    };
-
-    // Provides only blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> export
-    template<typename Type, bool SO >
-    class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      ::Rcpp::Matrix<RTYPE> mat;
-
-    public:
-      Exporter(SEXP x) : mat(x) {}
-      blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        if (SO == blaze::rowMajor) {
-          size_t actualCols = (size_t) mat.ncol() + Type::size - (size_t) mat.ncol() % Type::size;
-          blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> result(
-              blaze::allocate<Type>( actualCols * (size_t)mat.nrow() ), (size_t) mat.nrow(),
-              (size_t) mat.ncol(), actualCols, blaze::Deallocate() );
-          for (size_t i=0UL; i<result.rows(); ++i) {
-            for (size_t j=0UL; j<result.columns(); ++j) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-            }
-          }
-          return result;
-        } else {
-          size_t actualRows = (size_t) mat.nrow() + Type::size - (size_t) mat.nrow() % Type::size;
-          blaze::CustomMatrix<Type,blaze::aligned, blaze::unpadded,SO> result(
-              blaze::allocate<Type>( actualRows * (size_t)mat.ncol() ), (size_t) mat.nrow(),
-              (size_t) mat.ncol(), actualRows, blaze::Deallocate() );
-          for (size_t j=0UL; j<result.columns(); ++j) {
-            for (size_t i=0UL; i<result.rows(); ++i) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>( mat(i ,j) );
-            }
-          }
-          return result;
-        }
-      }
-    };
-
-    // Provides only blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> export
-    template<typename Type, bool SO >
-    class Exporter< blaze::CustomMatrix<Type, blaze::unaligned, blaze::padded, SO> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      ::Rcpp::Matrix<RTYPE> mat;
-
-    public:
-      Exporter(SEXP x) : mat(x) {}
-      blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        if (SO == blaze::rowMajor) {
-          size_t actualCols = (size_t) mat.ncol() + Type::size - (size_t) mat.ncol() % Type::size;
-          blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> result(
-              new Type[actualCols * (size_t)mat.nrow()],
-              (size_t) mat.nrow(),
-              (size_t) mat.ncol(),
-              actualCols,
-              blaze::ArrayDelete()
-          );
-          for (size_t i=0UL; i<result.rows(); ++i) {
-            for (size_t j=0UL; j<result.columns(); ++j) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
-            }
-          }
-          return result;
-        } else {
-          size_t actualRows = (size_t) mat.nrow() + Type::size - (size_t) mat.nrow() % Type::size;
-          blaze::CustomMatrix<Type,blaze::unaligned, blaze::padded,SO> result(
-              new Type[actualRows * (size_t)mat.ncol()],
-              (size_t) mat.nrow(),
-              (size_t) mat.ncol(),
-              actualRows,
-              blaze::ArrayDelete()
-          );
-          for (size_t j=0UL; j<result.columns(); ++j) {
-            for (size_t i=0UL; i<result.rows(); ++i) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
-            }
-          }
-          return result;
-        }
-      }
-    };
-
-    // Provides only blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> export
-    template<typename Type, bool SO >
-    class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::padded, SO> > {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      ::Rcpp::Matrix<RTYPE> mat;
-
-    public:
-      Exporter(SEXP x) : mat(x) {}
-      blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        if (SO == blaze::rowMajor) {
-          size_t actualCols = (size_t) mat.ncol() + Type::size - (size_t) mat.ncol() % Type::size;
-          blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> result(
-              blaze::allocate<Type>( actualCols * (size_t)mat.nrow() ),
-              (size_t) mat.nrow(),
-              (size_t) mat.ncol(), actualCols, blaze::Deallocate()
-          );
-          for (size_t i=0UL; i<result.rows(); ++i) {
-            for (size_t j=0UL; j<result.columns(); ++j) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
-            }
-          }
-          return result;
-        } else {
-          size_t actualRows = (size_t) mat.nrow() + Type::size - (size_t) mat.nrow() % Type::size;
-          blaze::CustomMatrix<Type,blaze::aligned, blaze::padded,SO> result(
-              blaze::allocate<Type>(actualRows * (size_t)mat.ncol()),
-              (size_t) mat.nrow(),
-              (size_t) mat.ncol(), actualRows, blaze::Deallocate()
-          );
-          for (size_t j=0UL; j<result.columns(); ++j) {
-            for (size_t i=0UL; i<result.rows(); ++i) {
-              result(i ,j) = ::Rcpp::internal::caster<value_t, Type>(mat(i ,j));
-            }
-          }
-          return result;
-        }
       }
     };
 

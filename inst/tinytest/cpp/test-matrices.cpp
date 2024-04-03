@@ -21,7 +21,7 @@ using Rcpp::_;
 using namespace std::complex_literals;
 
 // [[Rcpp::export]]
-Rcpp::List vector_wrap_test() {
+Rcpp::List matrix_wrap_test() {
   blaze::DynamicVector<int> dv_int(3);
   dv_int[0] = 1;
   dv_int[1] = 2;
@@ -87,8 +87,9 @@ Rcpp::List vector_wrap_test() {
   );
 }
 
+/*
 // [[Rcpp::export]]
-Rcpp::List vector_as_test(Rcpp::List input_list) {
+Rcpp::List matrix_as_test(Rcpp::List input_list) {
   blaze::DynamicVector<double> dv_double = input_list[1];
   blaze::DynamicVector<double> dv_int = input_list[0];
   blaze::StaticVector<double, 3> sv_double = input_list[1];
@@ -108,17 +109,7 @@ Rcpp::List vector_as_test(Rcpp::List input_list) {
 }
 
 // [[Rcpp::export]]
-void vector_sv_error(Rcpp::NumericVector x) {
-  blaze::StaticVector<double, 3> sv_double = Rcpp::as<blaze::StaticVector<double, 3>>(x);
-}
-
-// [[Rcpp::export]]
-void vector_hv_error(Rcpp::NumericVector) {
-  blaze::HybridVector<double, 3> sv_double = Rcpp::as<blaze::HybridVector<double, 3>>(x);
-}
-
-// [[Rcpp::export]]
-Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
+Rcpp::List custom_matrix_as_test(Rcpp::List input_list) {
   typedef typename blaze::CustomVector<int, blaze::unaligned, blaze::unpadded> iCustomVectorUU;
   typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> dCustomVectorUU;
   typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::padded> dCustomVectorUP;
@@ -139,23 +130,7 @@ Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
     // Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_double4)
   );
 }
-
+*/
 /*
-
-// [[Rcpp::export]]
-blaze::CompressedVector<double> test_CompressedVector_dbl_col( blaze::CompressedVector<double> x ) {
-  return x;
-}
-
-// [[Rcpp::export]]
-blaze::CompressedVector<double,blaze::rowVector>
-  test_CompressedVector_dbl_row( blaze::CompressedVector<double,blaze::rowVector> x ) {
-  return x;
-}
-
-// [[Rcpp::export]]
-blaze::ZeroVector<double>
-  test_ZeroVector_dbl( blaze::ZeroVector<double> x ) {
-  return x;
-}
+ CompressedMatrix, IdentityMatrix, ZeroMatrix
 */
