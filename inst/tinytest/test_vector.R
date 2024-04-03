@@ -33,3 +33,11 @@ expect_equal(vector_wrap_res[["cv_ua_up_double"]], expect_dbl_vec, info = "cv_ua
 expect_equal(vector_wrap_res[["cv_ua_pa_double"]], expect_dbl_vec, info = "cv_ua_pa_double")
 expect_equal(vector_wrap_res[["cv_al_up_double"]], expect_dbl_vec, info = "cv_al_up_double")
 expect_equal(vector_wrap_res[["cv_al_pa_double"]], expect_dbl_vec, info = "cv_al_pa_double")
+
+vector_as_res <- vector_as_test(list(c(1L, 3L, 6L), c(1.5,2.5,4.5)))
+expect_double_sum <- 8.5
+expect_equal(vector_as_res[["dv_int_sum"]], 10L, info = "dv_int_sum")
+expect_equal(vector_as_res[["dv_double_sum"]], expect_double_sum, info = "dv_double_sum")
+expect_equal(vector_as_res[["sv_double_sum"]], expect_double_sum, info = "sv_double_sum")
+expect_equal(vector_as_res[["hv_double_sum"]], expect_double_sum, info = "hv_double_sum")
+

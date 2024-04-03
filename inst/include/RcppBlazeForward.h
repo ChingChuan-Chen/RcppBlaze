@@ -76,20 +76,19 @@ namespace Rcpp {
 
     /* support for as for blaze dense vectors */
     template <typename Type, bool TF> class Exporter< blaze::DynamicVector<Type, TF> >;
-    template <typename Type, size_t N, bool TF> class Exporter< blaze::HybridVector<Type, N, TF> >;
-    template <typename Type, size_t N, bool TF> class Exporter< blaze::StaticVector<Type, N, TF> >;
-    template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
-    class Exporter< blaze::CustomVector<Type, AF, PF, TF> >;
+    template <typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+    class Exporter< blaze::HybridVector<Type, N, TF, AF, PF> >;
+    template<typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+    class Exporter< blaze::StaticVector<Type, N, TF, AF, PF> >;
+    template<typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> >;
+    template<typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> >;
+    template<typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> >;
+    template<typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> >;
 
     /* support for as for blaze dense matrixes */
     template<typename Type, bool SO> class Exporter< blaze::DynamicMatrix<Type, SO> >;
 
     /*
-
-    template< typename Type, bool TF > class Exporter< blaze::CustomVector<Type,blaze::unaligned,blaze::unpadded,TF> >;
-    template< typename Type, bool TF > class Exporter< blaze::CustomVector<Type,blaze::aligned,blaze::unpadded,TF> >;
-    template< typename Type, bool TF > class Exporter< blaze::CustomVector<Type,blaze::unaligned,blaze::padded,TF> >;
-    template< typename Type, bool TF > class Exporter< blaze::CustomVector<Type,blaze::aligned,blaze::padded,TF> >;
     template< typename Type > class Exporter< blaze::CompressedVector<Type,blaze::rowVector> >;
     template< typename Type > class Exporter< blaze::CompressedVector<Type,blaze::columnVector> >;
 

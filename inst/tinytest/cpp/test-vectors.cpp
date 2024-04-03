@@ -22,7 +22,6 @@ using namespace std::complex_literals;
 
 // [[Rcpp::export]]
 Rcpp::List vector_wrap_test() {
-
   blaze::DynamicVector<int> dv_int(3);
   dv_int[0] = 1;
   dv_int[1] = 2;
@@ -88,6 +87,45 @@ Rcpp::List vector_wrap_test() {
   );
 }
 
+// [[Rcpp::export]]
+Rcpp::List vector_as_test(Rcpp::List input_list) {
+  blaze::DynamicVector<double> dv_double = input_list[1];
+  blaze::DynamicVector<double> dv_int = input_list[0];
+  blaze::StaticVector<double, 3> sv_double = input_list[1];
+  blaze::HybridVector<double, 3> hv_double = input_list[1];
+
+  return Rcpp::List::create(
+    _["dv_int_sum"] = blaze::sum(dv_int),
+    _["dv_double_sum"] = blaze::sum(dv_double),
+    _["sv_double_sum"] = blaze::sum(dv_double),
+    _["hv_double_sum"] = blaze::sum(dv_double)
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
+  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> dCustomVectorUU;
+  typedef typename blaze::CustomVector<int, blaze::unaligned, blaze::unpadded> iCustomVectorUU;
+  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::padded> dCustomVectorUP;
+  typedef typename blaze::CustomVector<double, blaze::aligned, blaze::unpadded> dCustomVectorAU;
+  // typedef typename blaze::CustomVector<double, blaze::aligned, blaze::padded> dCustomVectorAP;
+
+  dCustomVectorUU cv_double1 = input_list[0];
+  dCustomVectorUP cv_double2 = input_list[0];
+  dCustomVectorAU cv_double3 = input_list[0];
+  // dCustomVectorAP cv_double4 = input_list[0];
+
+  iCustomVectorUU cv_int = input_list[1];
+
+  return Rcpp::List::create(
+    Rcpp::_["dCustomVectorUU"] = blaze::sum(cv_double1),
+    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_double2),
+    Rcpp::_["dCustomVectorAU"] = blaze::sum(cv_double3),
+  //  Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_double4),
+  Rcpp::_["iCustomVectorUU"] = blaze::sum(cv_int)
+  );
+}
+
 /*
 
 // [[Rcpp::export]]
@@ -127,28 +165,12 @@ Rcpp::List wrap_() {
 
 
 // [[Rcpp::export]]
-Rcpp::List asDynamicVector(Rcpp::NumericVector x1, Rcpp::IntegerVector x2, Rcpp::ComplexVector x3) {
-  blaze::DynamicVector<double> dv_double = Rcpp::as<blaze::DynamicVector<double>>(x1);
-  blaze::DynamicVector<double, blaze::rowVector> dv_double_r = Rcpp::as<blaze::DynamicVector<double, blaze::rowVector>>(x1);
-  blaze::DynamicVector<int> dp_int = Rcpp::as<blaze::DynamicVector<int>>(x2);
-  blaze::DynamicVector<std::complex<double>> dv_cplx = Rcpp::as<blaze::DynamicVector<std::complex<double>>>(x3);
-
-  blaze::HybridVector<double, 10, blaze::rowVector> hv_double = Rcpp::as<blaze::HybridVector<double, 10, blaze::rowVector>>(x1);
-
-  // StaticVector with default padding and alignment
-  blaze::StaticVector<double, 10> sv_double1 = Rcpp::as<blaze::StaticVector<double, 10>>(x1);
-
-  // StaticVector with default padding and alignment
-  blaze::StaticVector<double, 10, blaze::rowVector> sv_double = Rcpp::as<blaze::StaticVector<double, 10, blaze::rowVector>>(x1);
-
-  blaze::StaticVector<double, 10, blaze::rowVector, blaze::unaligned, blaze::unpadded> sv_double2 = Rcpp::as<blaze::StaticVector<double, 10, blaze::rowVector, blaze::unaligned, blaze::unpadded>>(x1);
-  // Rcpp::Rcout << dv_double_r + hv_double + sv_double + sv_double2 << std::endl;
-
-  // blaze::CustomVector<double, blaze::unaligned, blaze::unpadded, blaze::rowVector> cv_double = Rcpp::as<blaze::CustomVector<double, blaze::unaligned, blaze::unpadded, blaze::rowVector>>(x1);
-  // Rcpp::Rcout << cv_double << std::endl;
+Rcpp::List asDynamicVector(Rcpp::NumericVector x) {
+  blaze::CustomVector<double, blaze::unaligned, blaze::unpadded, blaze::rowVector> cv_double = Rcpp::as<blaze::CustomVector<double, blaze::unaligned, blaze::unpadded, blaze::rowVector>>(x);
+  Rcpp::Rcout << cv_double << std::endl;
 
   return Rcpp::List::create(
-    Rcpp::_["blaze::DynamicVector<double>"] = hv_double
+    Rcpp::_["blaze::CustomVector"] = cv_double
   );
 }
 
