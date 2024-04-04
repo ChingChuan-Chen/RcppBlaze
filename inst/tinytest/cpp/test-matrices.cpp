@@ -28,6 +28,12 @@ Rcpp::List matrix_wrap_test() {
   blaze::DynamicMatrix<int, blaze::rowMajor> dm_int_rm(2UL, 3UL);
   dm_int_rm = { { 1, -2, 4 }, { 5, -8, 0 } };
 
+  blaze::DynamicMatrix<std::complex<double>, blaze::columnMajor> dm_cmplx_cm(2, 3);
+  dm_cmplx_cm = { {  1.5 + 0.2i,  2.5 + 0.4i, 4.5 - 0.5i }, { -0.5 - 0.1i, -12.1 + 2i, 0.6i } };
+
+  blaze::DynamicMatrix<std::complex<double>, blaze::rowMajor> dm_cmplx_rm(2, 3);
+  dm_cmplx_rm = { {  1.5 + 0.2i,  2.5 + 0.4i, 4.5 - 0.5i }, { -0.5 - 0.1i, -12.1 + 2i, 0.6i } };
+
   blaze::DynamicMatrix<double, blaze::columnMajor> dm_double_cm(2UL, 3UL);
   dm_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
@@ -83,6 +89,8 @@ Rcpp::List matrix_wrap_test() {
   return Rcpp::List::create(
     _["dm_int_cm"] = dm_int_cm,
     _["dm_int_rm"] = dm_int_rm,
+    _["dm_cmplx_cm"] = dm_cmplx_cm,
+    _["dm_cmplx_rm"] = dm_cmplx_rm,
     _["dm_double_cm"] = dm_double_cm,
     _["dm_double_rm"] = dm_double_rm,
     _["sm_double_cm"] = sm_double_cm,
