@@ -5,8 +5,8 @@ blaze_version <- function(single) {
     .Call(`_RcppBlaze_blaze_version`, single)
 }
 
-testAs1 <- function(x, y) {
-    .Call(`_RcppBlaze_testAs1`, x, y)
+testAs1 <- function(x) {
+    .Call(`_RcppBlaze_testAs1`, x)
 }
 
 testWrap1 <- function() {

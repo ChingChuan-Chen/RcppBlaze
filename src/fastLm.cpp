@@ -26,24 +26,21 @@ using Rcpp::_;
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 // [[Rcpp::export]]
-Rcpp::List testAs1(Rcpp::NumericVector x, Rcpp::IntegerVector y) {
-  // typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> CustomVectorUU;
-  // typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::padded> CustomVectorUP;
+Rcpp::List testAs1(Rcpp::NumericVector x) {
+  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> CustomVectorUU;
+  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::padded> CustomVectorUP;
   typedef typename blaze::CustomVector<double, blaze::aligned, blaze::unpadded> CustomVectorAU;
-  // typedef typename blaze::CustomVector<double, blaze::aligned, blaze::padded> CustomVectorAP;
-  // CustomVectorUU cv_double1 = Rcpp::as<CustomVectorUU>(x);
-  // CustomVectorUP cv_double2 = Rcpp::as<CustomVectorUP>(x);
+  typedef typename blaze::CustomVector<double, blaze::aligned, blaze::padded> CustomVectorAP;
+  CustomVectorUU cv_double1 = Rcpp::as<CustomVectorUU>(x);
+  CustomVectorUP cv_double2 = Rcpp::as<CustomVectorUP>(x);
   CustomVectorAU cv_double3 = Rcpp::as<CustomVectorAU>(x);
-  // CustomVectorAP cv_double4 = Rcpp::as<CustomVectorAP>(x);
-
-  // blaze::CustomVector<int, blaze::unaligned, blaze::unpadded> cv_int = Rcpp::as< blaze::CustomVector<int, blaze::unaligned, blaze::unpadded> >(y);
+  CustomVectorAP cv_double4 = Rcpp::as<CustomVectorAP>(x);
 
   return Rcpp::List::create(
-  //  Rcpp::_["blaze::CustomVectorUU"] = cv_double1
-    // Rcpp::_["blaze::CustomVectorUP"] = cv_double2,
-    Rcpp::_["blaze::CustomVectorAU"] = cv_double3
-    //  Rcpp::_["blaze::CustomVectorAP"] = cv_double4,
-    //Rcpp::_["blaze::CustomVector<int>"] = cv_int
+    Rcpp::_["blaze::CustomVectorUU"] = cv_double1,
+    Rcpp::_["blaze::CustomVectorUP"] = cv_double2,
+    Rcpp::_["blaze::CustomVectorAU"] = blaze::sum(cv_double3),
+    Rcpp::_["blaze::CustomVectorAP"] = blaze::sum(cv_double4)
   );
 }
 
