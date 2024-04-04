@@ -89,18 +89,18 @@ namespace Rcpp {
 
     /* support for as for blaze dense matrixes */
     template<typename Type, bool SO> class Exporter< blaze::DynamicMatrix<Type, SO> >;
+    template <typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+    class Exporter< blaze::HybridMatrix<Type, M, N, SO, AF, PF> >;
+    template <typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+    class Exporter< blaze::StaticMatrix<Type, M, N, SO, AF, PF> >;
+    template<typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::unaligned, blaze::unpadded, SO> >;
+    template<typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> >;
+    template<typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::unaligned, blaze::padded, SO> >;
+    template<typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::padded, SO> >;
 
     /*
     template< typename Type > class Exporter< blaze::CompressedVector<Type,blaze::rowVector> >;
     template< typename Type > class Exporter< blaze::CompressedVector<Type,blaze::columnVector> >;
-
-    template< typename Type, bool SO > class Exporter< blaze::DynamicMatrix<Type,SO> >;
-    template< typename Type, size_t M, size_t N, bool SO > class Exporter< blaze::StaticMatrix<Type,M,N,SO> >;
-    template< typename Type, size_t M, size_t N, bool SO > class Exporter< blaze::HybridMatrix<Type,M,N,SO> >;
-    template< typename Type, bool SO > class Exporter< blaze::CustomMatrix<Type,blaze::unaligned,blaze::unpadded,SO> >;
-    template< typename Type, bool SO > class Exporter< blaze::CustomMatrix<Type,blaze::aligned,blaze::unpadded,SO> >;
-    template< typename Type, bool SO > class Exporter< blaze::CustomMatrix<Type,blaze::unaligned,blaze::padded,SO> >;
-    template< typename Type, bool SO > class Exporter< blaze::CustomMatrix<Type,blaze::aligned,blaze::padded,SO> >;
     template< typename Type, bool SO > class Exporter< blaze::CompressedMatrix<Type,SO> >;
     */
 

@@ -265,6 +265,31 @@ namespace Rcpp {
       }
     };
 
+    // exporter for blaze::CustomMatrix<Type, blaze::unaligned, blaze::unpadded, SO>
+    template <typename Type, bool SO>
+    class Exporter< blaze::CustomMatrix<Type, blaze::unaligned, blaze::unpadded, SO> > {
+      const static int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      Rcpp::Matrix<RTYPE> mat;
+
+    public:
+      typedef Type r_export_type;
+      Exporter(SEXP x) : mat(x) {}
+      blaze::CustomMatrix<Type, blaze::unaligned, blaze::unpadded, SO> get() {
+        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+        size_t m = mat.nrow(), n = mat.ncol();
+        size_t size = m*n;
+        std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[size]);
+
+        blaze::CustomMatrix<Type, blaze::unaligned, blaze::unpadded, SO> result(data.get(), m, n);
+        if (SO == blaze::rowMajor) {
+          RCPPBLAZE_MATRIX_COPY(i, j, m, n);
+        } else {
+          RCPPBLAZE_MATRIX_COPY(j, i, n, m);
+        }
+        return result;
+      }
+    };
+
 #undef RCPPBLAZE_MATRIX_COPY
     /*
     // Provides only blaze::CustomMatrix<Type,blaze::unaligned, blaze::unpadded,SO> export
