@@ -46,9 +46,31 @@ namespace Rcpp {
       return out;
     }
 
+    template<typename MT, bool SO>
+    SEXP blaze_wrap(const blaze::DenseMatrix<MT, SO>& x) {
+      typedef typename MT::ElementType ET;
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
+      typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+
+      size_t m = (*x).rows(), n = (*x).columns();
+      Rcpp::Matrix<RTYPE> out(m, n);
+      if (SO == blaze::rowMajor) {
+        for (size_t i=0UL; i<m; ++i) {
+          for (size_t j=0UL; j<n; ++j) {
+            out(i, j) = Rcpp::internal::caster<ET, value_t>((*x)(i, j));
+          }
+        }
+      } else {
+        for (size_t j=0UL; j<n; ++j) {
+          for (size_t i=0UL; i<m; ++i) {
+            out(i, j) = Rcpp::internal::caster<ET, value_t>((*x)(i, j));
+          }
+        }
+      }
+      return out;
+    }
 
 /*
-
      template<typename MT, bool SO>
      SEXP blaze_wrap(const blaze::SparseMatrix<MT,SO>& sm)
      {
@@ -140,22 +162,19 @@ namespace Rcpp {
      */
   } // namespace RcppBlaze
 
-/* wrap for the child classes of DenseMatrix, DenseVector, SparseMatrix and SparseVector */
-
-
-
+  // wrap for blaze dense vector
   template <typename Type, bool TF>
   SEXP wrap(const blaze::DynamicVector<Type, TF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, size_t N, bool TF>
-  SEXP wrap(const blaze::StaticVector<Type, N, TF>& x) {
+  template<typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  SEXP wrap(const blaze::StaticVector<Type, N, TF, AF, PF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, size_t N, bool TF>
-  SEXP wrap(const blaze::HybridVector<Type, N, TF>& x) {
+  template<typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  SEXP wrap(const blaze::HybridVector<Type, N, TF, AF, PF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
@@ -164,32 +183,37 @@ namespace Rcpp {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  /*
+  // wrap for blaze dense matrix
+  template<typename Type, bool SO>
+  SEXP wrap(const blaze::DynamicMatrix<Type, SO>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template<typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  SEXP wrap(const blaze::StaticMatrix<Type, M, N, SO, AF, PF>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template<typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  SEXP wrap(const blaze::HybridMatrix<Type, M, N, SO, AF, PF>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template<typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool SO>
+  SEXP wrap(const blaze::CustomMatrix<Type, AF, PF, SO>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  // wrap for blaze sparse vector
+/*
    template<typename Type, bool TF>
    SEXP wrap(const blaze::CompressedVector<Type, TF>& cv) {
    return RcppBlaze::blaze_wrap(cv);
    };
+*/
 
-  template<typename Type, size_t M, size_t N, bool SO>
-  SEXP wrap(const blaze::StaticMatrix<Type, M, N, SO>& sm) {
-    return RcppBlaze::blaze_wrap(sm);
-  };
-
-  template<typename Type, size_t M, size_t N, bool SO>
-  SEXP wrap(const blaze::HybridMatrix<Type, M, N, SO>& hm) {
-    return RcppBlaze::blaze_wrap(hm);
-  };
-
-  template<typename Type, bool SO>
-  SEXP wrap(const blaze::DynamicMatrix<Type, SO>& dm) {
-    return RcppBlaze::blaze_wrap(dm);
-  };
-
-  template<typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool SO>
-  SEXP wrap(const blaze::CustomMatrix<Type, AF, PF, SO>& cm) {
-    return RcppBlaze::blaze_wrap(cm);
-  };
-
+   // wrap for blaze sparse matrix
+   /*
    template<typename Type, bool SO>
    SEXP wrap(const blaze::CompressedMatrix<Type, SO>& cm) {
    return RcppBlaze::blaze_wrap(cm);
@@ -211,6 +235,7 @@ namespace Rcpp {
    };
    */
 
+   // adaptors
   /*
   template<typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::DiagonalMatrix<MT, SO, DF>& dm) {

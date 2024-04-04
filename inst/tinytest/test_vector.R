@@ -23,9 +23,9 @@ if (file.exists(file.path("cpp", cppFile))) {
 }
 
 vector_wrap_res <- vector_wrap_test()
-expect_dbl_vec <- c(1.5, 2.5, 4.5)
-expect_equal(vector_wrap_res[["dv_int"]], c(1L, 2L, 4L), info = "dv_int")
-expect_equal(vector_wrap_res[["dv_cmpl"]], c(1.5+0.2*1i, 0.75+0.3*1i, 3+0.1*1i), info = "dv_cmpl")
+expect_dbl_vec <- c(1.5, -2.5, 4.5)
+expect_equal(vector_wrap_res[["dv_int"]], c(1L, -2L, 4L), info = "dv_int")
+expect_equal(vector_wrap_res[["dv_cmpl"]], c(1.5+0.2*1i, -0.75-0.3*1i, -3+0.1*1i), info = "dv_cmpl")
 expect_equal(vector_wrap_res[["dv_double"]], expect_dbl_vec, info = "dv_double")
 expect_equal(vector_wrap_res[["sv_double"]], expect_dbl_vec, info = "sv_double")
 expect_equal(vector_wrap_res[["hv_double"]], expect_dbl_vec, info = "hv_double")
@@ -39,9 +39,9 @@ expect_double_sum <- 8.5
 expect_equal(vector_as_res[["dv_int_sum"]], 10L, info = "dv_int_sum")
 expect_equal(vector_as_res[["dv_double_sum"]], expect_double_sum, info = "dv_double_sum")
 expect_equal(vector_as_res[["sv_double_sum"]], expect_double_sum, info = "sv_double_sum")
-expect_equal(vector_as_res[["sv_double_aligned_sum"]], expect_double_sum, info = "sv_double_aligned_sum")
+expect_equal(vector_as_res[["sv_double_unaligned_sum"]], expect_double_sum, info = "sv_double_unaligned_sum")
 expect_equal(vector_as_res[["hv_double_sum"]], expect_double_sum, info = "hv_double_sum")
-expect_equal(vector_as_res[["hv_double_aligned_sum"]], expect_double_sum, info = "hv_double_aligned_sum")
+expect_equal(vector_as_res[["hv_double_unaligned_sum"]], expect_double_sum, info = "hv_double_unaligned_sum")
 
 expect_error(vector_sv_error(c(1.5, 2.5, 4.5, 5.5)))
 expect_error(vector_hv_error(c(1.5, 2.5, 4.5, 5.5)))

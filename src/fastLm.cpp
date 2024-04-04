@@ -26,21 +26,20 @@ using Rcpp::_;
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 // [[Rcpp::export]]
-Rcpp::List testAs1(Rcpp::NumericVector x) {
-  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> CustomVectorUU;
-  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::padded> CustomVectorUP;
-  typedef typename blaze::CustomVector<double, blaze::aligned, blaze::unpadded> CustomVectorAU;
-  typedef typename blaze::CustomVector<double, blaze::aligned, blaze::padded> CustomVectorAP;
-  CustomVectorUU cv_double1 = Rcpp::as<CustomVectorUU>(x);
-  CustomVectorUP cv_double2 = Rcpp::as<CustomVectorUP>(x);
-  CustomVectorAU cv_double3 = Rcpp::as<CustomVectorAU>(x);
-  CustomVectorAP cv_double4 = Rcpp::as<CustomVectorAP>(x);
+Rcpp::List testAs1(Rcpp::List input_list) {
+  blaze::DynamicMatrix<int, blaze::columnMajor> dm_int = input_list[0];
+  Rcpp::Rcout << dm_int << std::endl;
+
+  blaze::DynamicMatrix<double, blaze::columnMajor> dm_double = input_list[1];
+  Rcpp::Rcout << dm_double  << std::endl;
+
+  blaze::StaticMatrix<double, 2, 3, blaze::columnMajor> sm_double = input_list[1];
+  Rcpp::Rcout << sm_double  << std::endl;
 
   return Rcpp::List::create(
-    Rcpp::_["blaze::CustomVectorUU"] = cv_double1,
-    Rcpp::_["blaze::CustomVectorUP"] = cv_double2,
-    Rcpp::_["blaze::CustomVectorAU"] = blaze::sum(cv_double3),
-    Rcpp::_["blaze::CustomVectorAP"] = blaze::sum(cv_double4)
+    Rcpp::_["blaze::dm_int"] = blaze::sum(dm_int),
+    Rcpp::_["blaze::dm_double"] = blaze::sum(dm_double),
+    Rcpp::_["blaze::sm_double"] = blaze::sum(sm_double)
   );
 }
 
@@ -48,66 +47,59 @@ Rcpp::List testAs1(Rcpp::NumericVector x) {
 Rcpp::List testWrap1() {
   using namespace std::complex_literals;
 
-  blaze::DynamicVector<int> dv_int(3);
-  dv_int[0] = 1;
-  dv_int[1] = 2;
-  dv_int[2] = 4;
+  blaze::DynamicMatrix<int, blaze::columnMajor> dm_int_cm(2, 3);
+  dm_int_cm = { { 3,  6, 3 }, { -4, -12, 0 } };
 
-  blaze::DynamicVector<double> dv_double(3);
-  dv_double[0] = 1.5;
-  dv_double[1] = 2.5;
-  dv_double[2] = 4.5;
+  blaze::DynamicMatrix<int, blaze::rowMajor> dm_int_rm(2, 3);
+  dm_int_rm = { { 3,  6, 3 }, { -4, -12, 0 } };
 
-  blaze::DynamicVector<std::complex<double>> dv_cmpl(3);
-  dv_cmpl[0] = 1.5 + 0.2i;
-  dv_cmpl[1] = 0.75 + 0.3i;
-  dv_cmpl[2] = 3.0 + 0.1i;
+  /*
+  blaze::DynamicMatrix<std::complex<double>> dm_cmplx_cm(2, 3);
+  dm_cmplx_cm = { {  1.5 + 0.2i,  2.5 + 0.4i, 4.5 - 0.5i }, { -0.5 - 0.1i, -12.1 + 2i, 0.6i } };
 
-  blaze::StaticVector<double, 3> sv_double;
-  sv_double[0] = 1.5;
-  sv_double[1] = 2.5;
-  sv_double[2] = 4.5;
+  blaze::DynamicMatrix<std::complex<double>, blaze::rowMajor> dm_cmplx_rm(2, 3);
+  dm_cmplx_rm = { {  1.5 + 0.2i,  2.5 + 0.4i, 4.5 - 0.5i }, { -0.5 - 0.1i, -12.1 + 2i, 0.6i } };
+  */
 
-  blaze::HybridVector<double, 3> hv_double(3);
-  hv_double[0] = 1.5;
-  hv_double[1] = 2.5;
-  hv_double[2] = 4.5;
+  blaze::DynamicMatrix<double, blaze::columnMajor> dm_double_cm(2, 3);
+  dm_double_cm = { { 1.5,  2.5, 4.5 }, { -0.5, -12.1, -3.3 } };
 
-  std::vector<double> vec(3UL);
-  blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> cv_ua_up_double(&vec[0], 3UL);
-  cv_ua_up_double[0] = 1.5;
-  cv_ua_up_double[1] = 2.5;
-  cv_ua_up_double[2] = 4.5;
+  blaze::DynamicMatrix<double, blaze::rowMajor> dm_double_rm(2, 3);
+  dm_double_rm = { { 1.5,  2.5, 4.5 }, { -0.5, -12.1, -3.3 } };
 
-  std::unique_ptr<double[]> cv_ua_pa_double_mem(new double[4]);
-  blaze::CustomVector<double, blaze::unaligned, blaze::padded> cv_ua_pa_double(cv_ua_pa_double_mem.get(), 3UL, 4UL);
-  cv_ua_pa_double[0] = 1.5;
-  cv_ua_pa_double[1] = 2.5;
-  cv_ua_pa_double[2] = 4.5;
+  blaze::StaticMatrix<double, 2UL, 3UL, blaze::columnMajor> sm_double_cm;
+  sm_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
+  blaze::StaticMatrix<double, 2UL, 3UL, blaze::rowMajor> sm_double_rm;
+  sm_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
-  std::unique_ptr<double[], blaze::Deallocate> cv_al_up_double_mem(blaze::allocate<double>(3UL));
-  blaze::CustomVector<double, blaze::aligned, blaze::unpadded> cv_al_up_double(cv_al_up_double_mem.get(), 3UL);
-  cv_al_up_double[0] = 1.5;
-  cv_al_up_double[1] = 2.5;
-  cv_al_up_double[2] = 4.5;
+  blaze::HybridMatrix<double, 2UL, 3UL, blaze::columnMajor> hm_double_cm(2UL, 3UL);
+  hm_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
-  std::unique_ptr<double[], blaze::Deallocate> cv_al_pa_double_mem(blaze::allocate<double>(4UL));
-  blaze::CustomVector<double, blaze::aligned, blaze::padded> cv_al_pa_double(cv_al_pa_double_mem.get(), 3UL, 4UL);
-  cv_al_pa_double[0] = 1.5;
-  cv_al_pa_double[1] = 2.5;
-  cv_al_pa_double[2] = 4.5;
+  blaze::HybridMatrix<double, 2UL, 3UL, blaze::rowMajor> hm_double_rm(2UL, 3UL);
+  hm_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
+
+  std::unique_ptr<double[], blaze::Deallocate> al_pa_memory_cm(blaze::allocate<double>(16UL));
+  blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor> cm_al_pa_double_cm(al_pa_memory_cm.get(), 2UL, 3UL, 8UL);
+  cm_al_pa_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
+
+  std::unique_ptr<double[], blaze::Deallocate> al_pa_memory_rm(blaze::allocate<double>(16UL));
+  blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::rowMajor> cm_al_pa_double_rm(al_pa_memory_rm.get(), 2UL, 3UL, 8UL);
+  cm_al_pa_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
   return Rcpp::List::create(
-    _["dv_int"] = dv_int,
-    _["dv_double"] = dv_double,
-    _["dv_cmpl"] = dv_cmpl,
-    _["sv_double"] = sv_double,
-    _["hv_double"] = hv_double,
-    _["cv_ua_up_double"] = cv_ua_up_double,
-    _["cv_ua_pa_double"] = cv_ua_pa_double,
-    _["cv_al_up_double"] = cv_al_up_double,
-    _["cv_al_pa_double"] = cv_al_pa_double
+    _["dm_int_cm"] = dm_int_cm,
+    _["dm_int_rm"] = dm_int_rm,
+   // _["dm_cmplx_cm"] = dm_cmplx_cm,
+   // _["dm_cmplx_rm"] = dm_cmplx_rm,
+    _["dm_double_cm"] = dm_double_cm,
+    _["dm_double_rm"] = dm_double_rm,
+    _["sm_double_cm"] = sm_double_cm,
+    _["sm_double_rm"] = sm_double_rm,
+    _["hm_double_cm"] = hm_double_cm,
+    _["hm_double_rm"] = hm_double_rm,
+    _["cm_al_pa_double_cm"] = cm_al_pa_double_cm,
+    _["cm_al_pa_double_rm"] = cm_al_pa_double_rm
   );
 }
 

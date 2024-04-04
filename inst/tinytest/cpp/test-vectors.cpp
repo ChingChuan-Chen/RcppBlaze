@@ -22,37 +22,36 @@ using namespace std::complex_literals;
 
 // [[Rcpp::export]]
 Rcpp::List vector_wrap_test() {
-  blaze::DynamicVector<int> dv_int(3);
-  dv_int = {1, 2, 4};
+  blaze::DynamicVector<int> dv_int(3UL);
+  dv_int = {1, -2, 4};
 
-  blaze::DynamicVector<std::complex<double>> dv_cmpl(3);
-  dv_cmpl = {1.5 + 0.2i, 0.75 + 0.3i, 3.0 + 0.1i};
+  blaze::DynamicVector<std::complex<double>> dv_cmpl(3UL);
+  dv_cmpl = {1.5 + 0.2i, -0.75 - 0.3i, -3.0 + 0.1i};
 
-  blaze::DynamicVector<double> dv_double(3);
-  dv_double = {1.5, 2.5, 4.5};
+  blaze::DynamicVector<double> dv_double(3UL);
+  dv_double = {1.5, -2.5, 4.5};
 
-  blaze::StaticVector<double, 3> sv_double;
-  sv_double = {1.5, 2.5, 4.5};
+  blaze::StaticVector<double, 3UL> sv_double;
+  sv_double = {1.5, -2.5, 4.5};
 
-  blaze::HybridVector<double, 3> hv_double(3);
-  hv_double = {1.5, 2.5, 4.5};
+  blaze::HybridVector<double, 3UL> hv_double(3UL);
+  hv_double = {1.5, -2.5, 4.5};
 
-  std::vector<double> vec(3UL);
-  blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> cv_ua_up_double(&vec[0], 3UL);
-  cv_ua_up_double = {1.5, 2.5, 4.5};
+  std::unique_ptr<double[], blaze::ArrayDelete> cv_ua_up_double_mem(new double[3UL]);
+  blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> cv_ua_up_double(cv_ua_up_double_mem.get(), 3UL);
+  cv_ua_up_double = {1.5, -2.5, 4.5};
 
-  std::unique_ptr<double[]> cv_ua_pa_double_mem(new double[4]);
+  std::unique_ptr<double[], blaze::ArrayDelete> cv_ua_pa_double_mem(new double[4UL]);
   blaze::CustomVector<double, blaze::unaligned, blaze::padded> cv_ua_pa_double(cv_ua_pa_double_mem.get(), 3UL, 4UL);
-  cv_ua_pa_double = {1.5, 2.5, 4.5};
-
+  cv_ua_pa_double = {1.5, -2.5, 4.5};
 
   std::unique_ptr<double[], blaze::Deallocate> cv_al_up_double_mem(blaze::allocate<double>(3UL));
   blaze::CustomVector<double, blaze::aligned, blaze::unpadded> cv_al_up_double(cv_al_up_double_mem.get(), 3UL);
-  cv_al_up_double = {1.5, 2.5, 4.5};
+  cv_al_up_double = {1.5, -2.5, 4.5};
 
   std::unique_ptr<double[], blaze::Deallocate> cv_al_pa_double_mem(blaze::allocate<double>(4UL));
   blaze::CustomVector<double, blaze::aligned, blaze::padded> cv_al_pa_double(cv_al_pa_double_mem.get(), 3UL, 4UL);
-  cv_al_pa_double = {1.5, 2.5, 4.5};
+  cv_al_pa_double = {1.5, -2.5, 4.5};
 
   // TODO: CompressedVector, ZeroVector
 
@@ -75,16 +74,16 @@ Rcpp::List vector_as_test(Rcpp::List input_list) {
   blaze::DynamicVector<double> dv_double = input_list[1];
   blaze::StaticVector<double, 3> sv_double = input_list[1];
   blaze::HybridVector<double, 3> hv_double = input_list[1];
-  blaze::StaticVector<double, 3, blaze::rowVector, blaze::aligned> sv_double_aligned = input_list[1];
-  blaze::HybridVector<double, 3, blaze::rowVector, blaze::aligned> hv_double_aligned = input_list[1];
+  blaze::StaticVector<double, 3, blaze::rowVector, blaze::unaligned> sv_double_unaligned = input_list[1];
+  blaze::HybridVector<double, 3, blaze::rowVector, blaze::unaligned> hv_double_unaligned = input_list[1];
 
   return Rcpp::List::create(
     _["dv_int_sum"] = blaze::sum(dv_int),
     _["dv_double_sum"] = blaze::sum(dv_double),
     _["sv_double_sum"] = blaze::sum(sv_double),
-    _["sv_double_aligned_sum"] = blaze::sum(sv_double_aligned),
+    _["sv_double_unaligned_sum"] = blaze::sum(sv_double_unaligned),
     _["hv_double_sum"] = blaze::sum(dv_double),
-    _["hv_double_aligned_sum"] = blaze::sum(hv_double_aligned)
+    _["hv_double_unaligned_sum"] = blaze::sum(hv_double_unaligned)
   );
 }
 
@@ -115,7 +114,7 @@ Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
   return Rcpp::List::create(
     Rcpp::_["iCustomVectorUU"] = blaze::sum(cv_int),
     Rcpp::_["dCustomVectorUU"] = blaze::sum(cv_uu_double),
-    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_up_double)
+    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_up_double),
     Rcpp::_["dCustomVectorAU"] = blaze::sum(cv_au_double),
     Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_ap_double)
   );
