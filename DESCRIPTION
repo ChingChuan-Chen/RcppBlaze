@@ -15,9 +15,7 @@ Description: Blaze is an open-source, high-performance C++ math library for dens
     intuitive and fastest C++ math libraries available. The 'RcppBlaze' package includes the header files 
     from the 'Blaze' library with disabling some functionalities related to link to the thread and system
     libraries which make 'RcppBlaze' be a header-only library. Therefore, users do not need to install 
-    'Blaze'. 'Blaze' is licensed under the New (Revised) BSD license, while 'RcppBlaze' 
-    (the 'Rcpp' bindings/bridge to 'Blaze') is licensed under the GNU GPL version 2 or later, as is the 
-    rest of 'Rcpp'.
+    'Blaze'.
 Depends:
     R (>= 4.2.0)
 Imports:
@@ -33,5 +31,5 @@ Suggests:
     pkgKitten
 LazyLoad: yes
 Encoding: UTF-8
-License: GPL (>= 2)
+License: BSD_3_clause + file LICENSE
 RoxygenNote: 7.3.1

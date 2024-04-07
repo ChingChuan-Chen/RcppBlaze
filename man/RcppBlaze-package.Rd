@@ -15,9 +15,7 @@ ease of use of a domain-specific language with HPC-grade performance, making it 
 intuitive and fastest C++ math libraries available. The \strong{RcppBlaze} package includes the header files
 from the \strong{Blaze} library with disabling some functionalities related to link to the thread and system
 libraries which make \strong{RcppBlaze} be a header-only library. Therefore, users do not need to  install
-\strong{Blaze}. \strong{Blaze} is licensed under the New (Revised) BSD license, while \strong{RcppBlaze}
-(the \strong{Rcpp} bindings/bridge to \strong{Blaze}) is licensed under the GNU GPL version 2 or later,
-as is the rest of \strong{Rcpp}.
+\strong{Blaze}.
 }
 \section{Using RcppBlaze}{
 
@@ -28,14 +26,10 @@ using \code{RcppBlaze}. This can be done conveniently by the
 The important steps are
 \enumerate{
 \item Include the \samp{RcppBlaze.h} header file, which also includes \samp{blaze/Blaze.h}.
-\item Import \code{Rcpp}, LinkingTo \code{Rcpp}, \code{BH} and \code{RcppBlaze} by adding these lines to the \samp{DESCRIPTION} file:
+\item Import \code{Rcpp}, LinkingTo \code{Rcpp} and \code{RcppBlaze} by adding these lines to the \samp{DESCRIPTION} file:
 \preformatted{
   Imports: Rcpp (>= 1.0.0)
   LinkingTo: Rcpp, RcppBlaze
-}
-\item Link against the \code{BLAS} and \code{LAPACK} libraries, by adding following two lines in the \samp{Makevars} files:
-\preformatted{
-  PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
 }
 }
 

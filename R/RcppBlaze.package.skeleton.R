@@ -1,25 +1,13 @@
-## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
-## Copyright (C) 2014        Dirk Eddelbuettel
+## Copyright (C) 2010 - 2024 Dirk Eddelbuettel, Romain Francois and Douglas Bates
 ## Copyright (C) 2017 - 2024 Ching-Chuan Chen
 ##
-## This file is based on RcppArmadillo.package.skeleton.R,
-## RcppArmadillo.package.skeleton.Rd, RcppEigen.package.skeleton.R
-## and RcppEigen.package.skeleton.Rd from RcppArmadillo and RcppEigen.
-##
+## This file is based on files from RcppArmadillo.
 ## This file is part of RcppBlaze.
 ##
 ## RcppBlaze is free software: you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 2 of the License, or
-## (at your option) any later version.
-##
-## RcppBlaze is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with RcppBlaze  If not, see <http://www.gnu.org/licenses/>.
+## under the terms of the 3-Clause BSD License. You should have received
+## a copy of 3-Clause BSD License along with RcppBlaze.
+## If not, see https://opensource.org/license/BSD-3-Clause.
 
 #' Create a skeleton for a new package that intends to use RcppBlaze
 #'
@@ -31,8 +19,8 @@
 #' In addition to \link[utils]{package.skeleton} :
 #'
 #' The \samp{DESCRIPTION} file gains a Depends line requesting that
-#' the package depends on Rcpp and RcppArmadillo and
-#' a LinkingTo line so that the package finds Rcpp and RcppArmadillo header files.
+#' the package depends on Rcpp and RcppBlaze and
+#' a LinkingTo line so that the package finds Rcpp and RcppBlaze header files.
 #'
 #' The \samp{NAMESPACE}, if any, gains a \code{useDynLib} directive.
 #'

@@ -1,24 +1,14 @@
+// Copyright (C)  2010 - 2024  Dirk Eddelbuettel, Romain Francois and Douglas Bates
 // Copyright (C)  2017 - 2024  Ching-Chuan Chen
-// Copyright (C)  2010 - 2016  Dirk Eddelbuettel, Romain Francois and Douglas Bates
-// Copyright (C)  2011         Douglas Bates, Dirk Eddelbuettel and Romain Francois
 //
-// This file is based on fastLm.cpp and fastLm.h from RcppArmadillo and RcppEigen.
+// This file is based on files from RcppArmadillo.
+//
 // This file is part of RcppBlaze.
 //
-// fastLm.cpp: lm model written RcppBlaze
-//
 // RcppBlaze is free software: you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 2 of the License, or
-// (at your option) any later version.
-//
-// RcppBlaze is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with RcppBlaze.  If not, see <http://www.gnu.org/licenses/>.
+// under the terms of the 3-Clause BSD License. You should have received
+// a copy of 3-Clause BSD License along with RcppBlaze.
+// If not, see https://opensource.org/license/BSD-3-Clause.
 
 #include <RcppBlaze.h>
 using Rcpp::_;
@@ -26,80 +16,50 @@ using Rcpp::_;
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 // [[Rcpp::export]]
-Rcpp::List testAs1(Rcpp::List input_list) {
-  blaze::DynamicMatrix<int, blaze::columnMajor> dm_int = input_list[0];
-  Rcpp::Rcout << dm_int << std::endl;
-
-  blaze::DynamicMatrix<double, blaze::columnMajor> dm_double = input_list[1];
-  Rcpp::Rcout << dm_double  << std::endl;
-
-  blaze::StaticMatrix<double, 2, 3, blaze::columnMajor> sm_double = input_list[1];
-  Rcpp::Rcout << sm_double  << std::endl;
-
+Rcpp::List testAs1(Rcpp::NumericVector x) {
+  blaze::StaticVector<double, 5, blaze::columnVector> y = Rcpp::as<blaze::StaticVector<double, 5, blaze::columnVector>>(x);
+  Rcpp::Rcout << y << std::endl;
   return Rcpp::List::create(
-    Rcpp::_["blaze::dm_int"] = blaze::sum(dm_int),
-    Rcpp::_["blaze::dm_double"] = blaze::sum(dm_double),
-    Rcpp::_["blaze::sm_double"] = blaze::sum(sm_double)
+    _["test"] = true
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List testAs2(Rcpp::NumericVector x) {
+  blaze::DynamicVector<double, blaze::rowVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::rowVector>>(x);
+  Rcpp::Rcout << y << std::endl;
+  return Rcpp::List::create(
+    _["test"] = true
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List testAs3(Rcpp::NumericMatrix x) {
+  blaze::DynamicMatrix<double, blaze::columnMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::columnMajor>>(x);
+  Rcpp::Rcout << y << std::endl;
+  return Rcpp::List::create(
+    _["test"] = true
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List testAs4(Rcpp::NumericMatrix x) {
+  blaze::DynamicMatrix<double, blaze::rowMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::rowMajor>>(x);
+  Rcpp::Rcout << y << std::endl;
+  return Rcpp::List::create(
+    _["test"] = true
   );
 }
 
 // [[Rcpp::export]]
 Rcpp::List testWrap1() {
-  using namespace std::complex_literals;
-
-  blaze::DynamicMatrix<int, blaze::columnMajor> dm_int_cm(2, 3);
-  dm_int_cm = { { 3,  6, 3 }, { -4, -12, 0 } };
-
-  blaze::DynamicMatrix<int, blaze::rowMajor> dm_int_rm(2, 3);
-  dm_int_rm = { { 3,  6, 3 }, { -4, -12, 0 } };
-
-  /*
-  blaze::DynamicMatrix<std::complex<double>> dm_cmplx_cm(2, 3);
-  dm_cmplx_cm = { {  1.5 + 0.2i,  2.5 + 0.4i, 4.5 - 0.5i }, { -0.5 - 0.1i, -12.1 + 2i, 0.6i } };
-
-  blaze::DynamicMatrix<std::complex<double>, blaze::rowMajor> dm_cmplx_rm(2, 3);
-  dm_cmplx_rm = { {  1.5 + 0.2i,  2.5 + 0.4i, 4.5 - 0.5i }, { -0.5 - 0.1i, -12.1 + 2i, 0.6i } };
-  */
-
-  blaze::DynamicMatrix<double, blaze::columnMajor> dm_double_cm(2, 3);
-  dm_double_cm = { { 1.5,  2.5, 4.5 }, { -0.5, -12.1, -3.3 } };
-
-  blaze::DynamicMatrix<double, blaze::rowMajor> dm_double_rm(2, 3);
-  dm_double_rm = { { 1.5,  2.5, 4.5 }, { -0.5, -12.1, -3.3 } };
-
-  blaze::StaticMatrix<double, 2UL, 3UL, blaze::columnMajor> sm_double_cm;
-  sm_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
-
-  blaze::StaticMatrix<double, 2UL, 3UL, blaze::rowMajor> sm_double_rm;
-  sm_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
-
-  blaze::HybridMatrix<double, 2UL, 3UL, blaze::columnMajor> hm_double_cm(2UL, 3UL);
-  hm_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
-
-  blaze::HybridMatrix<double, 2UL, 3UL, blaze::rowMajor> hm_double_rm(2UL, 3UL);
-  hm_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
-
-  std::unique_ptr<double[], blaze::Deallocate> al_pa_memory_cm(blaze::allocate<double>(16UL));
-  blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor> cm_al_pa_double_cm(al_pa_memory_cm.get(), 2UL, 3UL, 8UL);
-  cm_al_pa_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
-
-  std::unique_ptr<double[], blaze::Deallocate> al_pa_memory_rm(blaze::allocate<double>(16UL));
-  blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::rowMajor> cm_al_pa_double_rm(al_pa_memory_rm.get(), 2UL, 3UL, 8UL);
-  cm_al_pa_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
+  blaze::DynamicVector<int> dv_int(3);
+  dv_int[0] = 1;
+  dv_int[1] = 2;
+  dv_int[2] = 4;
 
   return Rcpp::List::create(
-    _["dm_int_cm"] = dm_int_cm,
-    _["dm_int_rm"] = dm_int_rm,
-   // _["dm_cmplx_cm"] = dm_cmplx_cm,
-   // _["dm_cmplx_rm"] = dm_cmplx_rm,
-    _["dm_double_cm"] = dm_double_cm,
-    _["dm_double_rm"] = dm_double_rm,
-    _["sm_double_cm"] = sm_double_cm,
-    _["sm_double_rm"] = sm_double_rm,
-    _["hm_double_cm"] = hm_double_cm,
-    _["hm_double_rm"] = hm_double_rm,
-    _["cm_al_pa_double_cm"] = cm_al_pa_double_cm,
-    _["cm_al_pa_double_rm"] = cm_al_pa_double_rm
+    _["test"] = dv_int
   );
 }
 

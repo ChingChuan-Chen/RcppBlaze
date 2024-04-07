@@ -3,35 +3,23 @@
 #' RcppBlaze construct a bridge between R and Blaze.
 #'
 #' 'Blaze' is an open-source, high-performance C++ math library for dense and sparse arithmetic.
-## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
-## Copyright (C) 2014        Dirk Eddelbuettel
+## Copyright (C) 2010 - 2024 Dirk Eddelbuettel, Romain Francois and Douglas Bates
 ## Copyright (C) 2017 - 2024 Ching-Chuan Chen
 ##
-## This file is based on RcppEigen-package.Rd and RcppArmadillo-package.Rd
-## from RcppArmadillo and RcppEigen.
+## This file is based on files from RcppArmadillo.
 ## This file is part of RcppBlaze.
 ##
 ## RcppBlaze is free software: you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 2 of the License, or
-## (at your option) any later version.
-##
-## RcppBlaze is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with RcppBlaze  If not, see <http://www.gnu.org/licenses/>.
+## under the terms of the 3-Clause BSD License. You should have received
+## a copy of 3-Clause BSD License along with RcppBlaze.
+## If not, see https://opensource.org/license/BSD-3-Clause.
 
 #' With its state-of-the-art Smart Expression Template implementation \strong{Blaze} combines the elegance and
 #' ease of use of a domain-specific language with HPC-grade performance, making it one of the most
 #' intuitive and fastest C++ math libraries available. The \strong{RcppBlaze} package includes the header files
 #' from the \strong{Blaze} library with disabling some functionalities related to link to the thread and system
 #' libraries which make \strong{RcppBlaze} be a header-only library. Therefore, users do not need to  install
-#' \strong{Blaze}. \strong{Blaze} is licensed under the New (Revised) BSD license, while \strong{RcppBlaze}
-#' (the \strong{Rcpp} bindings/bridge to \strong{Blaze}) is licensed under the GNU GPL version 2 or later,
-#' as is the rest of \strong{Rcpp}.
+#' \strong{Blaze}.
 #'
 #' @section Using RcppBlaze:
 #' The simplest way to get started is to create a skeleton of a package

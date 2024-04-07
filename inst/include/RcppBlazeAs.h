@@ -1,26 +1,13 @@
-// Copyright (C)  2013 - 2021  Dirk Eddelbuettel, Romain Francois and Douglas Bates
-// Copyright (C)  2017 - 2021  Serguei Sokol
-// Copyright (C)  2011         Douglas Bates, Dirk Eddelbuettel and Romain Francois
-// Copyright (C)  2017 - 2024  Ching-Chuan Chen
+// Copyright (C) 2010 - 2024 Dirk Eddelbuettel, Romain Francois and Douglas Bates
+// Copyright (C) 2017 - 2024 Ching-Chuan Chen
 //
-// This file is based on RcppArmadillo and RcppEigen.
+// This file is based on Rcpp.
 // This file is part of RcppBlaze.
 //
-// RcppBlazeAs.h: Rcpp/Blaze glue
-//
 // RcppBlaze is free software: you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 2 of the License, or
-// (at your option) any later version.
-//
-// RcppBlaze is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with RcppBlaze.  If not, see <http://www.gnu.org/licenses/>.
-
+// under the terms of the 3-Clause BSD License. You should have received
+// a copy of 3-Clause BSD License along with RcppBlaze.
+// If not, see https://opensource.org/license/BSD-3-Clause.
 #ifndef RcppBlaze__RcppBlazeAs__h
 #define RcppBlaze__RcppBlazeAs__h
 
@@ -39,7 +26,7 @@ namespace Rcpp {
     public:
       typedef value_type r_export_type;
 
-      BlazeVectorExporter(SEXP x) : object(x){}
+      BlazeVectorExporter(SEXP r_obj) : object(r_obj){}
       ~BlazeVectorExporter(){}
 
       T get() {
@@ -66,120 +53,130 @@ namespace Rcpp {
       Exporter(SEXP x) : BlazeVectorExporter<blaze::HybridVector<Type, N, TF, AF, PF>, Type>(x){}
     };
 
+#define RCPPBLAZE_GET_TYPEMAP_SIZE                                        \
+  const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;         \
+  typedef typename Rcpp::traits::storage_type<RTYPE>::type r_object_type; \
+  Shield<SEXP> x(Rcpp::r_cast<RTYPE>(object));                            \
+  r_object_type* y = Rcpp::internal::r_vector_start<RTYPE>(x);            \
+  size_t size = (size_t) Rf_xlength(x);
+
+#define RCPPBLAZE_VEC_COPY                                                \
+  for (size_t i=0UL; i<size; ++i) {                                       \
+    result[i] = Rcpp::internal::caster<r_object_type, Type>(y[i]);        \
+  }
+
+
     // exporter for StaticVector since its constructor does not need size
     template <typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
     class Exporter< blaze::StaticVector<Type, N, TF, AF, PF> > {
-      const static int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      Rcpp::Vector<RTYPE> vec;
-
     public:
       typedef Type r_export_type;
-      Exporter(SEXP x) : vec(x) {}
-      blaze::StaticVector<Type, N, TF, AF, PF> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
 
-        size_t n = (size_t) vec.size();
-        if (n != N) {
+      Exporter(SEXP r_obj) : object(r_obj){}
+      ~Exporter(){}
+
+      blaze::StaticVector<Type, N, TF, AF, PF> get() {
+        RCPPBLAZE_GET_TYPEMAP_SIZE;
+        if (size != N) {
           throw std::invalid_argument("Dimension of vector is not match.");
         }
 
         blaze::StaticVector<Type, N, TF, AF, PF> result;
-        for (size_t i=0UL; i<n; ++i) {
-          result[i] = Rcpp::internal::caster<value_t, Type>(vec[i]);
-        }
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
+
+    private:
+      SEXP object;
     };
 
     // Provides only blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> export
     template<typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> > {
-      const static int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      Rcpp::Vector<RTYPE> vec;
-
     public:
       typedef Type r_export_type;
-      Exporter(SEXP x) : vec(x) {}
-      blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        size_t n = (size_t) vec.size();
-        std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[n]);
 
-        blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> result(data.get(), n);
-        for (size_t i=0UL; i<n; ++i) {
-          result[i] = Rcpp::internal::caster<value_t, Type>(vec[i]);
-        }
+      Exporter(SEXP r_obj) : object(r_obj){}
+      ~Exporter(){}
+
+      blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> get() {
+        RCPPBLAZE_GET_TYPEMAP_SIZE;
+        std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[size]);
+        blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> result(data.get(), size);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
+
+    private:
+      SEXP object;
     };
 
     // Provides only blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> export
     template<typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> > {
-      const static int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      Rcpp::Vector<RTYPE> vec;
-
     public:
       typedef Type r_export_type;
-      Exporter(SEXP x) : vec(x) {}
-      blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        size_t n = (size_t) vec.size();
-        size_t paddedSize = blaze::nextMultiple<size_t>(n, blaze::SIMDTrait<Type>::size);
-        std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[paddedSize]);
 
-        blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> result(data.get(), n, paddedSize);
-        for (size_t i=0UL; i<n; ++i) {
-          result[i] = Rcpp::internal::caster<value_t, Type>(vec[i]);
-        }
+      Exporter(SEXP r_obj) : object(r_obj){}
+      ~Exporter(){}
+
+      blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> get() {
+        RCPPBLAZE_GET_TYPEMAP_SIZE;
+        size_t paddedSize = blaze::nextMultiple<size_t>(size, blaze::SIMDTrait<Type>::size);
+        std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[paddedSize]);
+        blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> result(data.get(), size, paddedSize);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
+
+    private:
+      SEXP object;
     };
 
     // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> export (not supported)
     template<typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::unpadded,TF> > {
-      const static int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      Rcpp::Vector<RTYPE> vec;
-
     public:
       typedef Type r_export_type;
-      Exporter(SEXP x) : vec(x) {}
-      blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        size_t n = (size_t) vec.size();
-        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(n));
 
-        blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> result(data.get(), n);
-        for (size_t i=0UL; i<n; ++i) {
-          result[i] = Rcpp::internal::caster<value_t, Type>(vec[i]);
-        }
+      Exporter(SEXP r_obj) : object(r_obj){}
+      ~Exporter(){}
+
+      blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> get() {
+        RCPPBLAZE_GET_TYPEMAP_SIZE;
+        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(size));
+        blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> result(data.get(), size);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
+
+    private:
+      SEXP object;
     };
 
     // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> export (not supported)
     template<typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> > {
-      const static int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      Rcpp::Vector<RTYPE> vec;
-
     public:
       typedef Type r_export_type;
-      Exporter(SEXP x) : vec(x) {}
-      blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> get() {
-        typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-        size_t n = (size_t) vec.size();
-        size_t paddedSize = blaze::nextMultiple<size_t>(n, blaze::SIMDTrait<Type>::size);
-        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(paddedSize));
 
-        blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> result(data.get(), n, paddedSize);
-        for (size_t i=0UL; i<n; ++i) {
-          result[i] = Rcpp::internal::caster<value_t, Type>(vec[i]);
-        }
+      Exporter(SEXP r_obj) : object(r_obj){}
+      ~Exporter(){}
+
+      blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> get() {
+        RCPPBLAZE_GET_TYPEMAP_SIZE;
+        size_t paddedSize = blaze::nextMultiple<size_t>(size, blaze::SIMDTrait<Type>::size);
+        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(paddedSize));
+        blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> result(data.get(), size, paddedSize);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
+
+    private:
+      SEXP object;
     };
+
+#undef RCPPBLAZE_VEC_COPY
 
     // ---------------------------- Dense Matrix Exporter ----------------------------
 #define RCPPBLAZE_MATRIX_COPY(__IDX1__, __IDX2__, __END1__, __END2__)    \

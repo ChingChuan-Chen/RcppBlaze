@@ -1,3 +1,12 @@
+// Copyright (C) 2017 - 2024 Ching-Chuan Chen
+//
+// This file is part of RcppBlaze.
+//
+// RcppBlaze is free software: you can redistribute it and/or modify it
+// under the terms of the 3-Clause BSD License. You should have received
+// a copy of 3-Clause BSD License along with RcppBlaze.
+// If not, see https://opensource.org/license/BSD-3-Clause.
+
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
@@ -5,11 +14,17 @@
 /* .Call calls */
 extern SEXP _RcppBlaze_blaze_version(SEXP);
 extern SEXP _RcppBlaze_testAs1(SEXP);
+extern SEXP _RcppBlaze_testAs2(SEXP);
+extern SEXP _RcppBlaze_testAs3(SEXP);
+extern SEXP _RcppBlaze_testAs4(SEXP);
 extern SEXP _RcppBlaze_testWrap1();
 
 static const R_CallMethodDef CallEntries[] = {
   {"_RcppBlaze_blaze_version", (DL_FUNC) &_RcppBlaze_blaze_version, 1},
   {"_RcppBlaze_testAs1", (DL_FUNC) &_RcppBlaze_testAs1, 1},
+  {"_RcppBlaze_testAs2", (DL_FUNC) &_RcppBlaze_testAs2, 1},
+  {"_RcppBlaze_testAs3", (DL_FUNC) &_RcppBlaze_testAs3, 1},
+  {"_RcppBlaze_testAs4", (DL_FUNC) &_RcppBlaze_testAs4, 1},
   {"_RcppBlaze_testWrap1", (DL_FUNC) &_RcppBlaze_testWrap1, 0},
   {NULL, NULL, 0}
 };

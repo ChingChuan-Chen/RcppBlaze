@@ -32,8 +32,8 @@ which it executes first.
 In addition to \link[utils]{package.skeleton} :
 
 The \samp{DESCRIPTION} file gains a Depends line requesting that
-the package depends on Rcpp and RcppArmadillo and
-a LinkingTo line so that the package finds Rcpp and RcppArmadillo header files.
+the package depends on Rcpp and RcppBlaze and
+a LinkingTo line so that the package finds Rcpp and RcppBlaze header files.
 
 The \samp{NAMESPACE}, if any, gains a \code{useDynLib} directive.
 

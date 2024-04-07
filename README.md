@@ -8,8 +8,7 @@ for dense and sparse arithmetic. With its state-of-the-art *Smart Expression Tem
 making it one of the most  intuitive and fastest C++ math libraries available. The **RcppBlaze** package includes 
 the header files from the **Blaze** library with disabling some functionalities related to link to the thread and 
 system libraries which make **RcppBlaze** be a header-only library. Therefore, users do not need to  install 
-**Blaze**. **Blaze** is licensed under the New (Revised) BSD license, while **RcppBlaze** 
-(the 'Rcpp' bindings/bridge to **Blaze**) is licensed under the GNU GPL version 2 or later, as is the rest of **Rcpp**. 
+**Blaze**.
 
 ### Installation
 

@@ -1,6 +1,6 @@
 ## lmBenchmark.R: Benchmark different implementations of linear model solutions
 ##
-## Copyright (C)  2017 Douglas Bates, Dirk Eddelbuettel, Romain Francois and Ching-Chuan Chen
+## Copyright (C) 2017 - 2024 Douglas Bates, Dirk Eddelbuettel, Romain Francois and Ching-Chuan Chen
 ##
 ## This file is based on lmBenchmark.R from RcppEigen.
 ## This file is part of RcppBlaze.
