@@ -16,36 +16,38 @@ using Rcpp::_;
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 // [[Rcpp::export]]
-Rcpp::List testAs1(Rcpp::NumericVector x) {
-  blaze::StaticVector<double, 5, blaze::columnVector> y = Rcpp::as<blaze::StaticVector<double, 5, blaze::columnVector>>(x);
-  Rcpp::Rcout << y << std::endl;
-  return Rcpp::List::create(
-    _["test"] = true
-  );
-}
+Rcpp::List testAs1(Rcpp::NumericMatrix x) {
+/*
+  typedef typename blaze::CustomMatrix<double, blaze::unaligned, blaze::unpadded, blaze::columnMajor> dCustomMatrixUU;
+  dCustomMatrixUU w = Rcpp::as<dCustomMatrixUU>(x);
+  Rcpp::Rcout << w << std::endl;
 
-// [[Rcpp::export]]
-Rcpp::List testAs2(Rcpp::NumericVector x) {
-  blaze::DynamicVector<double, blaze::rowVector> y = Rcpp::as<blaze::DynamicVector<double, blaze::rowVector>>(x);
+  typedef typename blaze::CustomMatrix<double, blaze::unaligned, blaze::unpadded, blaze::rowMajor> dCustomMatrixUU2;
+  dCustomMatrixUU2 y = Rcpp::as<dCustomMatrixUU2>(x);
   Rcpp::Rcout << y << std::endl;
-  return Rcpp::List::create(
-    _["test"] = true
-  );
-}
+*/
 
-// [[Rcpp::export]]
-Rcpp::List testAs3(Rcpp::NumericMatrix x) {
-  blaze::DynamicMatrix<double, blaze::columnMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::columnMajor>>(x);
-  Rcpp::Rcout << y << std::endl;
-  return Rcpp::List::create(
-    _["test"] = true
-  );
-}
+  Rcpp::Rcout << "Column-Major:" << std::endl;
+  size_t m = x.rows(), n = x.cols();
+  size_t paddedSize = blaze::nextMultiple<size_t>(n, blaze::SIMDTrait<double>::size);
+  size_t matSize = (SO == blaze::rowMajor)?(paddedSize*n):(m*paddedSize);
+  Rcpp::Rcout << "m: " << m << ", n: " << n << ", paddedSize: " << paddedSize << "matSize: " << matSize << std::endl;
+  Rcpp::Rcout << "Row-Major:" << std::endl;
+  size_t m2 = x.rows(), n2 = x.cols();
+  size_t paddedSize2 = blaze::nextMultiple<size_t>(m, blaze::SIMDTrait<double>::size);
+  size_t matSize2 = (SO == blaze::rowMajor)?(paddedSize*n):(m*paddedSize);
+  Rcpp::Rcout << "m: " << m2 << ", n: " << n2 << ", paddedSize: " << paddedSize2 << "matSize: " << matSize2 << std::endl;
 
-// [[Rcpp::export]]
-Rcpp::List testAs4(Rcpp::NumericMatrix x) {
-  blaze::DynamicMatrix<double, blaze::rowMajor> y = Rcpp::as<blaze::DynamicMatrix<double, blaze::rowMajor>>(x);
-  Rcpp::Rcout << y << std::endl;
+  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::columnMajor> dCustomMatrixAP;
+
+  dCustomMatrixAP z = Rcpp::as<dCustomMatrixAP>(x);
+  Rcpp::Rcout << z << std::endl;
+
+  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::rowMajor> dCustomMatrixAP2;
+
+  dCustomMatrixAP2 t = Rcpp::as<dCustomMatrixAP2>(x);
+  Rcpp::Rcout << t << std::endl;
+
   return Rcpp::List::create(
     _["test"] = true
   );

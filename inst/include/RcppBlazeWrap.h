@@ -15,11 +15,6 @@
 
 // most code are modified from the definition of matrix in blaze
 
-// TODO:
-// Convert IdentityMatrix, ZeroMatrix
-// Convert Symmetric Matrices, Hermitian Matrices, Triangular Matrices
-// Convert Submatrix, Subvector, Row, Column, Rows, Columns, Band
-
 namespace Rcpp {
 
   namespace RcppBlaze {
@@ -224,6 +219,12 @@ namespace Rcpp {
 
    // adaptors
   /*
+
+   // TODO:
+   // Convert IdentityMatrix, ZeroMatrix
+   // Convert Symmetric Matrices, Hermitian Matrices, Triangular Matrices
+   // Convert Submatrix, Subvector, Row, Column, Rows, Columns, Band
+
   template<typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::DiagonalMatrix<MT, SO, DF>& dm) {
     return RcppBlaze::blaze_wrap(dm);
@@ -269,6 +270,9 @@ namespace Rcpp {
     return RcppBlaze::blaze_wrap(uum);
   };
    */
+
+  // TODO:
+  // Convert Exprs
 }
 
 #endif

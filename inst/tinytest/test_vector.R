@@ -44,4 +44,3 @@ expect_equal(vector_as_res[["dCustomVectorUU"]], expect_double_sum, info = "dCus
 expect_equal(vector_as_res[["dCustomVectorUP"]], expect_double_sum, info = "dCustomVectorUP")
 expect_equal(vector_as_res[["dCustomVectorAU"]], expect_double_sum, info = "dCustomVectorAU")
 expect_equal(vector_as_res[["dCustomVectorAP"]], expect_double_sum, info = "dCustomVectorAP")
-
