@@ -54,24 +54,24 @@ Rcpp::List matrix_wrap_test() {
   blaze::CustomMatrix<double, blaze::unaligned, blaze::unpadded, blaze::rowMajor> cm_ua_up_double_rm(ua_up_memory_rm.get(), 2UL, 3UL);
   cm_ua_up_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
-  std::unique_ptr<double[], blaze::ArrayDelete> ua_pa_memory_cm(new double[8UL]);
-  blaze::CustomMatrix<double, blaze::unaligned, blaze::padded, blaze::columnMajor> cm_ua_pa_double_cm(ua_pa_memory_cm.get(), 2UL, 3UL, 4UL);
+  std::unique_ptr<double[], blaze::ArrayDelete> ua_pa_memory_cm(new double[6UL]);
+  blaze::CustomMatrix<double, blaze::unaligned, blaze::padded, blaze::columnMajor> cm_ua_pa_double_cm(ua_pa_memory_cm.get(), 2UL, 3UL, 2UL);
   cm_ua_pa_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
   std::unique_ptr<double[], blaze::ArrayDelete> ua_pa_memory_rm(new double[8UL]);
   blaze::CustomMatrix<double, blaze::unaligned, blaze::padded, blaze::rowMajor> cm_ua_pa_double_rm(ua_pa_memory_rm.get(), 2UL, 3UL, 4UL);
   cm_ua_pa_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
-  std::unique_ptr<double[], blaze::Deallocate> al_up_memory_cm(blaze::allocate<double>(8UL));
-  blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::columnMajor> cm_al_up_double_cm(al_up_memory_cm.get(), 2UL, 3UL, 4UL);
+  std::unique_ptr<double[], blaze::Deallocate> al_up_memory_cm(blaze::allocate<double>(6UL));
+  blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::columnMajor> cm_al_up_double_cm(al_up_memory_cm.get(), 2UL, 3UL, 2UL);
   cm_al_up_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
   std::unique_ptr<double[], blaze::Deallocate> al_up_memory_rm(blaze::allocate<double>(8UL));
   blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::rowMajor> cm_al_up_double_rm(al_up_memory_rm.get(), 2UL, 3UL, 4UL);
   cm_al_up_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
-  std::unique_ptr<double[], blaze::Deallocate> al_pa_memory_cm(blaze::allocate<double>(8UL));
-  blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor> cm_al_pa_double_cm(al_pa_memory_cm.get(), 2UL, 3UL, 4UL);
+  std::unique_ptr<double[], blaze::Deallocate> al_pa_memory_cm(blaze::allocate<double>(6UL));
+  blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor> cm_al_pa_double_cm(al_pa_memory_cm.get(), 2UL, 3UL, 2UL);
   cm_al_pa_double_cm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
   std::unique_ptr<double[], blaze::Deallocate> al_pa_memory_rm(blaze::allocate<double>(8UL));
@@ -131,30 +131,28 @@ void matrix_hm_error(Rcpp::NumericMatrix x) {
   blaze::HybridMatrix<double, 3, 3, blaze::columnMajor> z = Rcpp::as<blaze::HybridMatrix<double, 3, 3, blaze::columnMajor>>(x);
 }
 
-/*
 // [[Rcpp::export]]
 Rcpp::List custom_matrix_as_test(Rcpp::List input_list) {
-  typedef typename blaze::CustomVector<int, blaze::unaligned, blaze::unpadded> iCustomVectorUU;
-  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> dCustomVectorUU;
-  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::padded> dCustomVectorUP;
-  // typedef typename blaze::CustomVector<double, blaze::aligned, blaze::unpadded> dCustomVectorAU;
-  // typedef typename blaze::CustomVector<double, blaze::aligned, blaze::padded> dCustomVectorAP;
+  typedef typename blaze::CustomMatrix<int, blaze::unaligned, blaze::unpadded, blaze::columnMajor> iCustomMatrixUU;
+  typedef typename blaze::CustomMatrix<double, blaze::unaligned, blaze::unpadded, blaze::columnMajor> dCustomMatrixUU;
+  typedef typename blaze::CustomMatrix<double, blaze::unaligned, blaze::padded, blaze::columnMajor> dCustomMatrixUP;
+  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::columnMajor> dCustomMatrixAU;
+  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor> dCustomMatrixAP;
 
-  iCustomVectorUU cv_int = input_list[0];
-  dCustomVectorUU cv_double1 = input_list[1];
-  dCustomVectorUP cv_double2 = input_list[1];
-  // dCustomVectorAU cv_double3 = input_list[1];
-  // dCustomVectorAP cv_double4 = input_list[1];
+  iCustomMatrixUU cm_int = input_list[0];
+  dCustomMatrixUU cm_double1 = input_list[1];
+  dCustomMatrixUP cm_double2 = input_list[1];
+  dCustomMatrixAU cm_double3 = input_list[1];
+  dCustomMatrixAP cm_double4 = input_list[1];
 
   return Rcpp::List::create(
-    Rcpp::_["iCustomVectorUU"] = blaze::sum(cv_int),
-    Rcpp::_["dCustomVectorUU"] = blaze::sum(cv_double1),
-    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_double2)
-    // Rcpp::_["dCustomVectorAU"] = blaze::sum(cv_double3),
-    // Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_double4)
+    Rcpp::_["iCustomMatrixUU"] = blaze::sum(cm_int),
+    Rcpp::_["dCustomMatrixUU"] = blaze::sum(cm_double1),
+    Rcpp::_["dCustomMatrixUP"] = blaze::sum(cm_double2),
+    Rcpp::_["dCustomMatrixAU"] = blaze::sum(cm_double3),
+    Rcpp::_["dCustomMatrixAP"] = blaze::sum(cm_double4)
   );
 }
-*/
 
 /*
  CompressedMatrix, IdentityMatrix, ZeroMatrix, UniformMatrix

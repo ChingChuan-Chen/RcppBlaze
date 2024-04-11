@@ -301,8 +301,14 @@ namespace Rcpp {
       blaze::CustomMatrix<Type, blaze::unaligned, blaze::padded, SO> get() {
         RCPPBLAZE_GET_TYPEMAP;
         RCPPBLAZE_GET_MATRIX_DIMS(m, n);
-        size_t paddedSize = blaze::nextMultiple<size_t>((SO == blaze::rowMajor)?m:n, blaze::SIMDTrait<Type>::size);
-        size_t matSize = (SO == blaze::rowMajor)?(paddedSize*n):(m*paddedSize);
+        size_t simdTypeSize = blaze::SIMDTrait<Type>::size, paddedSize, matSize;
+        if (SO == blaze::rowMajor) {
+          paddedSize = blaze::nextMultiple<size_t>(n, simdTypeSize);
+          matSize = m * paddedSize;
+        } else {
+          paddedSize = blaze::nextMultiple<size_t>(m, simdTypeSize);
+          matSize = paddedSize * n;
+        }
         std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[matSize]);
         blaze::CustomMatrix<Type, blaze::unaligned, blaze::padded, SO> result(data.get(), m, n, paddedSize);
         RCPPBLAZE_MATRIX_COPY(m, n);
@@ -325,8 +331,16 @@ namespace Rcpp {
       blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> get() {
         RCPPBLAZE_GET_TYPEMAP;
         RCPPBLAZE_GET_MATRIX_DIMS(m, n);
-        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(m*n));
-        blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> result(data.get(), m, n);
+        size_t simdTypeSize = blaze::SIMDTrait<Type>::size, paddedSize, matSize;
+        if (SO == blaze::rowMajor) {
+          paddedSize = blaze::nextMultiple<size_t>(n, simdTypeSize);
+          matSize = m * paddedSize;
+        } else {
+          paddedSize = blaze::nextMultiple<size_t>(m, simdTypeSize);
+          matSize = paddedSize * n;
+        }
+        std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(matSize));
+        blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> result(data.get(), m, n, paddedSize);
         RCPPBLAZE_MATRIX_COPY(m, n);
         return result;
       }
@@ -347,8 +361,14 @@ namespace Rcpp {
       blaze::CustomMatrix<Type, blaze::aligned, blaze::padded, SO> get() {
         RCPPBLAZE_GET_TYPEMAP;
         RCPPBLAZE_GET_MATRIX_DIMS(m, n);
-        size_t paddedSize = blaze::nextMultiple<size_t>((SO == blaze::rowMajor)?m:n, blaze::SIMDTrait<Type>::size);
-        size_t matSize = (SO == blaze::rowMajor)?(paddedSize*n):(m*paddedSize);
+        size_t simdTypeSize = blaze::SIMDTrait<Type>::size, paddedSize, matSize;
+        if (SO == blaze::rowMajor) {
+          paddedSize = blaze::nextMultiple<size_t>(n, simdTypeSize);
+          matSize = m * paddedSize;
+        } else {
+          paddedSize = blaze::nextMultiple<size_t>(m, simdTypeSize);
+          matSize = paddedSize * n;
+        }
         std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(matSize));
         blaze::CustomMatrix<Type, blaze::aligned, blaze::padded, SO> result(data.get(), m, n, paddedSize);
         RCPPBLAZE_MATRIX_COPY(m, n);

@@ -54,10 +54,15 @@ expect_equal(matrix_as_res[["hm_double_unaligned_sum"]], expect_double_sum, info
 expect_error(matrix_sm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
 expect_error(matrix_hm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
 
-# vector_as_res <- custom_vector_as_test(list(c(1L, 3L, 6L), c(1.5, 2.5, 4.5)))
-# expect_equal(vector_as_res[["iCustomVectorUU"]], 10L, info = "iCustomVectorUU")
-# expect_equal(vector_as_res[["dCustomVectorUU"]], expect_double_sum, info = "dCustomVectorUU")
-# expect_equal(vector_as_res[["dCustomVectorUP"]], expect_double_sum, info = "dCustomVectorUP")
-# expect_equal(vector_as_res[["dCustomVectorAU"]], expect_double_sum, info = "dCustomVectorAU")
-# expect_equal(vector_as_res[["dCustomVectorAP"]], expect_double_sum, info = "dCustomVectorAP")
+matrix_as_res <- custom_matrix_as_test(
+  list(
+    matrix(c(1L, 2L, 4L, 5L, 8L, 3L), nrow=2L, byrow=TRUE),
+    matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)
+  )
+)
+expect_equal(matrix_as_res[["iCustomMatrixUU"]], 23L, info = "iCustomMatrixUU")
+expect_equal(matrix_as_res[["dCustomMatrixUU"]], expect_double_sum, info = "dCustomMatrixUU")
+expect_equal(matrix_as_res[["dCustomMatrixUP"]], expect_double_sum, info = "dCustomMatrixUP")
+expect_equal(matrix_as_res[["dCustomMatrixAU"]], expect_double_sum, info = "dCustomMatrixAU")
+expect_equal(matrix_as_res[["dCustomMatrixAP"]], expect_double_sum, info = "dCustomMatrixAP")
 
