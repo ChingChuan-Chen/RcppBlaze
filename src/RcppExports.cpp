@@ -23,13 +23,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // testAs1
-Rcpp::List testAs1(Rcpp::NumericMatrix x);
-RcppExport SEXP _RcppBlaze_testAs1(SEXP xSEXP) {
+Rcpp::List testAs1(Rcpp::List input_list);
+RcppExport SEXP _RcppBlaze_testAs1(SEXP input_listSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(testAs1(x));
+    Rcpp::traits::input_parameter< Rcpp::List >::type input_list(input_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(testAs1(input_list));
     return rcpp_result_gen;
 END_RCPP
 }

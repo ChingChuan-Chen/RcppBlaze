@@ -36,6 +36,7 @@ expect_equal(matrix_wrap_res[["cm_al_up_double_cm"]], expect_dbl_mat, info = "cm
 expect_equal(matrix_wrap_res[["cm_al_up_double_rm"]], expect_dbl_mat, info = "cm_al_up_double_rm")
 expect_equal(matrix_wrap_res[["cm_al_pa_double_cm"]], expect_dbl_mat, info = "cm_al_pa_double_cm")
 expect_equal(matrix_wrap_res[["cm_al_pa_double_rm"]], expect_dbl_mat, info = "cm_al_pa_double_rm")
+# add UniformMatrix wrap test
 
 matrix_as_res <- matrix_as_test(
   list(
@@ -50,6 +51,7 @@ expect_equal(matrix_as_res[["sm_double_sum"]], expect_double_sum, info = "sm_dou
 expect_equal(matrix_as_res[["sm_double_unaligned_sum"]], expect_double_sum, info = "sm_double_unaligned_sum")
 expect_equal(matrix_as_res[["hm_double_sum"]], expect_double_sum, info = "hm_double_sum")
 expect_equal(matrix_as_res[["hm_double_unaligned_sum"]], expect_double_sum, info = "hm_double_unaligned_sum")
+# add UniformMatrix as test
 
 expect_error(matrix_sm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
 expect_error(matrix_hm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))

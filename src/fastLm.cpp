@@ -16,22 +16,12 @@ using Rcpp::_;
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 // [[Rcpp::export]]
-Rcpp::List testAs1(Rcpp::NumericMatrix x) {
-  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::columnMajor> dCustomMatrixAU;
-  dCustomMatrixAU z = Rcpp::as<dCustomMatrixAU>(x);
-  Rcpp::Rcout << "dCustomMatrixAU:" << std::endl << z << std::endl;
+Rcpp::List testAs1(Rcpp::List input_list) {
+  blaze::CompressedVector<double, blaze::rowVector> y = input_list[0];
+  Rcpp::Rcout << "CompressedVector rowVector:" << std::endl << y << std::endl;
 
-  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor> dCustomMatrixAP;
-  dCustomMatrixAP u = Rcpp::as<dCustomMatrixAP>(x);
-  Rcpp::Rcout << "dCustomMatrixUP:" << std::endl << u << std::endl;
-
-  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::rowMajor> dCustomMatrixAU2;
-  dCustomMatrixAU2 t = Rcpp::as<dCustomMatrixAU2>(x);
-  Rcpp::Rcout << "dCustomMatrixAU2:" << std::endl << t << std::endl;
-
-  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::rowMajor> dCustomMatrixAP2;
-  dCustomMatrixAP2 v = Rcpp::as<dCustomMatrixAP2>(x);
-  Rcpp::Rcout << "dCustomMatrixUP2:" << std::endl << v << std::endl;
+  blaze::CompressedVector<double, blaze::columnVector> x = input_list[1];
+  Rcpp::Rcout << "CompressedVector columnVector:" << std::endl << x << std::endl;
 
   return Rcpp::List::create(
     _["test"] = true

@@ -28,6 +28,11 @@ namespace Rcpp {
       return out;
     }
 
+    template<typename VT, bool TF>
+    SEXP blaze_expr_wrap(const blaze::Expression<blaze::DenseVector<VT, TF>>& x) {
+      return blaze_wrap<VT, TF>(x);
+    }
+
     template<typename MT, bool SO>
     SEXP blaze_wrap(const blaze::DenseMatrix<MT, SO>& x) {
       typedef typename MT::ElementType ET;
@@ -50,6 +55,11 @@ namespace Rcpp {
         }
       }
       return out;
+    }
+
+    template<typename MT, bool SO>
+    SEXP blaze_expr_wrap(const blaze::Expression<blaze::DenseMatrix<MT, SO>>& x) {
+      return blaze_wrap<MT, SO>(x);
     }
 
     template<typename VT, bool TF>
@@ -106,46 +116,52 @@ namespace Rcpp {
       return blaze_wrap<VT, TF>(x);
     }
 
+    template<typename MT, bool SO>
+    SEXP blaze_wrap(const blaze::SparseMatrix<MT,SO>& sm) {
+      typedef typename MT::ElementType ET;
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
+      if ((RTYPE != INTSXP) && (RTYPE != REALSXP)) {
+        Rcpp::stop("SparseMatrix only supports int, float and double!");
+      }
+
+      size_t m = (*sm).rows(), n = (*sm).columns;
+
+      std::string klass = "dgCMatrix";
+      Rcpp::S4 s(klass);
+      s.slot("Dim") = Rcpp::Dimension(m, n);
+      return s;
+
 /*
-     template<typename MT, bool SO>
-     SEXP blaze_wrap(const blaze::SparseMatrix<MT,SO>& sm)
-     {
-     typedef typename MT::ResultType     RT;
-     typedef typename MT::ReturnType     RN;
-     typedef typename MT::CompositeType  CT;
-     typedef typename blaze::If<blaze::IsExpression<RN>, const RT, CT>::Type  Tmp;
-     typedef typename blaze::RemoveReference<Tmp>::Type::ConstIterator ConstIterator;
+      const size_t index((SO == blaze::rowMajor)?A.rows():A.columns());
 
-     Tmp A(~sm);  // Evaluation of the sparse matrix operand
+      Rcpp::Vector<RTYPE> x(A.nonZeros());
+      Rcpp::IntegerVector idx(A.nonZeros());
+      Rcpp::IntegerVector p(index + 1UL);
 
-     const int RTYPE = ::Rcpp::traits::r_sexptype_traits<typename MT::ElementType>::rtype;
-     std::string klass = "dgCMatrix";
+      size_t k = 0UL;
+      for (size_t i=0UL; i<index; ++i) {
+        p[i] = (int) k;
+        for (ConstIterator element=A.begin(i); element!=A.end(i); ++element) {
+          x[k] = element->value();
+          idx[k] = element->index();
+          ++k;
+        }
+      }
+      p[index] = (int) A.nonZeros();
 
-     const size_t index((SO == blaze::rowMajor)?A.rows():A.columns());
+      Rcpp::S4 s(klass);
+      s.slot("Dim") = ::Rcpp::Dimension(A.rows(), A.columns());
+      s.slot((SO == blaze::rowMajor)?"j":"i") = idx;
+      s.slot("p") = p;
+      s.slot("x") = x;
+*/
+    }
 
-     ::Rcpp::Vector<RTYPE> x(A.nonZeros());
-     ::Rcpp::IntegerVector idx(A.nonZeros());
-     ::Rcpp::IntegerVector p(index + 1UL);
+    template<typename MT, bool SO>
+    SEXP blaze_expr_wrap(const blaze::Expression<blaze::SparseMatrix<MT, SO>>& x) {
+      return blaze_wrap<MT, SO>(x);
+    }
 
-     size_t k = 0UL;
-     for (size_t i=0UL; i<index; ++i) {
-     p[i] = (int) k;
-     for (ConstIterator element=A.begin(i); element!=A.end(i); ++element) {
-     x[k] = element->value();
-     idx[k] = element->index();
-     ++k;
-     }
-     }
-     p[index] = (int) A.nonZeros();
-
-     ::Rcpp::S4 s(klass);
-     s.slot("Dim") = ::Rcpp::Dimension(A.rows(), A.columns());
-     s.slot((SO == blaze::rowMajor)?"j":"i") = idx;
-     s.slot("p") = p;
-     s.slot("x") = x;
-     return s;
-     }
-     */
   } // namespace RcppBlaze
 
   // wrap for blaze dense vector
@@ -169,6 +185,11 @@ namespace Rcpp {
     return RcppBlaze::blaze_wrap(x);
   };
 
+  template<typename Type, bool TF>
+  SEXP wrap(const blaze::UniformVector<Type, TF>& x) {
+    return RcppBlaze::blaze_expr_wrap(x);
+  };
+
   // wrap for blaze dense matrix
   template<typename Type, bool SO>
   SEXP wrap(const blaze::DynamicMatrix<Type, SO>& x) {
@@ -190,6 +211,11 @@ namespace Rcpp {
     return RcppBlaze::blaze_wrap(x);
   };
 
+  template<typename Type, bool SO>
+  SEXP wrap(const blaze::UniformMatrix<Type, SO>& x) {
+    return RcppBlaze::blaze_expr_wrap(x);
+  };
+
   // wrap for blaze sparse vector
   template<typename Type, bool TF>
   SEXP wrap(const blaze::CompressedVector<Type, TF>& x) {
@@ -201,34 +227,25 @@ namespace Rcpp {
     return RcppBlaze::blaze_expr_wrap(x);
   };
 
-   // wrap for blaze sparse matrix
-   /*
-   template<typename Type, bool SO>
-   SEXP wrap(const blaze::CompressedMatrix<Type, SO>& cm) {
-   return RcppBlaze::blaze_wrap(cm);
-   };
+  // wrap for blaze sparse matrix
+  template<typename Type, bool SO>
+  SEXP wrap(const blaze::CompressedMatrix<Type, SO>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
 
-   template<typename MT, bool SO>
-   SEXP wrap(const blaze::IdentityMatrix<MT, SO>& sim) {
-   return RcppBlaze::blaze_wrap(sim);
-   };
+  template<typename MT, bool SO>
+  SEXP wrap(const blaze::IdentityMatrix<MT, SO>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
 
-   template<typename MT, bool SO>
-   SEXP wrap(const blaze::ZeroMatrix<MT, SO>& szm) {
-   return RcppBlaze::blaze_wrap(szm);
-   };
+  template<typename MT, bool SO>
+  SEXP wrap(const blaze::ZeroMatrix<MT, SO>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
 
-   template<typename MT, bool SO>
-   SEXP wrap(const blaze::UniformMatrix<MT, SO>& sum) {
-   return RcppBlaze::blaze_wrap(sum);
-   };
-   */
 
-   // adaptors
-  /*
-
+  /*adaptors
    // TODO:
-   // Convert IdentityMatrix, ZeroMatrix
    // Convert Symmetric Matrices, Hermitian Matrices, Triangular Matrices
    // Convert Submatrix, Subvector, Row, Column, Rows, Columns, Band
 
