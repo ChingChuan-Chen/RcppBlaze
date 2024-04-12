@@ -40,13 +40,25 @@ Rcpp::List testAs1(Rcpp::NumericMatrix x) {
 
 // [[Rcpp::export]]
 Rcpp::List testWrap1() {
-  blaze::DynamicVector<int> dv_int(3);
-  dv_int[0] = 1;
-  dv_int[1] = 2;
-  dv_int[2] = 4;
+  blaze::CompressedVector<int> a(6UL);
+  a[2] = 1;
+  a[4] = 3;
+
+  blaze::CompressedVector<double> b(6UL);
+  b[2] = 1.5;
+  b[4] = 3.6;
+
+  blaze::CompressedVector<double, blaze::rowVector> c(6UL);
+  c[2] = 1.5;
+  c[4] = 3.6;
+
+  blaze::ZeroVector<double> d(6UL);
 
   return Rcpp::List::create(
-    _["test"] = dv_int
+    _["test1"] = a,
+    _["test2"] = b,
+    _["test3"] = c,
+    _["test4"] = d
   );
 }
 

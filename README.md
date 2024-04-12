@@ -29,6 +29,10 @@ You can install:
 
 If you encounter a bug, please file a reproducible example on [github](https://github.com/ChingChuan-Chen/RcppBlaze/issues).
 
+### Note
+
+`CompressedVector` and `CompressedMatrix` only support `int`, `float` and `double` types.
+
 ### Authors
 
 Ching-Chuan Chen, Klaus Iglberger, Georg Hager, Christian Godenschwager, Tobias Scharpff

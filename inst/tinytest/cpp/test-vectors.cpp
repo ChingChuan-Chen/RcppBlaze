@@ -47,7 +47,25 @@ Rcpp::List vector_wrap_test() {
   blaze::CustomVector<double, blaze::aligned, blaze::padded> cv_al_pa_double(cv_al_pa_double_mem.get(), 3UL, 4UL);
   cv_al_pa_double = {1.5, -2.5, 4.5};
 
-  // TODO: CompressedVector, ZeroVector
+  // TODO: ZeroVector
+
+  blaze::CompressedVector<int> cv_int(6UL);
+  cv_int[2] = 1;
+  cv_int[4] = 3;
+
+  blaze::CompressedVector<double> cv_double(6UL);
+  cv_double[2] = 1.5;
+  cv_double[4] = 3.6;
+
+  blaze::CompressedVector<double, blaze::rowVector> cv_double_rv(6UL);
+  cv_double_rv[2] = 1.5;
+  cv_double_rv[4] = 3.6;
+
+  blaze::CompressedVector<float> cv_float(6UL);
+  cv_float[2] = 1.5;
+  cv_float[4] = 3.6;
+
+  blaze::ZeroVector<float> zv_double(6UL);
 
   return Rcpp::List::create(
     _["dv_int"] = dv_int,
@@ -58,7 +76,12 @@ Rcpp::List vector_wrap_test() {
     _["cv_ua_up_double"] = cv_ua_up_double,
     _["cv_ua_pa_double"] = cv_ua_pa_double,
     _["cv_al_up_double"] = cv_al_up_double,
-    _["cv_al_pa_double"] = cv_al_pa_double
+    _["cv_al_pa_double"] = cv_al_pa_double,
+    _["cv_int"] = cv_int,
+    _["cv_double"] = cv_double,
+    _["cv_double_rv"] = cv_double_rv,
+    _["cv_float"] = cv_float,
+    _["zv_double"] = zv_double
   );
 }
 

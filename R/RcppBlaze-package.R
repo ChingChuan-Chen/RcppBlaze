@@ -37,6 +37,7 @@
 #' }
 #'
 #' Note that if you would like to enable Boost threads support, you need to import \strong{BH} package in your DESCRIPTION.
+#' Note that \code{CompressedVector} and \code{CompressedMatrix} only support \code{int}, \code{float} and \code{double} types.
 #'
 #' @author
 #' For RcppBlaze: Ching-Chuan Chen

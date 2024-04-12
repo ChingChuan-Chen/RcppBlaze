@@ -41,7 +41,7 @@ namespace Rcpp {
   template<typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
   SEXP wrap(const blaze::CustomVector<Type, AF, PF, TF>&);
 
-  /* support wrapping blaze dense matrixes */
+  /* support wrapping blaze dense matrices */
   template<typename Type, bool SO> SEXP wrap(const blaze::DynamicMatrix<Type, SO>&);
   template<typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
   SEXP wrap(const blaze::StaticMatrix<Type, M, N, SO, AF, PF>&);
@@ -50,8 +50,11 @@ namespace Rcpp {
   template<typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool SO>
   SEXP wrap(const blaze::CustomMatrix<Type, AF, PF, SO>&);
 
+  /* support wrapping blaze sparse vectors */
+  template< typename Type, bool TF > SEXP wrap(const blaze::CompressedVector<Type,TF>&);
+  template< typename Type, bool TF > SEXP wrap(const blaze::ZeroVector<Type,TF>&);
+
   /*
-  template< typename Type, bool TF > SEXP wrap( const blaze::CompressedVector<Type,TF>& );
   template< typename Type, bool SO > SEXP wrap( const blaze::CompressedMatrix<Type,SO>& );
 
   template< typename MT, bool SO, bool DF > SEXP wrap( const blaze::DiagonalMatrix<MT,SO,DF>& );

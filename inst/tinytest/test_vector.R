@@ -13,9 +13,12 @@ if (file.exists(file.path("cpp", cppFile))) {
 } else {
   Rcpp::sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
 }
+library(Matrix)
+library(MatrixExtra)
 
 vector_wrap_res <- vector_wrap_test()
 expect_dbl_vec <- c(1.5, -2.5, 4.5)
+expect_sparse_vector <- Matrix(c(0, 0, 1.5, 0, 3.6, 0), 6, 1)
 expect_equal(vector_wrap_res[["dv_int"]], c(1L, -2L, 4L), info = "dv_int")
 expect_equal(vector_wrap_res[["dv_cmpl"]], c(1.5+0.2*1i, -0.75-0.3*1i, -3+0.1*1i), info = "dv_cmpl")
 expect_equal(vector_wrap_res[["dv_double"]], expect_dbl_vec, info = "dv_double")
@@ -25,6 +28,11 @@ expect_equal(vector_wrap_res[["cv_ua_up_double"]], expect_dbl_vec, info = "cv_ua
 expect_equal(vector_wrap_res[["cv_ua_pa_double"]], expect_dbl_vec, info = "cv_ua_pa_double")
 expect_equal(vector_wrap_res[["cv_al_up_double"]], expect_dbl_vec, info = "cv_al_up_double")
 expect_equal(vector_wrap_res[["cv_al_pa_double"]], expect_dbl_vec, info = "cv_al_pa_double")
+expect_equal(vector_wrap_res[["cv_int"]], Matrix(c(0, 0, 1, 0, 3, 0), 6, 1), info = "cv_int")
+expect_equal(vector_wrap_res[["cv_double"]], expect_sparse_vector, info = "cv_double")
+expect_equal(vector_wrap_res[["cv_double_rv"]], t(expect_sparse_vector), info = "cv_double_rv")
+expect_equal(vector_wrap_res[["cv_float"]], expect_sparse_vector, info = "cv_float", tolerance = 1e-6)
+expect_equal(vector_wrap_res[["zv_double"]], Matrix(0, 6, 1), info = "zv_double")
 
 vector_as_res <- vector_as_test(list(c(1L, 3L, 6L), c(1.5, 2.5, 4.5)))
 expect_double_sum <- 8.5
