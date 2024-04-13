@@ -31,16 +31,26 @@ Rcpp::List testAs1(Rcpp::List input_list) {
   );
 }
 
+
+using namespace std::complex_literals;
+
 // [[Rcpp::export]]
 Rcpp::List testWrap1() {
-  // blaze::ZeroVector<double, blaze::columnVector> a( 4UL );
-  blaze::UniformVector<double, blaze::columnVector> a( 4UL );
-  a = 2;
+  blaze::UniformMatrix<double, blaze::columnMajor> um_double_cm(2UL, 3UL, -3.2);
+  blaze::UniformMatrix<double, blaze::rowMajor> um_double_rm(2UL, 3UL, -3.2);
+  blaze::UniformMatrix<std::complex<double>, blaze::columnMajor> um_cplx(2UL, 3UL, -1.8 + 0.6i);
 
-  // blaze::UniformMatrix<double, blaze::columnMajor> b( 4UL, 4UL );
+  blaze::IdentityMatrix<double, blaze::columnMajor> im_double(3UL);
 
+  blaze::ZeroMatrix<double, blaze::columnMajor> zm_double_cm(2UL, 3UL);
+  blaze::ZeroMatrix<double, blaze::rowMajor> zm_double_rm(2UL, 3UL);
   return Rcpp::List::create(
-    _["test1"] = a
+    _["um_double_cm"] = um_double_cm,
+    _["um_double_rm"] = um_double_rm,
+    _["um_cplx"] = um_cplx,
+    _["im_double"] = im_double,
+    _["zm_double_cm"] = zm_double_cm,
+    _["zm_double_rm"] = zm_double_rm
   );
 }
 

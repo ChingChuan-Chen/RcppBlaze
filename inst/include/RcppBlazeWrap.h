@@ -21,9 +21,9 @@ namespace Rcpp {
 
     template <typename VT, bool TF>
     SEXP blaze_wrap(const blaze::DenseVector<VT, TF>& x) {
-      typedef typename VT::ElementType ET;
-      const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
-      const ET* data_pointer = blaze::data(*x);
+      typedef typename VT::ElementType Type;
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      const Type* data_pointer = blaze::data(*x);
       Rcpp::Vector<RTYPE> out = Rcpp::wrap(data_pointer, data_pointer + (*x).size());
       return out;
     }
@@ -33,10 +33,19 @@ namespace Rcpp {
       return blaze_wrap<VT, TF>(x);
     }
 
+    template <typename Type, bool TF>
+    SEXP blaze_uv_wrap(const blaze::UniformVector<Type, TF>& x) {
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+      Rcpp::Vector<RTYPE> out((*x).size());
+      std::fill(out.begin(), out.end(), Rcpp::internal::caster<Type, value_t>((*x)[0UL]));
+      return out;
+    }
+
     template <typename MT, bool SO>
     SEXP blaze_wrap(const blaze::DenseMatrix<MT, SO>& x) {
-      typedef typename MT::ElementType ET;
-      const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
+      typedef typename MT::ElementType Type;
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
 
       size_t m = (*x).rows(), n = (*x).columns();
@@ -44,13 +53,13 @@ namespace Rcpp {
       if (SO == blaze::rowMajor) {
         for (size_t i=0UL; i<m; ++i) {
           for (size_t j=0UL; j<n; ++j) {
-            out(i, j) = Rcpp::internal::caster<ET, value_t>((*x)(i, j));
+            out(i, j) = Rcpp::internal::caster<Type, value_t>((*x)(i, j));
           }
         }
       } else {
         for (size_t j=0UL; j<n; ++j) {
           for (size_t i=0UL; i<m; ++i) {
-            out(i, j) = Rcpp::internal::caster<ET, value_t>((*x)(i, j));
+            out(i, j) = Rcpp::internal::caster<Type, value_t>((*x)(i, j));
           }
         }
       }
@@ -62,10 +71,19 @@ namespace Rcpp {
       return blaze_wrap<MT, SO>(x);
     }
 
+    template <typename Type, bool SO>
+    SEXP blaze_um_wrap(const blaze::UniformMatrix<Type, SO>& x) {
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
+      typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+      Rcpp::Matrix<RTYPE> out((*x).rows(), (*x).columns());
+      std::fill(out.begin(), out.end(), Rcpp::internal::caster<Type, value_t>((*x)(0UL, 0UL)));
+      return out;
+    }
+
     template <typename VT, bool TF>
     SEXP blaze_wrap(const blaze::SparseVector<VT, TF>& sv) {
-      typedef typename VT::ElementType ET;
-      const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
+      typedef typename VT::ElementType Type;
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       if ((RTYPE != INTSXP) && (RTYPE != REALSXP)) {
         Rcpp::stop("SparseVector only supports int, float and double!");
       }
@@ -82,7 +100,7 @@ namespace Rcpp {
       size_t k = 0UL;
       if (TF == blaze::rowVector) {
         for (auto element=(*sv).begin(); element!=(*sv).end(); ++element) {
-          x[k] = Rcpp::internal::caster<ET, double>(element->value());
+          x[k] = Rcpp::internal::caster<Type, double>(element->value());
           p[element->index() + 1] = 1;
           ++k;
         }
@@ -92,23 +110,23 @@ namespace Rcpp {
       } else {
         p[1] = nonZeroSize;
         for (auto element=(*sv).begin(); element!=(*sv).end(); ++element) {
-          x[k] = Rcpp::internal::caster<ET, double>(element->value());
+          x[k] = Rcpp::internal::caster<Type, double>(element->value());
           idx[k] = element->index();
           ++k;
         }
       }
 
       std::string klass = "dgCMatrix";
-      Rcpp::S4 s(klass);
+      Rcpp::S4 out(klass);
       if (TF == blaze::rowVector) {
-        s.slot("Dim") = Rcpp::Dimension(1, size);
+        out.slot("Dim") = Rcpp::Dimension(1, size);
       } else {
-        s.slot("Dim") = Rcpp::Dimension(size, 1);
+        out.slot("Dim") = Rcpp::Dimension(size, 1);
       }
-      s.slot("i") = idx;
-      s.slot("p") = p;
-      s.slot("x") = x;
-      return s;
+      out.slot("i") = idx;
+      out.slot("p") = p;
+      out.slot("x") = x;
+      return out;
     }
 
     template <typename VT, bool TF>
@@ -118,8 +136,8 @@ namespace Rcpp {
 
     template <typename MT, bool SO>
     SEXP blaze_wrap(const blaze::SparseMatrix<MT,SO>& sm) {
-      typedef typename MT::ElementType ET;
-      const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
+      typedef typename MT::ElementType Type;
+      const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       if ((RTYPE != INTSXP) && (RTYPE != REALSXP)) {
         Rcpp::stop("SparseMatrix only supports int, float and double!");
       }
@@ -187,7 +205,7 @@ namespace Rcpp {
 
   template <typename Type, bool TF>
   SEXP wrap(const blaze::UniformVector<Type, TF>& x) {
-    return RcppBlaze::blaze_dv_expr_wrap(x);
+    return RcppBlaze::blaze_uv_wrap(x);
   };
 
   // wrap for blaze dense matrix
@@ -213,7 +231,7 @@ namespace Rcpp {
 
   template <typename Type, bool SO>
   SEXP wrap(const blaze::UniformMatrix<Type, SO>& x) {
-    return RcppBlaze::blaze_dm_expr_wrap(x);
+    return RcppBlaze::blaze_um_wrap(x);
   };
 
   // wrap for blaze sparse vector
@@ -233,14 +251,38 @@ namespace Rcpp {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template <typename MT, bool SO>
-  SEXP wrap(const blaze::IdentityMatrix<MT, SO>& x) {
-    return RcppBlaze::blaze_sm_expr_wrap(x);
+  template <typename Type, bool SO>
+  SEXP wrap(const blaze::IdentityMatrix<Type, SO>& x) {
+    const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
+    if ((RTYPE != INTSXP) && (RTYPE != REALSXP)) {
+      Rcpp::stop("IdentityMatrix only supports int, float and double!");
+    }
+    size_t m = (*x).rows(), n = (*x).columns();
+    if (m != n) {
+      Rcpp::stop("IdentityMatrix must have the same numbers of rows and columns!");
+    }
+    std::string klass = "ddiMatrix";
+    Rcpp::S4 out(klass);
+    out.slot("Dim") = Rcpp::Dimension(m, n);
+    out.slot("diag") = "N";
+    out.slot("x") = Rcpp::Vector<RTYPE>(3, 1.0);
+    return out;
   };
 
-  template <typename MT, bool SO>
-  SEXP wrap(const blaze::ZeroMatrix<MT, SO>& x) {
-    return RcppBlaze::blaze_sm_expr_wrap(x);
+  template <typename Type, bool SO>
+  SEXP wrap(const blaze::ZeroMatrix<Type, SO>& x) {
+    const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
+    if ((RTYPE != INTSXP) && (RTYPE != REALSXP)) {
+      Rcpp::stop("ZeroMatrix only supports int, float and double!");
+    }
+    size_t m = (*x).rows(), n = (*x).columns();
+    std::string klass = "dgCMatrix";
+    Rcpp::S4 out(klass);
+    out.slot("Dim") = Rcpp::Dimension(m, n);
+    out.slot("i") = Rcpp::Vector<INTSXP>(0);
+    out.slot("p") = Rcpp::Vector<INTSXP>(n+1, 0.0);
+    out.slot("x") = Rcpp::Vector<RTYPE>(0);
+    return out;
   };
 
 

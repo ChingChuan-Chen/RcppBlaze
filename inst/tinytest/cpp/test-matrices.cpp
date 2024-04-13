@@ -78,8 +78,6 @@ Rcpp::List matrix_wrap_test() {
   blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::rowMajor> cm_al_pa_double_rm(al_pa_memory_rm.get(), 2UL, 3UL, 4UL);
   cm_al_pa_double_rm = { { 1.5, -2.5, 4.5 }, { -5.5, 8.5, -7.3 } };
 
-  // TODO: CompressedMatrix, ZeroMatrix, IdentityMatrix, UniformMatrix
-
   return Rcpp::List::create(
     _["dm_int_cm"] = dm_int_cm,
     _["dm_int_rm"] = dm_int_rm,
@@ -99,6 +97,31 @@ Rcpp::List matrix_wrap_test() {
     _["cm_al_up_double_rm"] = cm_al_up_double_rm,
     _["cm_al_pa_double_cm"] = cm_al_pa_double_cm,
     _["cm_al_pa_double_rm"] = cm_al_pa_double_rm
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List matrix_wrap_test2() {
+  blaze::UniformMatrix<double, blaze::columnMajor> um_double_cm(2UL, 3UL, -3.2);
+  blaze::UniformMatrix<double, blaze::rowMajor> um_double_rm(2UL, 3UL, -3.2);
+  blaze::UniformMatrix<std::complex<double>, blaze::columnMajor> um_cplx(2UL, 3UL, -1.8 + 0.6i);
+
+  blaze::IdentityMatrix<double, blaze::columnMajor> im_double_cm(3UL);
+  blaze::IdentityMatrix<double, blaze::rowMajor> im_double_rm(3UL);
+
+  blaze::ZeroMatrix<double, blaze::columnMajor> zm_double_cm(2UL, 3UL);
+  blaze::ZeroMatrix<double, blaze::rowMajor> zm_double_rm(2UL, 3UL);
+
+  // TODO: CompressedMatrix
+
+  return Rcpp::List::create(
+    _["um_double_cm"] = um_double_cm,
+    _["um_double_rm"] = um_double_rm,
+    _["um_cplx"] = um_cplx,
+    _["im_double_cm"] = im_double_cm,
+    _["im_double_rm"] = im_double_rm,
+    _["zm_double_cm"] = zm_double_cm,
+    _["zm_double_rm"] = zm_double_rm
   );
 }
 

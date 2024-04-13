@@ -47,21 +47,25 @@ Rcpp::List vector_wrap_test() {
   blaze::CustomVector<double, blaze::aligned, blaze::padded> cv_al_pa_double(cv_al_pa_double_mem.get(), 3UL, 4UL);
   cv_al_pa_double = {1.5, -2.5, 4.5};
 
-  blaze::CompressedVector<int> cv_int(6UL);
-  cv_int[2] = 1;
-  cv_int[4] = 3;
+  blaze::UniformVector<double, blaze::columnVector> uv_double(6UL, 3.0);
 
-  blaze::CompressedVector<double> cv_double(6UL);
-  cv_double[2] = 1.5;
-  cv_double[4] = 3.6;
+  blaze::UniformVector<std::complex<double>, blaze::columnVector> uv_cplx(6UL, 3.3 - 2.7i);
 
-  blaze::CompressedVector<double, blaze::rowVector> cv_double_rv(6UL);
-  cv_double_rv[2] = 1.5;
-  cv_double_rv[4] = 3.6;
+  blaze::CompressedVector<int> cpv_int(6UL);
+  cpv_int[2] = 1;
+  cpv_int[4] = 3;
 
-  blaze::CompressedVector<float> cv_float(6UL);
-  cv_float[2] = 1.5;
-  cv_float[4] = 3.6;
+  blaze::CompressedVector<double> cpv_double(6UL);
+  cpv_double[2] = 1.5;
+  cpv_double[4] = 3.6;
+
+  blaze::CompressedVector<double, blaze::rowVector> cpv_double_rv(6UL);
+  cpv_double_rv[2] = 1.5;
+  cpv_double_rv[4] = 3.6;
+
+  blaze::CompressedVector<float> cpv_float(6UL);
+  cpv_float[2] = 1.5;
+  cpv_float[4] = 3.6;
 
   blaze::ZeroVector<float> zv_double(6UL);
 
@@ -75,6 +79,8 @@ Rcpp::List vector_wrap_test() {
     _["cv_ua_pa_double"] = cv_ua_pa_double,
     _["cv_al_up_double"] = cv_al_up_double,
     _["cv_al_pa_double"] = cv_al_pa_double,
+    _["uv_double"] = uv_double,
+    _["uv_cplx"] = uv_cplx,
     _["cv_int"] = cv_int,
     _["cv_double"] = cv_double,
     _["cv_double_rv"] = cv_double_rv,
@@ -137,30 +143,37 @@ Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
 
 // [[Rcpp::export]]
 Rcpp::List sparse_vector_as_test(Rcpp::List input_list) {
-  blaze::CompressedVector<int> cv_int_dgCMatrix = input_list[0];
-  blaze::CompressedVector<int> cv_int_dgTMatrix = input_list[1];
-  blaze::CompressedVector<int> cv_int_dgRMatrix = input_list[2];
+  blaze::CompressedVector<int> cpv_int_dgCMatrix = input_list[0];
+  blaze::CompressedVector<int> cpv_int_dgTMatrix = input_list[1];
+  blaze::CompressedVector<int> cpv_int_dgRMatrix = input_list[2];
 
-  blaze::CompressedVector<double> cv_double_dgCMatrix = input_list[3];
-  blaze::CompressedVector<double> cv_double_dgTMatrix = input_list[4];
-  blaze::CompressedVector<double> cv_double_dgRMatrix = input_list[5];
+  blaze::CompressedVector<double> cpv_double_dgCMatrix = input_list[3];
+  blaze::CompressedVector<double> cpv_double_dgTMatrix = input_list[4];
+  blaze::CompressedVector<double> cpv_double_dgRMatrix = input_list[5];
 
-  blaze::CompressedVector<double, blaze::rowVector> cv_double_rv_dgCMatrix = input_list[6];
-  blaze::CompressedVector<double, blaze::rowVector> cv_double_rv_dgTMatrix = input_list[7];
-  blaze::CompressedVector<double, blaze::rowVector> cv_double_rv_dgRMatrix = input_list[8];
-
-  // blaze::ZeroVector<double> zv_double_dgCMatrix = input_list[9];
+  blaze::CompressedVector<double, blaze::rowVector> cpv_double_rv_dgCMatrix = input_list[6];
+  blaze::CompressedVector<double, blaze::rowVector> cpv_double_rv_dgTMatrix = input_list[7];
+  blaze::CompressedVector<double, blaze::rowVector> cpv_double_rv_dgRMatrix = input_list[8];
 
   return Rcpp::List::create(
-    Rcpp::_["cv_int_dgCMatrix"] = blaze::sum(cv_int_dgCMatrix),
-    Rcpp::_["cv_int_dgTMatrix"] = blaze::sum(cv_int_dgTMatrix),
-    Rcpp::_["cv_int_dgRMatrix"] = blaze::sum(cv_int_dgRMatrix),
-    Rcpp::_["cv_double_dgCMatrix"] = blaze::sum(cv_double_dgCMatrix),
-    Rcpp::_["cv_double_dgTMatrix"] = blaze::sum(cv_double_dgTMatrix),
-    Rcpp::_["cv_double_dgRMatrix"] = blaze::sum(cv_double_dgRMatrix),
-    Rcpp::_["cv_double_rv_dgCMatrix"] = blaze::sum(cv_double_rv_dgCMatrix),
-    Rcpp::_["cv_double_rv_dgTMatrix"] = blaze::sum(cv_double_rv_dgTMatrix),
-    Rcpp::_["cv_double_rv_dgRMatrix"] = blaze::sum(cv_double_rv_dgRMatrix)
-    // Rcpp::_["zv_double_dgCMatrix"] = blaze::sum(zv_double_dgCMatrix)
+    Rcpp::_["cpv_int_dgCMatrix"] = blaze::sum(cpv_int_dgCMatrix),
+    Rcpp::_["cpv_int_dgTMatrix"] = blaze::sum(cpv_int_dgTMatrix),
+    Rcpp::_["cpv_int_dgRMatrix"] = blaze::sum(cpv_int_dgRMatrix),
+    Rcpp::_["cpv_double_dgCMatrix"] = blaze::sum(cpv_double_dgCMatrix),
+    Rcpp::_["cpv_double_dgTMatrix"] = blaze::sum(cpv_double_dgTMatrix),
+    Rcpp::_["cpv_double_dgRMatrix"] = blaze::sum(cpv_double_dgRMatrix),
+    Rcpp::_["cpv_double_rv_dgCMatrix"] = blaze::sum(cpv_double_rv_dgCMatrix),
+    Rcpp::_["cpv_double_rv_dgTMatrix"] = blaze::sum(cpv_double_rv_dgTMatrix),
+    Rcpp::_["cpv_double_rv_dgRMatrix"] = blaze::sum(cpv_double_rv_dgRMatrix)
   );
+}
+
+// [[Rcpp::export]]
+void vector_cpv_wrong_row_error(Rcpp::S4 x) {
+  blaze::CompressedVector<double, blaze::rowVector> z = Rcpp::as<blaze::CompressedVector<double, blaze::rowVector>>(x);
+}
+
+// [[Rcpp::export]]
+void vector_cpv_wrong_column_error(Rcpp::S4 x) {
+  blaze::CompressedVector<double, blaze::columnVector> z = Rcpp::as<blaze::CompressedVector<double, blaze::columnVector>>(x);
 }

@@ -541,6 +541,8 @@ namespace Rcpp {
         } else if (matrixClass == "dtRMatrix" || object.is("dtRMatrix")) {
           RCPPBLAZE_S4_MAT_CSR;
           RCPPBLAZE_S4_MAT_DIAG;
+        } else if (matrixClass == "ddiMatrix" || object.is("ddiMatrix")) {
+          // wait for implementation
         } else {
           Rcpp::stop(matrixClass + " is not supported.");
         }

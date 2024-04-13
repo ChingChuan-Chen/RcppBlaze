@@ -13,6 +13,8 @@ if (file.exists(file.path("cpp", cppFile))) {
 } else {
   Rcpp::sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
 }
+library(Matrix)
+library(MatrixExtra)
 
 matrix_wrap_res <- matrix_wrap_test()
 expect_int_mat <- matrix(c(1L, -2L, 4L, 5L, -8L, 0L), nrow=2L, byrow=TRUE)
@@ -36,7 +38,15 @@ expect_equal(matrix_wrap_res[["cm_al_up_double_cm"]], expect_dbl_mat, info = "cm
 expect_equal(matrix_wrap_res[["cm_al_up_double_rm"]], expect_dbl_mat, info = "cm_al_up_double_rm")
 expect_equal(matrix_wrap_res[["cm_al_pa_double_cm"]], expect_dbl_mat, info = "cm_al_pa_double_cm")
 expect_equal(matrix_wrap_res[["cm_al_pa_double_rm"]], expect_dbl_mat, info = "cm_al_pa_double_rm")
-# add UniformMatrix wrap test
+
+matrix_wrap_res2 <- matrix_wrap_test2()
+expect_equal(matrix_wrap_res2[["um_double_cm"]], matrix(-3.2, 2L, 3L), info = "um_double_cm")
+expect_equal(matrix_wrap_res2[["um_double_rm"]], matrix(-3.2, 2L, 3L), info = "um_double_rm")
+expect_equal(matrix_wrap_res2[["um_cplx"]], matrix(-1.8 + 0.6 * 1i, 2L, 3L), info = "um_cplx")
+expect_equal(matrix_wrap_res2[["im_double_cm"]], Diagonal(3L, rep(1, 3L)), info = "im_double_cm")
+expect_equal(matrix_wrap_res2[["im_double_rm"]], Diagonal(3L, rep(1, 3L)), info = "im_double_rm")
+expect_equal(matrix_wrap_res2[["zm_double_cm"]], Matrix(0, 2L, 3L), info = "zm_double_cm")
+expect_equal(matrix_wrap_res2[["zm_double_rm"]], Matrix(0, 2L, 3L), info = "zm_double_rm")
 
 matrix_as_res <- matrix_as_test(
   list(
@@ -51,7 +61,6 @@ expect_equal(matrix_as_res[["sm_double_sum"]], expect_double_sum, info = "sm_dou
 expect_equal(matrix_as_res[["sm_double_unaligned_sum"]], expect_double_sum, info = "sm_double_unaligned_sum")
 expect_equal(matrix_as_res[["hm_double_sum"]], expect_double_sum, info = "hm_double_sum")
 expect_equal(matrix_as_res[["hm_double_unaligned_sum"]], expect_double_sum, info = "hm_double_unaligned_sum")
-# add UniformMatrix as test
 
 expect_error(matrix_sm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
 expect_error(matrix_hm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))

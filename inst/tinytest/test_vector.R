@@ -29,12 +29,13 @@ expect_equal(vector_wrap_res[["cv_ua_up_double"]], expect_dbl_vec, info = "cv_ua
 expect_equal(vector_wrap_res[["cv_ua_pa_double"]], expect_dbl_vec, info = "cv_ua_pa_double")
 expect_equal(vector_wrap_res[["cv_al_up_double"]], expect_dbl_vec, info = "cv_al_up_double")
 expect_equal(vector_wrap_res[["cv_al_pa_double"]], expect_dbl_vec, info = "cv_al_pa_double")
-expect_equal(vector_wrap_res[["cv_int"]], expect_int_sparse_vector, info = "cv_int")
-expect_equal(vector_wrap_res[["cv_double"]], expect_dbl_sparse_vector, info = "cv_double")
-expect_equal(vector_wrap_res[["cv_double_rv"]], t(expect_dbl_sparse_vector), info = "cv_double_rv")
-expect_equal(vector_wrap_res[["cv_float"]], expect_dbl_sparse_vector, info = "cv_float", tolerance = 1e-6)
-expect_equal(vector_wrap_res[["zv_double"]], Matrix(0, 6, 1), info = "zv_double")
-# add UniformVector wrap test
+expect_equal(vector_wrap_res[["uv_double"]], rep(3, 6L), info = "uv_double")
+expect_equal(vector_wrap_res[["uv_cplx"]], rep(3.3-2.7*1i, 6L), info = "uv_cplx")
+expect_equal(vector_wrap_res[["cpv_int"]], expect_int_sparse_vector, info = "cpv_int")
+expect_equal(vector_wrap_res[["cpv_double"]], expect_dbl_sparse_vector, info = "cpv_double")
+expect_equal(vector_wrap_res[["cpv_double_rv"]], t(expect_dbl_sparse_vector), info = "cpv_double_rv")
+expect_equal(vector_wrap_res[["cpv_float"]], expect_dbl_sparse_vector, info = "cpv_float", tolerance = 1e-6)
+expect_equal(vector_wrap_res[["zv_double"]], Matrix(0, 6L, 1L), info = "zv_double")
 
 vector_as_res <- vector_as_test(list(c(1L, 3L, 6L), c(1.5, 2.5, 4.5)))
 expect_double_sum <- 8.5
@@ -44,7 +45,6 @@ expect_equal(vector_as_res[["sv_double_sum"]], expect_double_sum, info = "sv_dou
 expect_equal(vector_as_res[["sv_double_unaligned_sum"]], expect_double_sum, info = "sv_double_unaligned_sum")
 expect_equal(vector_as_res[["hv_double_sum"]], expect_double_sum, info = "hv_double_sum")
 expect_equal(vector_as_res[["hv_double_unaligned_sum"]], expect_double_sum, info = "hv_double_unaligned_sum")
-# add UniformVector as test
 
 expect_error(vector_sv_error(c(1.5, 2.5, 4.5, 5.5)))
 expect_error(vector_hv_error(c(1.5, 2.5, 4.5, 5.5)))
@@ -66,21 +66,20 @@ sparse_vector_as_res <- sparse_vector_as_test(
     as.csc.matrix(expect_dbl_sparse_vector),
     t(expect_dbl_sparse_vector),
     as.coo.matrix(t(expect_dbl_sparse_vector)),
-    as.csc.matrix(t(expect_dbl_sparse_vector)),
-    Matrix(0, 6, 1)
+    as.csc.matrix(t(expect_dbl_sparse_vector))
   )
 )
 expect_int_sum <- 4
 expect_double_sum <- 5.1
-expect_equal(sparse_vector_as_res[["cv_int_dgCMatrix"]], expect_int_sum, info = "cv_int_dgCMatrix")
-expect_equal(sparse_vector_as_res[["cv_int_dgTMatrix"]], expect_int_sum, info = "cv_int_dgTMatrix")
-expect_equal(sparse_vector_as_res[["cv_int_dgRMatrix"]], expect_int_sum, info = "cv_int_dgRMatrix")
-expect_equal(sparse_vector_as_res[["cv_double_dgCMatrix"]], expect_double_sum, info = "cv_double_dgCMatrix")
-expect_equal(sparse_vector_as_res[["cv_double_dgTMatrix"]], expect_double_sum, info = "cv_double_dgTMatrix")
-expect_equal(sparse_vector_as_res[["cv_double_dgRMatrix"]], expect_double_sum, info = "cv_double_dgRMatrix")
-expect_equal(sparse_vector_as_res[["cv_double_rv_dgCMatrix"]], expect_double_sum, info = "cv_double_rv_dgCMatrix")
-expect_equal(sparse_vector_as_res[["cv_double_rv_dgTMatrix"]], expect_double_sum, info = "cv_double_rv_dgTMatrix")
-expect_equal(sparse_vector_as_res[["cv_double_rv_dgRMatrix"]], expect_double_sum, info = "cv_double_rv_dgRMatrix")
-# expect_equal(sparse_vector_as_res[["zv_double_dgCMatrix"]], 0, info = "zv_double_dgCMatrix")
+expect_equal(sparse_vector_as_res[["cpv_int_dgCMatrix"]], expect_int_sum, info = "cpv_int_dgCMatrix")
+expect_equal(sparse_vector_as_res[["cpv_int_dgTMatrix"]], expect_int_sum, info = "cpv_int_dgTMatrix")
+expect_equal(sparse_vector_as_res[["cpv_int_dgRMatrix"]], expect_int_sum, info = "cpv_int_dgRMatrix")
+expect_equal(sparse_vector_as_res[["cpv_double_dgCMatrix"]], expect_double_sum, info = "cpv_double_dgCMatrix")
+expect_equal(sparse_vector_as_res[["cpv_double_dgTMatrix"]], expect_double_sum, info = "cpv_double_dgTMatrix")
+expect_equal(sparse_vector_as_res[["cpv_double_dgRMatrix"]], expect_double_sum, info = "cpv_double_dgRMatrix")
+expect_equal(sparse_vector_as_res[["cpv_double_rv_dgCMatrix"]], expect_double_sum, info = "cpv_double_rv_dgCMatrix")
+expect_equal(sparse_vector_as_res[["cpv_double_rv_dgTMatrix"]], expect_double_sum, info = "cpv_double_rv_dgTMatrix")
+expect_equal(sparse_vector_as_res[["cpv_double_rv_dgRMatrix"]], expect_double_sum, info = "cpv_double_rv_dgRMatrix")
 
-# add CompressedVector Row/Column Vector error tests
+expect_error(vector_cpv_wrong_row_error(Matrix(c(0, 0, 1), 3L, 1L)))
+expect_error(vector_cpv_wrong_column_error(Matrix(c(0, 0, 1), 1L, 3L)))
