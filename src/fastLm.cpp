@@ -23,6 +23,9 @@ Rcpp::List testAs1(Rcpp::List input_list) {
   blaze::CompressedVector<double, blaze::columnVector> x = input_list[1];
   Rcpp::Rcout << "CompressedVector columnVector:" << std::endl << x << std::endl;
 
+  blaze::ZeroVector<double> zv_double_dgCMatrix = input_list[2];
+  Rcpp::Rcout << "ZeroVector columnVector:" << std::endl << zv_double_dgCMatrix << std::endl;
+
   return Rcpp::List::create(
     _["test"] = true
   );
@@ -30,25 +33,14 @@ Rcpp::List testAs1(Rcpp::List input_list) {
 
 // [[Rcpp::export]]
 Rcpp::List testWrap1() {
-  blaze::CompressedVector<int> a(6UL);
-  a[2] = 1;
-  a[4] = 3;
+  // blaze::ZeroVector<double, blaze::columnVector> a( 4UL );
+  blaze::UniformVector<double, blaze::columnVector> a( 4UL );
+  a = 2;
 
-  blaze::CompressedVector<double> b(6UL);
-  b[2] = 1.5;
-  b[4] = 3.6;
-
-  blaze::CompressedVector<double, blaze::rowVector> c(6UL);
-  c[2] = 1.5;
-  c[4] = 3.6;
-
-  blaze::ZeroVector<double> d(6UL);
+  // blaze::UniformMatrix<double, blaze::columnMajor> b( 4UL, 4UL );
 
   return Rcpp::List::create(
-    _["test1"] = a,
-    _["test2"] = b,
-    _["test3"] = c,
-    _["test4"] = d
+    _["test1"] = a
   );
 }
 

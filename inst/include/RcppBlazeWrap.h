@@ -19,7 +19,7 @@ namespace Rcpp {
 
   namespace RcppBlaze {
 
-    template<typename VT, bool TF>
+    template <typename VT, bool TF>
     SEXP blaze_wrap(const blaze::DenseVector<VT, TF>& x) {
       typedef typename VT::ElementType ET;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
@@ -28,12 +28,12 @@ namespace Rcpp {
       return out;
     }
 
-    template<typename VT, bool TF>
-    SEXP blaze_expr_wrap(const blaze::Expression<blaze::DenseVector<VT, TF>>& x) {
+    template <typename VT, bool TF>
+    SEXP blaze_dv_expr_wrap(const blaze::Expression<blaze::DenseVector<VT, TF>>& x) {
       return blaze_wrap<VT, TF>(x);
     }
 
-    template<typename MT, bool SO>
+    template <typename MT, bool SO>
     SEXP blaze_wrap(const blaze::DenseMatrix<MT, SO>& x) {
       typedef typename MT::ElementType ET;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
@@ -57,12 +57,12 @@ namespace Rcpp {
       return out;
     }
 
-    template<typename MT, bool SO>
-    SEXP blaze_expr_wrap(const blaze::Expression<blaze::DenseMatrix<MT, SO>>& x) {
+    template <typename MT, bool SO>
+    SEXP blaze_dm_expr_wrap(const blaze::Expression<blaze::DenseMatrix<MT, SO>>& x) {
       return blaze_wrap<MT, SO>(x);
     }
 
-    template<typename VT, bool TF>
+    template <typename VT, bool TF>
     SEXP blaze_wrap(const blaze::SparseVector<VT, TF>& sv) {
       typedef typename VT::ElementType ET;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
@@ -111,12 +111,12 @@ namespace Rcpp {
       return s;
     }
 
-    template<typename VT, bool TF>
-    SEXP blaze_expr_wrap(const blaze::Expression<blaze::SparseVector<VT, TF>>& x) {
+    template <typename VT, bool TF>
+    SEXP blaze_sv_expr_wrap(const blaze::Expression<blaze::SparseVector<VT, TF>>& x) {
       return blaze_wrap<VT, TF>(x);
     }
 
-    template<typename MT, bool SO>
+    template <typename MT, bool SO>
     SEXP blaze_wrap(const blaze::SparseMatrix<MT,SO>& sm) {
       typedef typename MT::ElementType ET;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<ET>::rtype;
@@ -157,8 +157,8 @@ namespace Rcpp {
 */
     }
 
-    template<typename MT, bool SO>
-    SEXP blaze_expr_wrap(const blaze::Expression<blaze::SparseMatrix<MT, SO>>& x) {
+    template <typename MT, bool SO>
+    SEXP blaze_sm_expr_wrap(const blaze::Expression<blaze::SparseMatrix<MT, SO>>& x) {
       return blaze_wrap<MT, SO>(x);
     }
 
@@ -170,126 +170,126 @@ namespace Rcpp {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  template <typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
   SEXP wrap(const blaze::StaticVector<Type, N, TF, AF, PF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  template <typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
   SEXP wrap(const blaze::HybridVector<Type, N, TF, AF, PF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
+  template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
   SEXP wrap(const blaze::CustomVector<Type, AF, PF, TF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, bool TF>
+  template <typename Type, bool TF>
   SEXP wrap(const blaze::UniformVector<Type, TF>& x) {
-    return RcppBlaze::blaze_expr_wrap(x);
+    return RcppBlaze::blaze_dv_expr_wrap(x);
   };
 
   // wrap for blaze dense matrix
-  template<typename Type, bool SO>
+  template <typename Type, bool SO>
   SEXP wrap(const blaze::DynamicMatrix<Type, SO>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  template <typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
   SEXP wrap(const blaze::StaticMatrix<Type, M, N, SO, AF, PF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
+  template <typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
   SEXP wrap(const blaze::HybridMatrix<Type, M, N, SO, AF, PF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool SO>
+  template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool SO>
   SEXP wrap(const blaze::CustomMatrix<Type, AF, PF, SO>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, bool SO>
+  template <typename Type, bool SO>
   SEXP wrap(const blaze::UniformMatrix<Type, SO>& x) {
-    return RcppBlaze::blaze_expr_wrap(x);
+    return RcppBlaze::blaze_dm_expr_wrap(x);
   };
 
   // wrap for blaze sparse vector
-  template<typename Type, bool TF>
+  template <typename Type, bool TF>
   SEXP wrap(const blaze::CompressedVector<Type, TF>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename Type, bool TF>
+  template <typename Type, bool TF>
   SEXP wrap(const blaze::ZeroVector<Type, TF>& x) {
-    return RcppBlaze::blaze_expr_wrap(x);
+    return RcppBlaze::blaze_sv_expr_wrap(x);
   };
 
   // wrap for blaze sparse matrix
-  template<typename Type, bool SO>
+  template <typename Type, bool SO>
   SEXP wrap(const blaze::CompressedMatrix<Type, SO>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template<typename MT, bool SO>
+  template <typename MT, bool SO>
   SEXP wrap(const blaze::IdentityMatrix<MT, SO>& x) {
-    return RcppBlaze::blaze_wrap(x);
+    return RcppBlaze::blaze_sm_expr_wrap(x);
   };
 
-  template<typename MT, bool SO>
+  template <typename MT, bool SO>
   SEXP wrap(const blaze::ZeroMatrix<MT, SO>& x) {
-    return RcppBlaze::blaze_wrap(x);
+    return RcppBlaze::blaze_sm_expr_wrap(x);
   };
 
 
-  /*adaptors
+  /* adaptors
    // TODO:
    // Convert Symmetric Matrices, Hermitian Matrices, Triangular Matrices
    // Convert Submatrix, Subvector, Row, Column, Rows, Columns, Band
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::DiagonalMatrix<MT, SO, DF>& dm) {
     return RcppBlaze::blaze_wrap(dm);
   };
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::LowerMatrix<MT, SO, DF>& lm) {
     return RcppBlaze::blaze_wrap(lm);
   };
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::UpperMatrix<MT, SO, DF>& um) {
     return RcppBlaze::blaze_wrap(um);
   };
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::HermitianMatrix<MT, SO, DF>& hm) {
     return RcppBlaze::blaze_wrap(hm);
   };
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::StrictlyLowerMatrix<MT, SO, DF>& slm) {
     return RcppBlaze::blaze_wrap(slm);
   };
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::StrictlyUpperMatrix<MT, SO, DF>& sum) {
     return RcppBlaze::blaze_wrap(sum);
   };
 
-  template<typename MT, bool SO, bool DF, bool NF>
+  template <typename MT, bool SO, bool DF, bool NF>
   SEXP wrap(const blaze::SymmetricMatrix<MT, SO, DF, NF>& sm) {
     return RcppBlaze::blaze_wrap(sm);
   };
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::UniLowerMatrix<MT, SO, DF>& ulm) {
     return RcppBlaze::blaze_wrap(ulm);
   };
 
-  template<typename MT, bool SO, bool DF>
+  template <typename MT, bool SO, bool DF>
   SEXP wrap(const blaze::UniUpperMatrix<MT, SO, DF>& uum) {
     return RcppBlaze::blaze_wrap(uum);
   };

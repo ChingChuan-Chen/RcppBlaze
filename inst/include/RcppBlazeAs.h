@@ -91,7 +91,7 @@ namespace Rcpp {
     };
 
     // Provides only blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> export
-    template<typename Type, bool TF>
+    template <typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> > {
     public:
       typedef Type r_export_type;
@@ -113,7 +113,7 @@ namespace Rcpp {
     };
 
     // Provides only blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> export
-    template<typename Type, bool TF>
+    template <typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> > {
     public:
       typedef Type r_export_type;
@@ -136,7 +136,7 @@ namespace Rcpp {
     };
 
     // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> export (not supported)
-    template<typename Type, bool TF>
+    template <typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::unpadded,TF> > {
     public:
       typedef Type r_export_type;
@@ -158,7 +158,7 @@ namespace Rcpp {
     };
 
     // Provides only blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> export (not supported)
-    template<typename Type, bool TF>
+    template <typename Type, bool TF>
     class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> > {
     public:
       typedef Type r_export_type;
@@ -409,7 +409,7 @@ namespace Rcpp {
   std::string uplo = Rcpp::as<std::string>(object.slot("uplo"));
 
     // Provides only blaze::CompressedVector<Type, TF> export
-    template<typename Type, bool TF>
+    template <typename Type, bool TF>
     class Exporter< blaze::CompressedVector<Type, TF> > {
     public:
       typedef Type r_export_type;
@@ -495,9 +495,15 @@ namespace Rcpp {
       Rcpp::S4 object;
     };
 
+    template <typename Type, bool TF>
+    class Exporter< blaze::ZeroVector<Type, TF> > : public Exporter< blaze::CompressedVector<Type, TF> > {
+    public:
+      Exporter(SEXP x) : Exporter< blaze::CompressedVector<Type, TF> >(x){}
+    };
+
   // ---------------------------- Sparse Matrix Exporter ----------------------------
     // Provides only blaze::CompressedMatrix<Type,SO> export
-    template<typename Type, bool SO >
+    template <typename Type, bool SO >
     class Exporter< blaze::CompressedMatrix<Type, SO> > {
     public:
       typedef Type r_export_type;
@@ -543,6 +549,12 @@ namespace Rcpp {
 
     private:
       Rcpp::S4 object;
+    };
+
+    template <typename Type, bool SO>
+    class Exporter< blaze::ZeroMatrix<Type, SO> > : public Exporter< blaze::CompressedMatrix<Type, SO> > {
+    public:
+      Exporter(SEXP x) : Exporter< blaze::CompressedMatrix<Type, SO> >(x){}
     };
 
 #undef RCPPBLAZE_GET_S4_OBJ_MAP
