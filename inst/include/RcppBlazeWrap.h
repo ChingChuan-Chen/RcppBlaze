@@ -94,21 +94,21 @@ namespace Rcpp {
       if (TF == blaze::rowVector) {
         pSize = size + 1UL;
       }
-      Rcpp::IntegerVector p(pSize, 0);
+      Rcpp::IntegerVector p(pSize, 0UL);
       Rcpp::IntegerVector idx(nonZeroSize);
 
       size_t k = 0UL;
       if (TF == blaze::rowVector) {
         for (auto element=(*sv).begin(); element!=(*sv).end(); ++element) {
           x[k] = Rcpp::internal::caster<Type, double>(element->value());
-          p[element->index() + 1] = 1;
+          p[element->index() + 1UL] = 1;
           ++k;
         }
         for( size_t i=1UL; i<(size_t)p.size(); ++i) {
           p[i] = p[i-1UL] + p[i];
         }
       } else {
-        p[1] = nonZeroSize;
+        p[1UL] = nonZeroSize;
         for (auto element=(*sv).begin(); element!=(*sv).end(); ++element) {
           x[k] = Rcpp::internal::caster<Type, double>(element->value());
           idx[k] = element->index();
@@ -119,9 +119,9 @@ namespace Rcpp {
       std::string klass = "dgCMatrix";
       Rcpp::S4 out(klass);
       if (TF == blaze::rowVector) {
-        out.slot("Dim") = Rcpp::Dimension(1, size);
+        out.slot("Dim") = Rcpp::Dimension(1UL, size);
       } else {
-        out.slot("Dim") = Rcpp::Dimension(size, 1);
+        out.slot("Dim") = Rcpp::Dimension(size, 1UL);
       }
       out.slot("i") = idx;
       out.slot("p") = p;
@@ -142,37 +142,30 @@ namespace Rcpp {
         Rcpp::stop("SparseMatrix only supports int, float and double!");
       }
 
-      size_t m = (*sm).rows(), n = (*sm).columns;
-
-      std::string klass = "dgCMatrix";
-      Rcpp::S4 s(klass);
-      s.slot("Dim") = Rcpp::Dimension(m, n);
-      return s;
-
-/*
-      const size_t index((SO == blaze::rowMajor)?A.rows():A.columns());
-
-      Rcpp::Vector<RTYPE> x(A.nonZeros());
-      Rcpp::IntegerVector idx(A.nonZeros());
-      Rcpp::IntegerVector p(index + 1UL);
+      size_t nonZeroSize = (*sm).nonZeros(), m = (*sm).rows(), n = (*sm).columns();
+      Rcpp::Vector<REALSXP> x(nonZeroSize);
+      Rcpp::IntegerVector idx(nonZeroSize);
+      size_t pSizeMinus1 = (SO == blaze::rowMajor)?m:n;
+      Rcpp::IntegerVector p(pSizeMinus1 + 1UL);
+      p[pSizeMinus1] = (int) nonZeroSize;
 
       size_t k = 0UL;
-      for (size_t i=0UL; i<index; ++i) {
+      for (size_t i=0UL; i<pSizeMinus1; ++i) {
         p[i] = (int) k;
-        for (ConstIterator element=A.begin(i); element!=A.end(i); ++element) {
-          x[k] = element->value();
+        for (auto element=(*sm).begin(i); element!=(*sm).end(i); ++element) {
+          x[k] = Rcpp::internal::caster<Type, double>(element->value());
           idx[k] = element->index();
           ++k;
         }
       }
-      p[index] = (int) A.nonZeros();
 
-      Rcpp::S4 s(klass);
-      s.slot("Dim") = ::Rcpp::Dimension(A.rows(), A.columns());
-      s.slot((SO == blaze::rowMajor)?"j":"i") = idx;
-      s.slot("p") = p;
-      s.slot("x") = x;
-*/
+      std::string klass = (SO == blaze::rowMajor)?"dgRMatrix":"dgCMatrix";
+      Rcpp::S4 out(klass);
+      out.slot("Dim") = Rcpp::Dimension(m, n);
+      out.slot((SO == blaze::rowMajor)?"j":"i") = idx;
+      out.slot("p") = p;
+      out.slot("x") = x;
+      return out;
     }
 
     template <typename MT, bool SO>

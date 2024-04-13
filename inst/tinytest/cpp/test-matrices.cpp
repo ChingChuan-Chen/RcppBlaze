@@ -106,18 +106,52 @@ Rcpp::List matrix_wrap_test2() {
   blaze::UniformMatrix<double, blaze::rowMajor> um_double_rm(2UL, 3UL, -3.2);
   blaze::UniformMatrix<std::complex<double>, blaze::columnMajor> um_cplx(2UL, 3UL, -1.8 + 0.6i);
 
+  blaze::CompressedMatrix<int, blaze::columnMajor> cpm_int(3UL, 5UL);
+  cpm_int(0, 1) = 1;
+  cpm_int(0, 4) = 2;
+  cpm_int(1, 2) = 2;
+  cpm_int(1, 4) = 1;
+  cpm_int(2, 0) = 2;
+  cpm_int(2, 2) = 1;
+
+  blaze::CompressedMatrix<double, blaze::columnMajor> cpm_double_cm(3UL, 5UL);
+  cpm_double_cm(0, 1) = 1.5;
+  cpm_double_cm(0, 4) = 2.5;
+  cpm_double_cm(1, 2) = 2.5;
+  cpm_double_cm(1, 4) = 1.5;
+  cpm_double_cm(2, 0) = 2.5;
+  cpm_double_cm(2, 2) = 1.5;
+
+  blaze::CompressedMatrix<double, blaze::rowMajor> cpm_double_rm(3UL, 5UL);
+  cpm_double_rm(0, 1) = 1.5;
+  cpm_double_rm(0, 4) = 2.5;
+  cpm_double_rm(1, 2) = 2.5;
+  cpm_double_rm(1, 4) = 1.5;
+  cpm_double_rm(2, 0) = 2.5;
+  cpm_double_rm(2, 2) = 1.5;
+
+  blaze::CompressedMatrix<float, blaze::columnMajor> cpm_float(3UL, 5UL);
+  cpm_float(0, 1) = 1.5;
+  cpm_float(0, 4) = 2.5;
+  cpm_float(1, 2) = 2.5;
+  cpm_float(1, 4) = 1.5;
+  cpm_float(2, 0) = 2.5;
+  cpm_float(2, 2) = 1.5;
+
   blaze::IdentityMatrix<double, blaze::columnMajor> im_double_cm(3UL);
   blaze::IdentityMatrix<double, blaze::rowMajor> im_double_rm(3UL);
 
   blaze::ZeroMatrix<double, blaze::columnMajor> zm_double_cm(2UL, 3UL);
   blaze::ZeroMatrix<double, blaze::rowMajor> zm_double_rm(2UL, 3UL);
 
-  // TODO: CompressedMatrix
-
   return Rcpp::List::create(
     _["um_double_cm"] = um_double_cm,
     _["um_double_rm"] = um_double_rm,
     _["um_cplx"] = um_cplx,
+    _["cpm_int"] = cpm_int,
+    _["cpm_double_cm"] = cpm_double_cm,
+    _["cpm_double_rm"] = cpm_double_rm,
+    _["cpm_float"] = cpm_float,
     _["im_double_cm"] = im_double_cm,
     _["im_double_rm"] = im_double_rm,
     _["zm_double_cm"] = zm_double_cm,

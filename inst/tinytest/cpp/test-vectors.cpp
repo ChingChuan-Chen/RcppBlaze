@@ -81,10 +81,10 @@ Rcpp::List vector_wrap_test() {
     _["cv_al_pa_double"] = cv_al_pa_double,
     _["uv_double"] = uv_double,
     _["uv_cplx"] = uv_cplx,
-    _["cv_int"] = cv_int,
-    _["cv_double"] = cv_double,
-    _["cv_double_rv"] = cv_double_rv,
-    _["cv_float"] = cv_float,
+    _["cpv_int"] = cpv_int,
+    _["cpv_double"] = cpv_double,
+    _["cpv_double_rv"] = cpv_double_rv,
+    _["cpv_float"] = cpv_float,
     _["zv_double"] = zv_double
   );
 }

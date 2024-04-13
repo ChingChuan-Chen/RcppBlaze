@@ -36,21 +36,25 @@ using namespace std::complex_literals;
 
 // [[Rcpp::export]]
 Rcpp::List testWrap1() {
-  blaze::UniformMatrix<double, blaze::columnMajor> um_double_cm(2UL, 3UL, -3.2);
-  blaze::UniformMatrix<double, blaze::rowMajor> um_double_rm(2UL, 3UL, -3.2);
-  blaze::UniformMatrix<std::complex<double>, blaze::columnMajor> um_cplx(2UL, 3UL, -1.8 + 0.6i);
+  blaze::CompressedMatrix<double, blaze::columnMajor> a(3UL, 5UL);
+  a(0, 1) = 1;
+  a(0, 4) = 2;
+  a(1, 2) = 2;
+  a(1, 4) = 1;
+  a(2, 0) = 2;
+  a(2, 3) = 1;
 
-  blaze::IdentityMatrix<double, blaze::columnMajor> im_double(3UL);
+  blaze::CompressedMatrix<double, blaze::rowMajor> b(3UL, 5UL);
+  b(0, 1) = 1;
+  b(0, 4) = 2;
+  b(1, 2) = 2;
+  b(1, 4) = 1;
+  b(2, 0) = 2;
+  b(2, 3) = 1;
 
-  blaze::ZeroMatrix<double, blaze::columnMajor> zm_double_cm(2UL, 3UL);
-  blaze::ZeroMatrix<double, blaze::rowMajor> zm_double_rm(2UL, 3UL);
   return Rcpp::List::create(
-    _["um_double_cm"] = um_double_cm,
-    _["um_double_rm"] = um_double_rm,
-    _["um_cplx"] = um_cplx,
-    _["im_double"] = im_double,
-    _["zm_double_cm"] = zm_double_cm,
-    _["zm_double_rm"] = zm_double_rm
+    _["a"] = a,
+    _["b"] = b
   );
 }
 
