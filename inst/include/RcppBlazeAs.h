@@ -402,11 +402,60 @@ namespace Rcpp {
 #define RCPPBLAZE_S4_MAT_COO                                     \
   Rcpp::IntegerVector i = object.slot("i"), j = object.slot("j");
 
+typedef std::tuple<size_t, double> vi_pair;
+#define RCPPBLAZE_GET_VI_PAIRS(__MASK__)                                      \
+  int v = 0, cnt;                                                             \
+  std::vector<std::vector<vi_pair>> vi_pair_vec(n);                           \
+  for (int u=1; u < p.size(); ++u) {                                          \
+    if (p[u] > p[u-1]) {                                                      \
+      cnt = p[u] - p[u-1]; vi_pair_vec[u-1].reserve(cnt);                     \
+      for (int t=0; t<cnt; ++t) {                                             \
+        vi_pair_vec[u-1].push_back(vi_pair((size_t) __MASK__[v], x[v])); ++v; \
+      }}}
+
+#define RCPPBLAZE_CSPARSE_MATRIX_COPY                          \
+  for (size_t u=0UL; u<vi_pair_vec.size(); ++u) {              \
+    result.reserve(u, vi_pair_vec[u].size());                  \
+    for (auto &el: vi_pair_vec[u]) {                           \
+      result.append(std::get<0>(el), u, std::get<1>(el));      \
+    }                                                          \
+    result.finalize(u);                                        \
+  }
+
+#define RCPPBLAZE_RSPARSE_MATRIX_COPY                          \
+  for (size_t u=0UL; u<vi_pair_vec.size(); ++u) {              \
+    result.reserve(u, vi_pair_vec[u].size());                  \
+    for (auto &el: vi_pair_vec[u]) {                           \
+      result.append(u, std::get<0>(el), std::get<1>(el));      \
+    }                                                          \
+    result.finalize(u);                                        \
+  }
+
+#define RCPPBLAZE_TSPARSE_MATRIX_COPY                          \
+  for (size_t u=0UL; u<i.size(); ++u) {                        \
+    result(i[u], j[u]) = x[u];                                 \
+  }
+
 #define RCPPBLAZE_S4_MAT_DIAG                                    \
-  std::string diag = Rcpp::as<std::string>(object.slot("diag"));
+  std::string diag = Rcpp::as<std::string>(object.slot("diag")); \
+  if (diag == "U") {                                             \
+    for (size_t i=0UL; i<(size_t)std::min(m, n); ++i) {          \
+      result(i, i) = 1.0;                                        \
+    }}
+
+#define RCPPBLAZE_SYM_COPY(__START__, __END__)                   \
+  for (size_t i=0UL; i<(size_t)m; ++i) {                         \
+    for (size_t j=__START__; j < (size_t)__END__; ++j) {         \
+      result(j, i) = result(i, j);                               \
+    }}
 
 #define RCPPBLAZE_S4_MAT_UPLO                                    \
-  std::string uplo = Rcpp::as<std::string>(object.slot("uplo"));
+  std::string uplo = Rcpp::as<std::string>(object.slot("uplo")); \
+  if (uplo == "U") {                                             \
+    RCPPBLAZE_SYM_COPY(i, n);                                    \
+  } else {                                                       \
+    RCPPBLAZE_SYM_COPY(0UL, i+1);                                \
+  }
 
     // Provides only blaze::CompressedVector<Type, TF> export
     template <typename Type, bool TF>
@@ -434,9 +483,10 @@ namespace Rcpp {
           }
         }
 
-        blaze::CompressedVector<Type, TF> result(size);
         std::string matrixClass = Rcpp::as<std::string>(object.slot("class"));
         Rcpp::Vector<RTYPE> x = object.slot("x");
+        size_t nonZeroSize = (size_t) x.size();
+        blaze::CompressedVector<Type, TF> result(size, nonZeroSize);
         size_t u, v;
         int cnt;
         if (matrixClass == "dgCMatrix" || object.is("dgCMatrix")) {
@@ -448,9 +498,9 @@ namespace Rcpp {
               cnt = 0;
               while (p[u] > p[u-1] + cnt) {
                 if (TF == blaze::rowVector) {
-                  result[u-1] = x[v];
+                  result.append(u-1, x[v]);
                 } else {
-                  result[(size_t)i[v]] = x[v];
+                  result.append((size_t)i[v], x[v]);
                 }
                 ++v;
                 ++cnt;
@@ -459,12 +509,11 @@ namespace Rcpp {
           }
         } else if (matrixClass == "dgTMatrix" || object.is("dgTMatrix")) {
           RCPPBLAZE_S4_MAT_COO;
-          size_t nonZeroSize = (size_t) x.size();
           for (u=0UL; u < nonZeroSize; ++u) {
             if (TF == blaze::rowVector) {
-              result[(size_t)j[u]] = x[u];
+              result.append((size_t)j[v], x[v]);
             } else {
-              result[(size_t)i[u]] = x[u];
+              result.append((size_t)i[v], x[v]);
             }
           }
         } else if (matrixClass == "dgRMatrix" || object.is("dgRMatrix")) {
@@ -476,9 +525,9 @@ namespace Rcpp {
               cnt = 0;
               while (p[u] > p[u-1] + cnt) {
                 if (TF == blaze::rowVector) {
-                  result[(size_t)j[v]] = x[v];
+                  result.append((size_t)j[v], x[v]);
                 } else {
-                  result[u-1] = x[v];
+                  result.append(u-1, x[v]);
                 }
                 ++v;
                 ++cnt;
@@ -514,16 +563,22 @@ namespace Rcpp {
       blaze::CompressedMatrix<Type, SO> get() {
         RCPPBLAZE_GET_S4_OBJ_MAP;
 
+        Rcpp::Vector<RTYPE> x = object.slot("x");
         blaze::CompressedMatrix<Type, SO> result(m, n);
         std::string matrixClass = Rcpp::as<std::string>(object.slot("class"));
-        Rcpp::Vector<RTYPE> x = object.slot("x");
 
         if (matrixClass == "dgCMatrix" || object.is("dgCMatrix")) {
           RCPPBLAZE_S4_MAT_CSC;
+          RCPPBLAZE_GET_VI_PAIRS(i);
+          RCPPBLAZE_CSPARSE_MATRIX_COPY;
         } else if (matrixClass == "dsCMatrix" || object.is("dsCMatrix")) {
           RCPPBLAZE_S4_MAT_CSC;
+          RCPPBLAZE_GET_VI_PAIRS(i);
+          RCPPBLAZE_CSPARSE_MATRIX_COPY;
         } else if (matrixClass == "dtCMatrix" || object.is("dtCMatrix")) {
           RCPPBLAZE_S4_MAT_CSC;
+          RCPPBLAZE_GET_VI_PAIRS(i);
+          RCPPBLAZE_CSPARSE_MATRIX_COPY;
           RCPPBLAZE_S4_MAT_DIAG;
         } else if (matrixClass == "dgTMatrix" || object.is("dgTMatrix")) {
           RCPPBLAZE_S4_MAT_COO;
@@ -535,11 +590,17 @@ namespace Rcpp {
           RCPPBLAZE_S4_MAT_DIAG;
         } else if (matrixClass == "dgRMatrix" || object.is("dgRMatrix")) {
           RCPPBLAZE_S4_MAT_CSR;
+          RCPPBLAZE_GET_VI_PAIRS(j);
+          RCPPBLAZE_RSPARSE_MATRIX_COPY;
         } else if (matrixClass == "dsRMatrix" || object.is("dsRMatrix")) {
           RCPPBLAZE_S4_MAT_CSR;
+          RCPPBLAZE_GET_VI_PAIRS(j);
+          RCPPBLAZE_RSPARSE_MATRIX_COPY;
           RCPPBLAZE_S4_MAT_UPLO;
         } else if (matrixClass == "dtRMatrix" || object.is("dtRMatrix")) {
           RCPPBLAZE_S4_MAT_CSR;
+          RCPPBLAZE_GET_VI_PAIRS(j);
+          RCPPBLAZE_RSPARSE_MATRIX_COPY;
           RCPPBLAZE_S4_MAT_DIAG;
         } else if (matrixClass == "ddiMatrix" || object.is("ddiMatrix")) {
           // wait for implementation
@@ -561,10 +622,15 @@ namespace Rcpp {
 
 #undef RCPPBLAZE_GET_S4_OBJ_MAP
 #undef RCPPBLAZE_S4_MAT_CSC
-#undef RCPPBLAZE_S4_MAT_CSR
 #undef RCPPBLAZE_S4_MAT_COO
+#undef RCPPBLAZE_S4_MAT_CSR
+#undef RCPPBLAZE_GET_VI_PAIRS
+#undef RCPPBLAZE_CSPARSE_MATRIX_COPY
+#undef RCPPBLAZE_RSPARSE_MATRIX_COPY
+#undef RCPPBLAZE_TSPARSE_MATRIX_COPY
 #undef RCPPBLAZE_S4_MAT_DIAG
 #undef RCPPBLAZE_S4_MAT_UPLO
+#undef RCPPBLAZE_SYM_COPY
   } // end traits
 }
 

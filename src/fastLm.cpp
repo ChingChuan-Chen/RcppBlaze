@@ -17,14 +17,11 @@ enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 // [[Rcpp::export]]
 Rcpp::List testAs1(Rcpp::List input_list) {
-  blaze::CompressedVector<double, blaze::rowVector> y = input_list[0];
-  Rcpp::Rcout << "CompressedVector rowVector:" << std::endl << y << std::endl;
+  blaze::CompressedMatrix<double, blaze::columnMajor> y = input_list[0];
+  Rcpp::Rcout << "CompressedMatrix columnMajor:" << std::endl << y << std::endl;
 
-  blaze::CompressedVector<double, blaze::columnVector> x = input_list[1];
-  Rcpp::Rcout << "CompressedVector columnVector:" << std::endl << x << std::endl;
-
-  blaze::ZeroVector<double> zv_double_dgCMatrix = input_list[2];
-  Rcpp::Rcout << "ZeroVector columnVector:" << std::endl << zv_double_dgCMatrix << std::endl;
+  blaze::CompressedMatrix<double, blaze::rowMajor> z = input_list[0];
+  Rcpp::Rcout << "CompressedMatrix rowMajor:" << std::endl << z << std::endl;
 
   return Rcpp::List::create(
     _["test"] = true

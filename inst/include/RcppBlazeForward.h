@@ -60,6 +60,7 @@ namespace Rcpp {
   template <typename Type, bool SO> SEXP wrap(const blaze::CompressedMatrix<Type,SO>&);
   template <typename Type, bool SO> SEXP wrap(const blaze::IdentityMatrix<Type,SO>&);
   template <typename Type, bool SO> SEXP wrap(const blaze::ZeroMatrix<Type,SO>&);
+
   /*
   template< typename MT, bool SO, bool DF > SEXP wrap( const blaze::DiagonalMatrix<MT,SO,DF>& );
   template< typename MT, bool SO, bool DF > SEXP wrap( const blaze::LowerMatrix<MT,SO,DF>& );
