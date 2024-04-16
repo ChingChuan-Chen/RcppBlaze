@@ -402,61 +402,6 @@ namespace Rcpp {
 #define RCPPBLAZE_S4_MAT_COO                                     \
   Rcpp::IntegerVector i = object.slot("i"), j = object.slot("j");
 
-typedef std::tuple<size_t, double> vi_pair;
-#define RCPPBLAZE_GET_VI_PAIRS(__MASK__)                                      \
-  int v = 0, cnt;                                                             \
-  std::vector<std::vector<vi_pair>> vi_pair_vec(n);                           \
-  for (int u=1; u < p.size(); ++u) {                                          \
-    if (p[u] > p[u-1]) {                                                      \
-      cnt = p[u] - p[u-1]; vi_pair_vec[u-1].reserve(cnt);                     \
-      for (int t=0; t<cnt; ++t) {                                             \
-        vi_pair_vec[u-1].push_back(vi_pair((size_t) __MASK__[v], x[v])); ++v; \
-      }}}
-
-#define RCPPBLAZE_CSPARSE_MATRIX_COPY                          \
-  for (size_t u=0UL; u<vi_pair_vec.size(); ++u) {              \
-    result.reserve(u, vi_pair_vec[u].size());                  \
-    for (auto &el: vi_pair_vec[u]) {                           \
-      result.append(std::get<0>(el), u, std::get<1>(el));      \
-    }                                                          \
-    result.finalize(u);                                        \
-  }
-
-#define RCPPBLAZE_RSPARSE_MATRIX_COPY                          \
-  for (size_t u=0UL; u<vi_pair_vec.size(); ++u) {              \
-    result.reserve(u, vi_pair_vec[u].size());                  \
-    for (auto &el: vi_pair_vec[u]) {                           \
-      result.append(u, std::get<0>(el), std::get<1>(el));      \
-    }                                                          \
-    result.finalize(u);                                        \
-  }
-
-#define RCPPBLAZE_TSPARSE_MATRIX_COPY                          \
-  for (size_t u=0UL; u<i.size(); ++u) {                        \
-    result(i[u], j[u]) = x[u];                                 \
-  }
-
-#define RCPPBLAZE_S4_MAT_DIAG                                    \
-  std::string diag = Rcpp::as<std::string>(object.slot("diag")); \
-  if (diag == "U") {                                             \
-    for (size_t i=0UL; i<(size_t)std::min(m, n); ++i) {          \
-      result(i, i) = 1.0;                                        \
-    }}
-
-#define RCPPBLAZE_SYM_COPY(__START__, __END__)                   \
-  for (size_t i=0UL; i<(size_t)m; ++i) {                         \
-    for (size_t j=__START__; j < (size_t)__END__; ++j) {         \
-      result(j, i) = result(i, j);                               \
-    }}
-
-#define RCPPBLAZE_S4_MAT_UPLO                                    \
-  std::string uplo = Rcpp::as<std::string>(object.slot("uplo")); \
-  if (uplo == "U") {                                             \
-    RCPPBLAZE_SYM_COPY(i, n);                                    \
-  } else {                                                       \
-    RCPPBLAZE_SYM_COPY(0UL, i+1);                                \
-  }
-
     // Provides only blaze::CompressedVector<Type, TF> export
     template <typename Type, bool TF>
     class Exporter< blaze::CompressedVector<Type, TF> > {
@@ -551,6 +496,63 @@ typedef std::tuple<size_t, double> vi_pair;
     };
 
   // ---------------------------- Sparse Matrix Exporter ----------------------------
+
+  typedef std::tuple<size_t, double> vi_pair;
+#define RCPPBLAZE_GET_VI_PAIRS(__MASK__)                                      \
+  int v = 0, cnt;                                                             \
+  std::vector<std::vector<vi_pair>> vi_pair_vec(n);                           \
+  for (int u=1; u < p.size(); ++u) {                                          \
+    if (p[u] > p[u-1]) {                                                      \
+      cnt = p[u] - p[u-1]; vi_pair_vec[u-1].reserve(cnt);                     \
+      for (int t=0; t<cnt; ++t) {                                             \
+        vi_pair_vec[u-1].push_back(vi_pair((size_t) __MASK__[v], x[v])); ++v; \
+      }}}
+
+#define RCPPBLAZE_CSPARSE_MATRIX_COPY                            \
+    for (size_t u=0UL; u<vi_pair_vec.size(); ++u) {              \
+      result.reserve(u, vi_pair_vec[u].size());                  \
+      for (auto &el: vi_pair_vec[u]) {                           \
+        result.append(std::get<0>(el), u, std::get<1>(el));      \
+      }                                                          \
+      result.finalize(u);                                        \
+    }
+
+#define RCPPBLAZE_RSPARSE_MATRIX_COPY                          \
+  for (size_t u=0UL; u<vi_pair_vec.size(); ++u) {              \
+    result.reserve(u, vi_pair_vec[u].size());                  \
+    for (auto &el: vi_pair_vec[u]) {                           \
+      result.append(u, std::get<0>(el), std::get<1>(el));      \
+    }                                                          \
+    result.finalize(u);                                        \
+  }                                                            \
+
+#define RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(__SIZE__, __IDX1__, __IDX2__) \
+  std::vector<std::vector<vi_pair>> vi_pair_vec(__SIZE__);                            \
+  for (size_t u=0UL; u<i.size(); ++u) {                                               \
+    out[__IDX1__[u]].push_back(vi_pair(__IDX2__[u], x[u]));                           \
+  }
+
+#define RCPPBLAZE_S4_MAT_DIAG                                    \
+  std::string diag = Rcpp::as<std::string>(object.slot("diag")); \
+  if (diag == "U") {                                             \
+    for (size_t i=0UL; i<(size_t)std::min(m, n); ++i) {          \
+      result(i, i) = 1.0;                                        \
+    }}
+
+#define RCPPBLAZE_SYM_COPY(__START__, __END__)                   \
+  for (size_t i=0UL; i<(size_t)m; ++i) {                         \
+    for (size_t j=__START__; j < (size_t)__END__; ++j) {         \
+      result(j, i) = result(i, j);                               \
+    }}
+
+#define RCPPBLAZE_S4_MAT_UPLO                                    \
+  std::string uplo = Rcpp::as<std::string>(object.slot("uplo")); \
+  if (uplo == "U") {                                             \
+    RCPPBLAZE_SYM_COPY(i, n);                                    \
+  } else {                                                       \
+    RCPPBLAZE_SYM_COPY(0UL, i+1);                                \
+  }
+
     // Provides only blaze::CompressedMatrix<Type,SO> export
     template <typename Type, bool SO >
     class Exporter< blaze::CompressedMatrix<Type, SO> > {
@@ -582,11 +584,32 @@ typedef std::tuple<size_t, double> vi_pair;
           RCPPBLAZE_S4_MAT_DIAG;
         } else if (matrixClass == "dgTMatrix" || object.is("dgTMatrix")) {
           RCPPBLAZE_S4_MAT_COO;
+          if (SO == blaze::rowMajor) {
+            RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(m, i, j);
+            RCPPBLAZE_RSPARSE_MATRIX_COPY;
+          } else {
+            RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(n, j, i);
+            RCPPBLAZE_CSPARSE_MATRIX_COPY;
+          }
         } else if (matrixClass == "dsTMatrix" || object.is("dsTMatrix")) {
           RCPPBLAZE_S4_MAT_COO;
+          if (SO == blaze::rowMajor) {
+            RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(m, i, j);
+            RCPPBLAZE_RSPARSE_MATRIX_COPY;
+          } else {
+            RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(n, j, i);
+            RCPPBLAZE_CSPARSE_MATRIX_COPY;
+          }
           RCPPBLAZE_S4_MAT_UPLO;
         } else if (matrixClass == "dtTMatrix" || object.is("dtTMatrix")) {
           RCPPBLAZE_S4_MAT_COO;
+          if (SO == blaze::rowMajor) {
+            RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(m, i, j);
+            RCPPBLAZE_RSPARSE_MATRIX_COPY;
+          } else {
+            RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(n, j, i);
+            RCPPBLAZE_CSPARSE_MATRIX_COPY;
+          }
           RCPPBLAZE_S4_MAT_DIAG;
         } else if (matrixClass == "dgRMatrix" || object.is("dgRMatrix")) {
           RCPPBLAZE_S4_MAT_CSR;
@@ -627,7 +650,7 @@ typedef std::tuple<size_t, double> vi_pair;
 #undef RCPPBLAZE_GET_VI_PAIRS
 #undef RCPPBLAZE_CSPARSE_MATRIX_COPY
 #undef RCPPBLAZE_RSPARSE_MATRIX_COPY
-#undef RCPPBLAZE_TSPARSE_MATRIX_COPY
+#undef RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC
 #undef RCPPBLAZE_S4_MAT_DIAG
 #undef RCPPBLAZE_S4_MAT_UPLO
 #undef RCPPBLAZE_SYM_COPY
