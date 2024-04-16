@@ -528,8 +528,8 @@ namespace Rcpp {
 
 #define RCPPBLAZE_CONVERT_TSPARSE_MATRIX_TO_VI_PAIR_VEC(__SIZE__, __IDX1__, __IDX2__) \
   std::vector<std::vector<vi_pair>> vi_pair_vec(__SIZE__);                            \
-  for (size_t u=0UL; u<i.size(); ++u) {                                               \
-    out[__IDX1__[u]].push_back(vi_pair(__IDX2__[u], x[u]));                           \
+  for (size_t u=0UL; u<(size_t)i.size(); ++u) {                                       \
+    vi_pair_vec[__IDX1__[u]].push_back(vi_pair(__IDX2__[u], x[u]));                   \
   }
 
 #define RCPPBLAZE_S4_MAT_DIAG                                    \
