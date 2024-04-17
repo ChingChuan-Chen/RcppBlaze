@@ -37,8 +37,7 @@ Since `Matrix` only provides `l*[CTR]Matrix` and `d*[CTR]Matrix` and does not su
 
 ### Linear Model Fitting Benchmark 
 
-* YOu can refer to the file [lmBenchmark.R](./inst/examples/lmBenchmark.R) to find the code.
-
+You can refer to the file [lmBenchmark.R](./inst/examples/lmBenchmark.R) to find the code.
 Below code and corresponding results show that `RcppBlaze` have better performance than `RcppArmadillo` and `RcppGSL`.
 However, `RcppEigen` can provide more efficient algorithms (`LDLt` and `LLt`) for linear model fitting (about 2.4 times faster).
 
