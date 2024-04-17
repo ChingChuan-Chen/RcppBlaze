@@ -48,19 +48,23 @@ if (suppressMessages(require(RcppArmadillo, quietly = TRUE))) {
   // [[Rcpp::depends(RcppArmadillo)]]
   #include <RcppArmadillo.h>
   using Rcpp::_;
-  using Rcpp::List;
 
   // [[Rcpp::export]]
   Rcpp::List arma_fastLm_direct(const arma::mat& X, const arma::vec& y) {
     arma::mat R = chol(X.t() * X);
     arma::vec coef = arma::solve(R, arma::solve(R.t(), X.t() * y));
-    arma::vec res  = y - X*coef;
+    arma::vec fitted = X*coef;
+    arma::vec res  = y - fitted;
     arma::uword df = X.n_rows - X.n_cols;
     double s2 = arma::dot(res, res) / (double) df;
     arma::vec se = arma::sqrt(s2 * arma::sum(arma::square(arma::inv(R)), 1));
-    return List::create(_["coefficients"] = coef,
-                        _["stderr"]       = se,
-                        _["df.residual"]  = df);
+    return Rcpp::List::create(
+      _["coefficients"]  = coef,
+      _["stderr"]        = se,
+      _["df.residual"]   = df,
+      _["s"]             = std::sqrt(s2),
+      _["fitted.values"] = fitted
+    );
   }
 
   // [[Rcpp::export]]
@@ -68,39 +72,54 @@ if (suppressMessages(require(RcppArmadillo, quietly = TRUE))) {
     arma::mat Q, R;
     arma::qr_econ(Q, R, X);
     arma::vec coef = arma::solve(R, Q.t() * y);
-    arma::vec res  = y - X*coef;
+    arma::vec fitted = X*coef;
+    arma::vec res  = y - fitted;
     arma::uword df = X.n_rows - X.n_cols;
     double s2 = arma::dot(res, res) / (double) df;
     arma::vec se = arma::sqrt(s2 * arma::sum(arma::square(arma::inv(R)), 1));
-    return List::create(_["coefficients"] = coef,
-                        _["stderr"]       = se,
-                        _["df.residual"]  = df);
+    return Rcpp::List::create(
+      _["coefficients"]  = coef,
+      _["stderr"]        = se,
+      _["df.residual"]   = df,
+      _["s"]             = std::sqrt(s2),
+      _["fitted.values"] = fitted
+    );
   }
 
   // [[Rcpp::export]]
   Rcpp::List arma_fastLm_chol(const arma::mat& X, const arma::vec& y) {
     arma::mat xtx = X.t() * X;
     arma::vec coef = arma::solve(xtx, X.t() * y);
-    arma::vec res  = y - X*coef;
+    arma::vec fitted = X*coef;
+    arma::vec res  = y - fitted;
     arma::uword df = X.n_rows - X.n_cols;
     double s2 = arma::dot(res, res) / (double) df;
     arma::colvec se = arma::sqrt(s2 * arma::diagvec(arma::inv_sympd(xtx)));
-    return List::create(_["coefficients"] = coef,
-                        _["stderr"]       = se,
-                        _["df.residual"]  = df);
+    return Rcpp::List::create(
+      _["coefficients"]  = coef,
+      _["stderr"]        = se,
+      _["df.residual"]   = df,
+      _["s"]             = std::sqrt(s2),
+      _["fitted.values"] = fitted
+    );
   }
 
   // [[Rcpp::export]]
   Rcpp::List arma_fastLm_pinv(const arma::mat& X, const arma::vec& y) {
     arma::mat xtx_inv = arma::pinv(X.t() * X);
     arma::vec coef = xtx_inv * X.t() * y;
-    arma::vec res  = y - X*coef;
+    arma::vec fitted = X*coef;
+    arma::vec res  = y - fitted;
     arma::uword df = X.n_rows - X.n_cols;
     double s2 = arma::dot(res, res) / (double) df;
     arma::colvec se = arma::sqrt(s2 * arma::diagvec(xtx_inv));
-    return List::create(_["coefficients"] = coef,
-                        _["stderr"]       = se,
-                        _["df.residual"]  = df);
+    return Rcpp::List::create(
+      _["coefficients"]  = coef,
+      _["stderr"]        = se,
+      _["df.residual"]   = df,
+      _["s"]             = std::sqrt(s2),
+      _["fitted.values"] = fitted
+    );
   }'
   Rcpp::sourceCpp(code = code)
 
