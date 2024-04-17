@@ -5,11 +5,25 @@ blaze_version <- function(single) {
     .Call(`_RcppBlaze_blaze_version`, single)
 }
 
-testAs1 <- function(input_list) {
-    .Call(`_RcppBlaze_testAs1`, input_list)
-}
-
-testWrap1 <- function() {
-    .Call(`_RcppBlaze_testWrap1`)
+#' linear model fitting function based on RcppBlaze
+#'
+#' \code{fastLmPure} provides the estimates of the linear model based on \code{RcppBlaze}.
+#'
+#' \code{fastLm} estimates the linear model using the \code{solve}.
+#'
+#' @param X A model matrix.
+#' @param y A response vector.
+#' @param type A integer. 0 is QR solver, 1 is LLT solver and 2 is LDLT sovler.
+#' @return A list containing coefficients, standard errors, rank of model matrix,
+#'   degree of freedom of residuals, residuals, the standard deviation of random errors and
+#'   fitted values.
+#' @examples
+#' # according to fastLm example in RcppArmadillo
+#' data(trees, package="datasets")
+#' flm <- fastLmPure(cbind(1, log(trees$Girth)), log(trees$Volume), 0)
+#' print(flm)
+#' @export
+fastLmPure <- function(X, y, type) {
+    .Call(`_RcppBlaze_fastLmPure`, X, y, type)
 }
 

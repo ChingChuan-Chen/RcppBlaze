@@ -1,7 +1,7 @@
 # RcppBlaze v1.0.0
 
 * Update Blaze-lib to 3.8.2 since Rcpp supports C++14 / C++17 since 4.2.0.
-* Support `dgTMatrix` thanks to robinsonjj's contribution.
+* Because of the support of C++14, R need to be >= `4.2.0` to install `RcppBlaze`.
 * Enable C++11 Threads when compiling `fastLm`.
 * Change to use BSD License which is aligned with `blize-lib`.
 

@@ -15,46 +15,6 @@ using Rcpp::_;
 
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
-// [[Rcpp::export]]
-Rcpp::List testAs1(Rcpp::List input_list) {
-  blaze::CompressedMatrix<double, blaze::columnMajor> y = input_list[0];
-  Rcpp::Rcout << "CompressedMatrix columnMajor:" << std::endl << y << std::endl;
-
-  blaze::CompressedMatrix<double, blaze::rowMajor> z = input_list[0];
-  Rcpp::Rcout << "CompressedMatrix rowMajor:" << std::endl << z << std::endl;
-
-  return Rcpp::List::create(
-    _["test"] = true
-  );
-}
-
-
-// [[Rcpp::export]]
-Rcpp::List testWrap1() {
-  blaze::CompressedMatrix<double, blaze::columnMajor> a(3UL, 5UL);
-  a(0, 1) = 1;
-  a(0, 4) = 2;
-  a(1, 2) = 2;
-  a(1, 4) = 1;
-  a(2, 0) = 2;
-  a(2, 3) = 1;
-
-  blaze::CompressedMatrix<double, blaze::rowMajor> b(3UL, 5UL);
-  b(0, 1) = 1;
-  b(0, 4) = 2;
-  b(1, 2) = 2;
-  b(1, 4) = 1;
-  b(2, 0) = 2;
-  b(2, 3) = 1;
-
-  return Rcpp::List::create(
-    _["a"] = a,
-    _["b"] = b
-  );
-}
-
-
-/*
 Rcpp::List QRsolver(const blaze::DynamicMatrix<double>& X, const blaze::DynamicVector<double>& y) {
   blaze::DynamicMatrix<double> Q;
   blaze::DynamicMatrix<double> R;
@@ -73,7 +33,7 @@ Rcpp::List QRsolver(const blaze::DynamicMatrix<double>& X, const blaze::DynamicV
     se[i] = std::sqrt((row(S, i), row(S, i))) * s;
   }
 
-  return List::create(
+  return Rcpp::List::create(
     _["coefficients"]  = coef,
     _["se"]            = se,
     _["rank"]          = (unsigned int) R.rows(),
@@ -99,7 +59,7 @@ Rcpp::List LDLTSolver(const blaze::DynamicMatrix<double>& X, const blaze::Dynami
     se[i] = std::sqrt( XTXinv(i, i) ) * s;
   }
 
-  return List::create(
+  return Rcpp::List::create(
     _["coefficients"]  = coef,
     _["se"]            = se,
     _["rank"]          = (unsigned int) XTXinv.columns(),
@@ -125,7 +85,7 @@ Rcpp::List LLTSolver(const blaze::DynamicMatrix<double>& X, const blaze::Dynamic
     se[i] = std::sqrt(XTXinv(i, i)) * s;
   }
 
-  return List::create(
+  return Rcpp::List::create(
     _["coefficients"]  = coef,
     _["se"]            = se,
     _["rank"]          = (unsigned int) XTXinv.columns(),
@@ -155,7 +115,7 @@ Rcpp::List LLTSolver(const blaze::DynamicMatrix<double>& X, const blaze::Dynamic
 //' print(flm)
 //' @export
 // [[Rcpp::export]]
-List fastLmPure(blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, int type) {
+Rcpp::List fastLmPure(blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, int type) {
   if (X.rows() != y.size()) {
     throw std::invalid_argument("size mismatch");
   }
@@ -171,6 +131,3 @@ List fastLmPure(blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, 
       throw std::invalid_argument("invalid type");
   }
 }
-
- */
-

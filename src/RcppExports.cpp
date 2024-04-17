@@ -22,24 +22,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// testAs1
-Rcpp::List testAs1(Rcpp::List input_list);
-RcppExport SEXP _RcppBlaze_testAs1(SEXP input_listSEXP) {
+// fastLmPure
+Rcpp::List fastLmPure(blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, int type);
+RcppExport SEXP _RcppBlaze_fastLmPure(SEXP XSEXP, SEXP ySEXP, SEXP typeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List >::type input_list(input_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(testAs1(input_list));
-    return rcpp_result_gen;
-END_RCPP
-}
-// testWrap1
-Rcpp::List testWrap1();
-RcppExport SEXP _RcppBlaze_testWrap1() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(testWrap1());
+    Rcpp::traits::input_parameter< blaze::DynamicMatrix<double> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< blaze::DynamicVector<double> >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(fastLmPure(X, y, type));
     return rcpp_result_gen;
 END_RCPP
 }
