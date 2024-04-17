@@ -211,6 +211,13 @@ Rcpp::List custom_matrix_as_test(Rcpp::List input_list) {
   );
 }
 
-/*
- CompressedMatrix, IdentityMatrix, ZeroMatrix, UniformMatrix
-*/
+// [[Rcpp::export]]
+Rcpp::List sparse_matrix_as_test(Rcpp::List input_list) {
+  blaze::CompressedMatrix<double, blaze::columnMajor> cpm_cm = input_list[0];
+  blaze::CompressedMatrix<double, blaze::rowMajor> cpm_rm = input_list[0];
+
+  return Rcpp::List::create(
+    Rcpp::_["cpm_cm"] = blaze::sum(cpm_cm),
+    Rcpp::_["cpm_rm"] = blaze::sum(cpm_rm)
+  );
+}

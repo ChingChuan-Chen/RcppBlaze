@@ -29,8 +29,6 @@ Rcpp::List testAs1(Rcpp::List input_list) {
 }
 
 
-using namespace std::complex_literals;
-
 // [[Rcpp::export]]
 Rcpp::List testWrap1() {
   blaze::CompressedMatrix<double, blaze::columnMajor> a(3UL, 5UL);
