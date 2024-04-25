@@ -136,7 +136,7 @@ namespace Rcpp {
     }
 
     template <typename MT, bool SO>
-    SEXP blaze_wrap(const blaze::SparseMatrix<MT,SO>& sm) {
+    SEXP blaze_wrap(const blaze::SparseMatrix<MT, SO>& sm) {
       typedef typename MT::ElementType Type;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       if ((RTYPE != INTSXP) && (RTYPE != REALSXP)) {
@@ -279,6 +279,7 @@ namespace Rcpp {
     return out;
   };
 
+  // wrap for adaptors for blaze matrices
   template <typename MT, bool SO, bool DF, bool NF>
   SEXP wrap(const blaze::SymmetricMatrix<MT, SO, DF, NF>& x) {
     return RcppBlaze::blaze_wrap(x);
@@ -300,6 +301,7 @@ RCPPBLAZE_ADAPTOR_WRAPPER(blaze::DiagonalMatrix);
 
 #undef RCPPBLAZE_ADAPTOR_WRAPPER
 
+  // wrap for views for blaze vectors
   template <typename VT, blaze::AlignmentFlag AF, bool TF, bool DF, size_t... CSAs>
   SEXP wrap(const blaze::Subvector<VT, AF, TF, DF, CSAs...>& x) {
     return RcppBlaze::blaze_wrap(x);
@@ -310,6 +312,7 @@ RCPPBLAZE_ADAPTOR_WRAPPER(blaze::DiagonalMatrix);
     return RcppBlaze::blaze_wrap(x);
   };
 
+  // wrap for views for blaze matrices
   template <typename MT, bool SO, bool DF, bool SF, size_t... CRAs>
   SEXP wrap(const blaze::Row<MT, SO, DF, SF, CRAs...>& x) {
     return RcppBlaze::blaze_wrap(x);
@@ -325,10 +328,24 @@ RCPPBLAZE_ADAPTOR_WRAPPER(blaze::DiagonalMatrix);
     return RcppBlaze::blaze_wrap(x);
   };
 
+  template <typename MT, blaze::AlignmentFlag AF, bool SO, bool DF, size_t... CSAs>
+  SEXP wrap(const blaze::Submatrix<MT, AF, SO, DF, CSAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template <typename MT, bool SO, bool DF, bool SF, typename... CRAs>
+  SEXP wrap(const blaze::Rows<MT, SO, DF, SF, CRAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template <typename MT, bool SO, bool DF, bool SF, typename... CCAs>
+  SEXP wrap(const blaze::Columns<MT, SO, DF, SF, CCAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
 
   /*
    // TODO:
-   // Convert Submatrix, Subvector, Row, Column, Rows, Columns, Band
+   // Convert Submatrix, Rows, Columns
 
    */
 

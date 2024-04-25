@@ -15,22 +15,14 @@ using Rcpp::_;
 
 // [[Rcpp::export]]
 Rcpp::List testWrap() {
-  /*
   blaze::StaticMatrix<double, 3UL, 3UL> D{
     {  3.0,  0.0,  0.0 },
     {  8.0,  0.0,  0.0 },
     { -2.0, -1.0,  4.0 }
   };
 
-  // blaze::LowerMatrix< blaze::DynamicMatrix<double, blaze::columnMajor> > E( D );
-
-  auto row0 = blaze::row(D, 0UL);
-  auto row1 = blaze::row(D, 1UL);
-  auto row2 = blaze::row(D, 2UL);
-
-  auto column0 = blaze::column(D, 0UL);
-  auto column1 = blaze::column(D, 1UL);
-  auto column2 = blaze::column(D, 2UL);
+  auto rs1 = blaze::rows<0UL, 2UL>(D);
+  auto rs2 = blaze::rows(D, {0UL, 2UL});
 
   blaze::CompressedMatrix<double> E(3UL, 3UL);
   E.reserve(5);
@@ -42,21 +34,15 @@ Rcpp::List testWrap() {
   E.append(2, 1, -1.0);
   E.append(2, 2, 4.0);
   E.finalize(2);
-  Rcpp::Rcout << E << std::endl;
 
-  auto row3 = blaze::row(E, 0UL);
-  auto row4 = blaze::row(E, 1UL);
-  auto row5 = blaze::row(E, 2UL);
-  */
-
-  blaze::DynamicVector<int> dv_int(3UL);
-  dv_int = {1, -2, 4};
+  auto rs3 = blaze::rows<0UL, 2UL>(E);
+  auto rs4 = blaze::rows(E, {0UL, 2UL});
 
   return Rcpp::List::create(
-    _["row0"] = blaze::subvector(dv_int, 1UL, 2UL),
-    _["row1"] = blaze::subvector<1UL, 2UL>(dv_int),
-    _["row2"] = blaze::elements(dv_int, {0UL, 2UL}),
-    _["row3"] = blaze::elements<0UL, 2UL>(dv_int)
+    _["row0"] = rs1,
+    _["row1"] = rs2,
+    _["row2"] = rs3,
+    _["row3"] = rs4
   );
 /*
   blaze::StaticVector<double, 3UL> a;

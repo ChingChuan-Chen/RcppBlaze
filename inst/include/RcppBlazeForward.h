@@ -85,6 +85,12 @@ namespace Rcpp {
   SEXP wrap(const blaze::Column<MT, SO, DF, SF, CCAs...>&);
   template <typename MT, bool TF, bool DF, bool MF, ptrdiff_t... CBAs>
   SEXP wrap(const blaze::Band<MT, TF, DF, MF, CBAs...>&);
+  template <typename MT, blaze::AlignmentFlag AF, bool SO, bool DF, size_t... CSAs>
+  SEXP wrap(const blaze::Submatrix<MT, AF, SO, DF, CSAs...>&);
+  template <typename MT, bool SO, bool DF, bool SF, typename... CRAs>
+  SEXP wrap(const blaze::Rows<MT, SO, DF, SF, CRAs...>&);
+  template <typename MT, bool SO, bool DF, bool SF, typename... CCAs>
+  SEXP wrap(const blaze::Columns<MT, SO, DF, SF, CCAs...>&);
 
   namespace traits {
 
