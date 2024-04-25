@@ -62,21 +62,27 @@ namespace Rcpp {
   template <typename Type, bool SO> SEXP wrap(const blaze::ZeroMatrix<Type,SO>&);
 
   /* support blaze matrices adaptors */
-  template <typename MT, bool SO, bool DF, bool NF > SEXP wrap( const blaze::SymmetricMatrix<MT, SO, DF, NF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::HermitianMatrix<MT, SO, DF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::LowerMatrix<MT, SO, DF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::UniLowerMatrix<MT, SO, DF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::StrictlyLowerMatrix<MT, SO, DF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::UpperMatrix<MT, SO, DF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::UniUpperMatrix<MT, SO, DF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::StrictlyUpperMatrix<MT, SO, DF>&);
-  template <typename MT, bool SO, bool DF> SEXP wrap( const blaze::DiagonalMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF, bool NF > SEXP wrap(const blaze::SymmetricMatrix<MT, SO, DF, NF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::HermitianMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::LowerMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::UniLowerMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::StrictlyLowerMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::UpperMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::UniUpperMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::StrictlyUpperMatrix<MT, SO, DF>&);
+  template <typename MT, bool SO, bool DF> SEXP wrap(const blaze::DiagonalMatrix<MT, SO, DF>&);
 
-  /* support blaze views */
-  template <typename MT, bool SO, bool DF, bool SF, size_t... CBAs>
-  SEXP wrap(const blaze::Row<MT, SO, DF, SF, CBAs...>&);
-  template <typename MT, bool SO, bool DF, bool SF, size_t... CBAs>
-  SEXP wrap(const blaze::Column<MT, SO, DF, SF, CBAs...>&);
+  /* support blaze views for vectors */
+  template <typename VT, blaze::AlignmentFlag AF, bool TF, bool DF, size_t... CSAs>
+  SEXP wrap(const blaze::Subvector<VT, AF, TF, DF, CSAs...>&);
+  template <typename VT, bool TF, bool DF, typename... CEAs>
+  SEXP wrap(const blaze::Elements<VT, TF, DF, CEAs...>&);
+
+  /* support blaze views for matrices */
+  template <typename MT, bool SO, bool DF, bool SF, size_t... CRAs>
+  SEXP wrap(const blaze::Row<MT, SO, DF, SF, CRAs...>&);
+  template <typename MT, bool SO, bool DF, bool SF, size_t... CCAs>
+  SEXP wrap(const blaze::Column<MT, SO, DF, SF, CCAs...>&);
   template <typename MT, bool TF, bool DF, bool MF, ptrdiff_t... CBAs>
   SEXP wrap(const blaze::Band<MT, TF, DF, MF, CBAs...>&);
 

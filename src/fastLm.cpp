@@ -15,6 +15,7 @@ using Rcpp::_;
 
 // [[Rcpp::export]]
 Rcpp::List testWrap() {
+  /*
   blaze::StaticMatrix<double, 3UL, 3UL> D{
     {  3.0,  0.0,  0.0 },
     {  8.0,  0.0,  0.0 },
@@ -46,17 +47,16 @@ Rcpp::List testWrap() {
   auto row3 = blaze::row(E, 0UL);
   auto row4 = blaze::row(E, 1UL);
   auto row5 = blaze::row(E, 2UL);
+  */
+
+  blaze::DynamicVector<int> dv_int(3UL);
+  dv_int = {1, -2, 4};
 
   return Rcpp::List::create(
-    _["row0"] = row0,
-    _["row1"] = row1,
-    _["row2"] = row2,
-    _["row3"] = row3,
-    _["row4"] = row4,
-    _["row5"] = row5,
-    _["column0_dm"] = column0,
-    _["column1_dm"] = column1,
-    _["column2_dm"] = column2
+    _["row0"] = blaze::subvector(dv_int, 1UL, 2UL),
+    _["row1"] = blaze::subvector<1UL, 2UL>(dv_int),
+    _["row2"] = blaze::elements(dv_int, {0UL, 2UL}),
+    _["row3"] = blaze::elements<0UL, 2UL>(dv_int)
   );
 /*
   blaze::StaticVector<double, 3UL> a;

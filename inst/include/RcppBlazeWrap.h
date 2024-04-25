@@ -300,13 +300,23 @@ RCPPBLAZE_ADAPTOR_WRAPPER(blaze::DiagonalMatrix);
 
 #undef RCPPBLAZE_ADAPTOR_WRAPPER
 
-  template <typename MT, bool SO, bool DF, bool SF, size_t... CBAs>
-  SEXP wrap(const blaze::Row<MT, SO, DF, SF, CBAs...>& x) {
+  template <typename VT, blaze::AlignmentFlag AF, bool TF, bool DF, size_t... CSAs>
+  SEXP wrap(const blaze::Subvector<VT, AF, TF, DF, CSAs...>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 
-  template <typename MT, bool SO, bool DF, bool SF, size_t... CBAs>
-  SEXP wrap(const blaze::Column<MT, SO, DF, SF, CBAs...>& x) {
+  template <typename VT, bool TF, bool DF, typename... CEAs>
+  SEXP wrap(const blaze::Elements<VT, TF, DF, CEAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template <typename MT, bool SO, bool DF, bool SF, size_t... CRAs>
+  SEXP wrap(const blaze::Row<MT, SO, DF, SF, CRAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template <typename MT, bool SO, bool DF, bool SF, size_t... CCAs>
+  SEXP wrap(const blaze::Column<MT, SO, DF, SF, CCAs...>& x) {
     return RcppBlaze::blaze_wrap(x);
   };
 

@@ -12,31 +12,49 @@
 // [[Rcpp::depends(RcppBlaze)]]
 #include <RcppBlaze.h>
 using Rcpp::_;
-using namespace std::complex_literals;
+
+// [[Rcpp::export]]
+Rcpp::List wrap_vector_view_test() {
+  blaze::DynamicVector<double> dv_dbl(8UL);
+  dv_dbl = {1.5, -2.3, 4.0, 4.4, -12.1, 8.6, 7.7, -5.9};
+
+  blaze::CompressedVector<double> cpv_double(8UL);
+  cpv_double[2] = 1.5;
+  cpv_double[4] = 3.6;
+  cpv_double[6] = 5.2;
+
+  return Rcpp::List::create(
+    _["subvector_dv_function"] = blaze::subvector(dv_dbl, 2UL, 4UL),
+    _["subvector_dv_template"] = blaze::subvector<2UL, 4UL>(dv_dbl),
+    _["elements_dv_function"] = blaze::elements(dv_dbl, {0UL, 2UL, 5UL}),
+    _["elements_dv_template"] = blaze::elements<0UL, 2UL, 5UL>(dv_dbl),
+    _["subvector_sv_function"] = blaze::subvector(cpv_double, 2UL, 4UL),
+    _["subvector_sv_template"] = blaze::subvector<2UL, 4UL>(cpv_double),
+    _["elements_sv_function"] = blaze::elements(cpv_double, {0UL, 2UL, 5UL}),
+    _["elements_sv_template"] = blaze::elements<0UL, 2UL, 5UL>(cpv_double)
+  );
+}
+
+#define GET_STATICMATRIX                                       \
+  blaze::StaticMatrix<double, 3UL, 3UL> D{                     \
+  {3.0, 0.0, 0.0}, {8.0, 0.0, 0.0}, {-2.0, -1.0, 4.0}};
+
+#define GET_COMPRESSEDMATRIX                                   \
+  blaze::CompressedMatrix<double> E(3UL, 3UL);                 \
+  E.reserve(5); E.append(0, 0, 3.0); E.finalize(0);            \
+  E.append(1, 0, 8.0); E.finalize(1); E.append(2, 0, -2.0);    \
+  E.append(2, 1, -1.0); E.append(2, 2, 4.0); E.finalize(2);
 
 // [[Rcpp::export]]
 Rcpp::List wrap_band_test() {
-  blaze::StaticMatrix<double, 3UL, 3UL> D{
-    {  3.0,  0.0,  0.0 },
-    {  8.0,  0.0,  0.0 },
-    { -2.0, -1.0,  4.0 }
-  };
+  GET_STATICMATRIX;
 
   auto band0 = blaze::band(D, 0L);
   auto band1 = blaze::band(D, -1L);
   auto band1_2 = blaze::band<-1L>(D);
   auto band2 = blaze::band(D, -2L);
 
-  blaze::CompressedMatrix<double> E(3UL, 3UL);
-  E.reserve(5);
-  E.append(0, 0, 3.0);
-  E.finalize(0);
-  E.append(1, 0, 8.0);
-  E.finalize(1);
-  E.append(2, 0, -2.0);
-  E.append(2, 1, -1.0);
-  E.append(2, 2, 4.0);
-  E.finalize(2);
+  GET_COMPRESSEDMATRIX;
 
   auto band3 = blaze::band(E, 0L);
   auto band4 = blaze::band(E, -1L);
@@ -58,27 +76,14 @@ Rcpp::List wrap_band_test() {
 
 // [[Rcpp::export]]
 Rcpp::List wrap_row_test() {
-  blaze::StaticMatrix<double, 3UL, 3UL> D{
-    {  3.0,  0.0,  0.0 },
-    {  8.0,  0.0,  0.0 },
-    { -2.0, -1.0,  4.0 }
-  };
+  GET_STATICMATRIX;
 
   auto row0 = blaze::row(D, 0UL);
   auto row1 = blaze::row(D, 1UL);
   auto row1_2 = blaze::row<1UL>(D);
   auto row2 = blaze::row(D, 2UL);
 
-  blaze::CompressedMatrix<double> E(3UL, 3UL);
-  E.reserve(5);
-  E.append(0, 0, 3.0);
-  E.finalize(0);
-  E.append(1, 0, 8.0);
-  E.finalize(1);
-  E.append(2, 0, -2.0);
-  E.append(2, 1, -1.0);
-  E.append(2, 2, 4.0);
-  E.finalize(2);
+  GET_COMPRESSEDMATRIX;
 
   auto row3 = blaze::row(E, 0UL);
   auto row4 = blaze::row(E, 1UL);
@@ -99,27 +104,14 @@ Rcpp::List wrap_row_test() {
 
 // [[Rcpp::export]]
 Rcpp::List wrap_column_test() {
-  blaze::StaticMatrix<double, 3UL, 3UL> D{
-    {  3.0,  0.0,  0.0 },
-    {  8.0,  0.0,  0.0 },
-    { -2.0, -1.0,  4.0 }
-  };
+  GET_STATICMATRIX;
 
   auto column0 = blaze::column(D, 0UL);
   auto column1 = blaze::column(D, 1UL);
   auto column1_2 = blaze::column<1UL>(D);
   auto column2 = blaze::column(D, 2UL);
 
-  blaze::CompressedMatrix<double> E(3UL, 3UL);
-  E.reserve(5);
-  E.append(0, 0, 3.0);
-  E.finalize(0);
-  E.append(1, 0, 8.0);
-  E.finalize(1);
-  E.append(2, 0, -2.0);
-  E.append(2, 1, -1.0);
-  E.append(2, 2, 4.0);
-  E.finalize(2);
+  GET_COMPRESSEDMATRIX;
 
   auto column3 = blaze::column(E, 0UL);
   auto column4 = blaze::column(E, 1UL);

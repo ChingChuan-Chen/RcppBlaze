@@ -15,6 +15,16 @@ if (file.exists(file.path("cpp", cppFile))) {
 }
 library(Matrix)
 
+wrap_vector_views_res <- wrap_vector_view_test()
+expect_equal(wrap_vector_views_res[["subvector_dv_function"]], c(4.0, 4.4, -12.1, 8.6), info = "subvector_dv_function")
+expect_equal(wrap_vector_views_res[["subvector_dv_template"]], c(4.0, 4.4, -12.1, 8.6), info = "subvector_dv_template")
+expect_equal(wrap_vector_views_res[["elements_dv_function"]], c(1.5, 4.0, 8.6), info = "elements_dv_function")
+expect_equal(wrap_vector_views_res[["elements_dv_template"]], c(1.5, 4.0, 8.6), info = "elements_dv_template")
+expect_equal(wrap_vector_views_res[["subvector_sv_function"]], Matrix(c(1.5, 0, 3.6, 0), 4, 1, sparse=TRUE), info = "subvector_sv_function")
+expect_equal(wrap_vector_views_res[["subvector_sv_template"]], Matrix(c(1.5, 0, 3.6, 0), 4, 1, sparse=TRUE), info = "subvector_sv_template")
+expect_equal(wrap_vector_views_res[["elements_sv_function"]], Matrix(c(0, 1.5, 0), 3, 1, sparse=TRUE), info = "elements_sv_function")
+expect_equal(wrap_vector_views_res[["elements_sv_template"]], Matrix(c(0, 1.5, 0), 3, 1, sparse=TRUE), info = "elements_sv_template")
+
 wrap_band_res <- wrap_band_test()
 band0 <- c(3, 0, 4)
 band1 <- c(8, -1)
