@@ -13,8 +13,6 @@
 #include "RcppBlazeForward.h"
 #include <Rcpp.h>
 
-// most code are modified from the definition of matrix in blaze
-
 namespace Rcpp {
 
   namespace RcppBlaze {
@@ -23,8 +21,11 @@ namespace Rcpp {
     SEXP blaze_wrap(const blaze::DenseVector<VT, TF>& x) {
       typedef typename VT::ElementType Type;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
-      const Type* data_pointer = blaze::data(*x);
-      Rcpp::Vector<RTYPE> out = Rcpp::wrap(data_pointer, data_pointer + (*x).size());
+      typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
+      Rcpp::Vector<RTYPE> out((*x).size());
+      for (size_t i=0UL; i<(*x).size(); ++i) {
+        out[i] = Rcpp::internal::caster<Type, value_t>((*x)[i]);
+      }
       return out;
     }
 
@@ -278,56 +279,47 @@ namespace Rcpp {
     return out;
   };
 
+  template <typename MT, bool SO, bool DF, bool NF>
+  SEXP wrap(const blaze::SymmetricMatrix<MT, SO, DF, NF>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
 
-  /* adaptors
+#define RCPPBLAZE_ADAPTOR_WRAPPER(__ADAPTOR__)                 \
+  template <typename MT, bool SO, bool DF> SEXP wrap(          \
+      const __ADAPTOR__<MT, SO, DF>& x                         \
+  ) {return RcppBlaze::blaze_wrap(x);};                        \
+
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::HermitianMatrix);
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::LowerMatrix);
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::UniLowerMatrix);
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::StrictlyLowerMatrix);
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::UpperMatrix);
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::UniUpperMatrix);
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::StrictlyUpperMatrix);
+RCPPBLAZE_ADAPTOR_WRAPPER(blaze::DiagonalMatrix);
+
+#undef RCPPBLAZE_ADAPTOR_WRAPPER
+
+  template <typename MT, bool SO, bool DF, bool SF, size_t... CBAs>
+  SEXP wrap(const blaze::Row<MT, SO, DF, SF, CBAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template <typename MT, bool SO, bool DF, bool SF, size_t... CBAs>
+  SEXP wrap(const blaze::Column<MT, SO, DF, SF, CBAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+  template <typename MT, bool TF, bool DF, bool MF, ptrdiff_t... CBAs>
+  SEXP wrap(const blaze::Band<MT, TF, DF, MF, CBAs...>& x) {
+    return RcppBlaze::blaze_wrap(x);
+  };
+
+
+  /*
    // TODO:
-   // Convert Symmetric Matrices, Hermitian Matrices, Triangular Matrices
    // Convert Submatrix, Subvector, Row, Column, Rows, Columns, Band
 
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::DiagonalMatrix<MT, SO, DF>& dm) {
-    return RcppBlaze::blaze_wrap(dm);
-  };
-
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::LowerMatrix<MT, SO, DF>& lm) {
-    return RcppBlaze::blaze_wrap(lm);
-  };
-
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::UpperMatrix<MT, SO, DF>& um) {
-    return RcppBlaze::blaze_wrap(um);
-  };
-
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::HermitianMatrix<MT, SO, DF>& hm) {
-    return RcppBlaze::blaze_wrap(hm);
-  };
-
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::StrictlyLowerMatrix<MT, SO, DF>& slm) {
-    return RcppBlaze::blaze_wrap(slm);
-  };
-
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::StrictlyUpperMatrix<MT, SO, DF>& sum) {
-    return RcppBlaze::blaze_wrap(sum);
-  };
-
-  template <typename MT, bool SO, bool DF, bool NF>
-  SEXP wrap(const blaze::SymmetricMatrix<MT, SO, DF, NF>& sm) {
-    return RcppBlaze::blaze_wrap(sm);
-  };
-
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::UniLowerMatrix<MT, SO, DF>& ulm) {
-    return RcppBlaze::blaze_wrap(ulm);
-  };
-
-  template <typename MT, bool SO, bool DF>
-  SEXP wrap(const blaze::UniUpperMatrix<MT, SO, DF>& uum) {
-    return RcppBlaze::blaze_wrap(uum);
-  };
    */
 
   // TODO:

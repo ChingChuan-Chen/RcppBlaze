@@ -13,6 +13,70 @@
 #include <RcppBlaze.h>
 using Rcpp::_;
 
+// [[Rcpp::export]]
+Rcpp::List testWrap() {
+  blaze::StaticMatrix<double, 3UL, 3UL> D{
+    {  3.0,  0.0,  0.0 },
+    {  8.0,  0.0,  0.0 },
+    { -2.0, -1.0,  4.0 }
+  };
+
+  // blaze::LowerMatrix< blaze::DynamicMatrix<double, blaze::columnMajor> > E( D );
+
+  auto row0 = blaze::row(D, 0UL);
+  auto row1 = blaze::row(D, 1UL);
+  auto row2 = blaze::row(D, 2UL);
+
+  auto column0 = blaze::column(D, 0UL);
+  auto column1 = blaze::column(D, 1UL);
+  auto column2 = blaze::column(D, 2UL);
+
+  blaze::CompressedMatrix<double> E(3UL, 3UL);
+  E.reserve(5);
+  E.append(0, 0, 3.0);
+  E.finalize(0);
+  E.append(1, 0, 8.0);
+  E.finalize(1);
+  E.append(2, 0, -2.0);
+  E.append(2, 1, -1.0);
+  E.append(2, 2, 4.0);
+  E.finalize(2);
+  Rcpp::Rcout << E << std::endl;
+
+  auto row3 = blaze::row(E, 0UL);
+  auto row4 = blaze::row(E, 1UL);
+  auto row5 = blaze::row(E, 2UL);
+
+  return Rcpp::List::create(
+    _["row0"] = row0,
+    _["row1"] = row1,
+    _["row2"] = row2,
+    _["row3"] = row3,
+    _["row4"] = row4,
+    _["row5"] = row5,
+    _["column0_dm"] = column0,
+    _["column1_dm"] = column1,
+    _["column2_dm"] = column2
+  );
+/*
+  blaze::StaticVector<double, 3UL> a;
+  a = {1.5, -2.5, 4.5};
+
+  blaze::StaticVector<double, 3UL> b;
+  b = {-1.5, 2.5, 0.0};
+
+  return Rcpp::List::create(
+    _["2.0 + a"] = Rcpp::RcppBlaze::blaze_dv_expr_wrap(2.0 + a)
+    _["2.0 - a"] = 2.0 - a,
+    _["2.0 * a"] = 2.0 * a,
+    _["a+b"] = a + b,
+    _["a-b"] = a - b,
+    _["a*b"] = a * b
+  );
+  */
+}
+
+
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 Rcpp::List QRsolver(const blaze::DynamicMatrix<double>& X, const blaze::DynamicVector<double>& y) {

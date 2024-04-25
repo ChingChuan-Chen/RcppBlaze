@@ -22,6 +22,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// testWrap
+Rcpp::List testWrap();
+RcppExport SEXP _RcppBlaze_testWrap() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(testWrap());
+    return rcpp_result_gen;
+END_RCPP
+}
 // fastLmPure
 Rcpp::List fastLmPure(blaze::DynamicMatrix<double> X, blaze::DynamicVector<double> y, int type);
 RcppExport SEXP _RcppBlaze_fastLmPure(SEXP XSEXP, SEXP ySEXP, SEXP typeSEXP) {

@@ -14,10 +14,12 @@
 /* .Call calls */
 extern SEXP _RcppBlaze_blaze_version(SEXP);
 extern SEXP _RcppBlaze_fastLmPure(SEXP, SEXP, SEXP);
+extern SEXP _RcppBlaze_testWrap();
 
 static const R_CallMethodDef CallEntries[] = {
   {"_RcppBlaze_blaze_version", (DL_FUNC) &_RcppBlaze_blaze_version, 1},
   {"_RcppBlaze_fastLmPure", (DL_FUNC) &_RcppBlaze_fastLmPure, 3},
+  {"_RcppBlaze_testWrap", (DL_FUNC) &_RcppBlaze_testWrap, 0},
   {NULL, NULL, 0}
 };
 
