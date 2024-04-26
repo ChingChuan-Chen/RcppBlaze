@@ -22,9 +22,7 @@
 #define R_NO_REMAP
 #endif
 
-#include <Rinternals.h>
-#include <R_ext/Boolean.h>
-#include <Rcpp/XPtr.h>
+#include <RcppCommon.h>
 #include <Rconfig.h>
 
 #include <blaze/Blaze.h>

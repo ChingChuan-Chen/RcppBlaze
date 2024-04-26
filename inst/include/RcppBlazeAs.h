@@ -56,11 +56,11 @@ namespace Rcpp {
 #define RCPPBLAZE_GET_TYPEMAP                                             \
   const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;         \
   typedef typename Rcpp::traits::storage_type<RTYPE>::type r_object_type; \
-  Shield<SEXP> x(Rcpp::r_cast<RTYPE>(object));                            \
+  Rcpp::Shield<SEXP> x(Rcpp::r_cast<RTYPE>(object));                      \
   r_object_type* y = Rcpp::internal::r_vector_start<RTYPE>(x);
 
-#define RCPPBLAZE_VEC_COPY(__SIZE__)                                      \
-  for (size_t i=0UL; i<__SIZE__; ++i) {                                   \
+#define RCPPBLAZE_VEC_COPY                                                \
+  for (size_t i=0UL; i<n; ++i) {                                          \
     result[i] = Rcpp::internal::caster<r_object_type, Type>(y[i]);        \
   }
 
@@ -81,7 +81,7 @@ namespace Rcpp {
         }
 
         blaze::StaticVector<Type, N, TF, AF, PF> result;
-        RCPPBLAZE_VEC_COPY(n);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
 
@@ -103,7 +103,7 @@ namespace Rcpp {
         size_t n = (size_t) Rf_xlength(x);
         std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[n]);
         blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> result(data.get(), n);
-        RCPPBLAZE_VEC_COPY(n);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
 
@@ -126,7 +126,7 @@ namespace Rcpp {
         size_t paddedSize = blaze::nextMultiple<size_t>(n, blaze::SIMDTrait<Type>::size);
         std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[paddedSize]);
         blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> result(data.get(), n, paddedSize);
-        RCPPBLAZE_VEC_COPY(n);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
 
@@ -148,7 +148,7 @@ namespace Rcpp {
         size_t n = (size_t) Rf_xlength(x);
         std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(n));
         blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> result(data.get(), n);
-        RCPPBLAZE_VEC_COPY(n);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
 
@@ -171,7 +171,7 @@ namespace Rcpp {
         size_t paddedSize = blaze::nextMultiple<size_t>(n, blaze::SIMDTrait<Type>::size);
         std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(paddedSize));
         blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> result(data.get(), n, paddedSize);
-        RCPPBLAZE_VEC_COPY(n);
+        RCPPBLAZE_VEC_COPY;
         return result;
       }
 

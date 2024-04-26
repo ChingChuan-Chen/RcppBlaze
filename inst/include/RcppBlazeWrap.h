@@ -22,8 +22,9 @@ namespace Rcpp {
       typedef typename VT::ElementType Type;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-      Rcpp::Vector<RTYPE> out((*x).size());
-      for (size_t i=0UL; i<(*x).size(); ++i) {
+	  size_t size = (*x).size();
+      Rcpp::Vector<RTYPE> out(size);
+      for (size_t i=0UL; i<size; ++i) {
         out[i] = Rcpp::internal::caster<Type, value_t>((*x)[i]);
       }
       return out;
@@ -33,7 +34,8 @@ namespace Rcpp {
     SEXP blaze_uv_wrap(const blaze::UniformVector<Type, TF>& x) {
       const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-      Rcpp::Vector<RTYPE> out((*x).size());
+	  size_t size = (*x).size();
+      Rcpp::Vector<RTYPE> out(size);
       std::fill(out.begin(), out.end(), Rcpp::internal::caster<Type, value_t>((*x)[0UL]));
       return out;
     }
@@ -85,7 +87,7 @@ namespace Rcpp {
       if (TF == blaze::rowVector) {
         pSize = size + 1UL;
       }
-      Rcpp::IntegerVector p(pSize, 0UL);
+      Rcpp::IntegerVector p(pSize, 0);
       Rcpp::IntegerVector idx(nonZeroSize);
 
       size_t k = 0UL;
@@ -110,9 +112,9 @@ namespace Rcpp {
       std::string klass = "dgCMatrix";
       Rcpp::S4 out(klass);
       if (TF == blaze::rowVector) {
-        out.slot("Dim") = Rcpp::Dimension(1UL, size);
+        out.slot("Dim") = Rcpp::Dimension(1, (int)size);
       } else {
-        out.slot("Dim") = Rcpp::Dimension(size, 1UL);
+        out.slot("Dim") = Rcpp::Dimension((int)size, 1);
       }
       out.slot("i") = idx;
       out.slot("p") = p;
