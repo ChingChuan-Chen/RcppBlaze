@@ -31,9 +31,14 @@ The important steps are
   Imports: Rcpp (>= 1.0.0)
   LinkingTo: Rcpp, RcppBlaze
 }
+\item Link against the \code{BLAS} and \code{LAPACK} libraries, by adding following two lines in the \samp{Makevars} and \samp{Makevars.win} files:
+\preformatted{
+  PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+}
 }
 
 Note that if you would like to enable Boost threads support, you need to import \strong{BH} package in your DESCRIPTION.
+Note that \code{CompressedVector} and \code{CompressedMatrix} only support \code{int}, \code{float} and \code{double} types.
 }
 
 \references{

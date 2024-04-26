@@ -9,16 +9,15 @@
 ## a copy of 3-Clause BSD License along with RcppBlaze.
 ## If not, see https://opensource.org/license/BSD-3-Clause.
 
-LdFlags <- function() {}
-
 #' @importFrom Rcpp Rcpp.plugin.maker
 inlineCxxPlugin <-  function() {
+  openmpFlag <- ifelse(Sys.info()[["sysname"]] == "Darwin", "", "$(SHLIB_OPENMP_CFLAGS)")
   getSettings <- Rcpp.plugin.maker(
     include.before = "#include <RcppBlaze.h>",
-    libs = "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)",
+    libs = paste0(openmpFlag, "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)"),
     package = c("RcppBlaze")
   )
   settings <- getSettings()
-  settings$env$PKG_LIBS <- paste(settings$env$PKG_LIBS, LdFlags())
+  settings$env$PKG_CPPFLAGS <- paste("-I../inst/include", openmpflag)
   return(settings)
 }
