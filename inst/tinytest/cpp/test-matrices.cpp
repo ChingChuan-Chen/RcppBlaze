@@ -188,6 +188,7 @@ void matrix_hm_error(Rcpp::NumericMatrix x) {
   blaze::HybridMatrix<double, 3, 3, blaze::columnMajor> z = Rcpp::as<blaze::HybridMatrix<double, 3, 3, blaze::columnMajor>>(x);
 }
 
+/*
 // [[Rcpp::export]]
 Rcpp::List custom_matrix_as_test(Rcpp::List input_list) {
   typedef typename blaze::CustomMatrix<int, blaze::unaligned, blaze::unpadded, blaze::columnMajor> iCustomMatrixUU;
@@ -210,6 +211,7 @@ Rcpp::List custom_matrix_as_test(Rcpp::List input_list) {
     Rcpp::_["dCustomMatrixAP"] = blaze::sum(cm_double4)
   );
 }
+*/
 
 // [[Rcpp::export]]
 Rcpp::List sparse_matrix_as_test(Rcpp::List input_list) {

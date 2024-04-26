@@ -118,6 +118,7 @@ void vector_hv_error(Rcpp::NumericVector x) {
   blaze::HybridVector<double, 3> z = Rcpp::as<blaze::HybridVector<double, 3>>(x);
 }
 
+/*
 // [[Rcpp::export]]
 Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
   typedef typename blaze::CustomVector<int, blaze::unaligned, blaze::unpadded> iCustomVectorUU;
@@ -140,6 +141,7 @@ Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
     Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_ap_double)
   );
 }
+*/
 
 // [[Rcpp::export]]
 Rcpp::List sparse_vector_as_test(Rcpp::List input_list) {

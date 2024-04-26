@@ -35,6 +35,12 @@ If you encounter a bug, please file a reproducible example on [github](https://g
 Logical part is not supported because there is no enough resource for it (helps are welcome).
 Since `Matrix` only provides `l*[CTR]Matrix` and `d*[CTR]Matrix` and does not support `z*[CTR]Matrix`.
 
+### Known Issues
+
+Converting R object to `CustomVector` or `CustomMatrix` (`Rcpp::as`) is unstable. You should take your own risk to do so.
+Returning `CustomVector` or `CustomMatrix` from `C++` (`Rcpp::wrap`) is totally okay.
+You can `#define RCPPBLAZE_ENABLE_WARN false` to disable the related warnings.
+
 ### Linear Model Fitting Benchmark 
 
 You can refer to the file [lmBenchmark.R](./inst/examples/lmBenchmark.R) to find the code.

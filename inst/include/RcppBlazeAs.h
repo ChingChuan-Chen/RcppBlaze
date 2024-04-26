@@ -99,6 +99,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomVector is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         size_t n = (size_t) Rf_xlength(x);
         std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[n]);
@@ -121,6 +124,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomVector is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         size_t n = (size_t) Rf_xlength(x);
         size_t paddedSize = blaze::nextMultiple<size_t>(n, blaze::SIMDTrait<Type>::size);
@@ -144,6 +150,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomVector is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         size_t n = (size_t) Rf_xlength(x);
         std::unique_ptr<Type[], blaze::Deallocate> data(blaze::allocate<Type>(n));
@@ -166,6 +175,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomVector is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         size_t n = (size_t) Rf_xlength(x);
         size_t paddedSize = blaze::nextMultiple<size_t>(n, blaze::SIMDTrait<Type>::size);
@@ -276,6 +288,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomMatrix<Type, blaze::unaligned, blaze::unpadded, SO> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomMatrix is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         RCPPBLAZE_GET_MATRIX_DIMS(m, n);
         std::unique_ptr<Type[], blaze::ArrayDelete> data(new Type[m*n]);
@@ -298,6 +313,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomMatrix<Type, blaze::unaligned, blaze::padded, SO> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomMatrix is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         RCPPBLAZE_GET_MATRIX_DIMS(m, n);
         size_t simdTypeSize = blaze::SIMDTrait<Type>::size, paddedSize, matSize;
@@ -328,6 +346,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomMatrix is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         RCPPBLAZE_GET_MATRIX_DIMS(m, n);
         size_t simdTypeSize = blaze::SIMDTrait<Type>::size, paddedSize, matSize;
@@ -358,6 +379,9 @@ namespace Rcpp {
       ~Exporter(){}
 
       blaze::CustomMatrix<Type, blaze::aligned, blaze::padded, SO> get() {
+        if (RCPPBLAZE_ENABLE_WARN) {
+          Rcpp::warning("Convert R Object to blaze::CustomMatrix is unstable. Take your own risk!");
+        }
         RCPPBLAZE_GET_TYPEMAP;
         RCPPBLAZE_GET_MATRIX_DIMS(m, n);
         size_t simdTypeSize = blaze::SIMDTrait<Type>::size, paddedSize, matSize;
