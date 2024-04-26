@@ -5,10 +5,6 @@ blaze_version <- function(single) {
     .Call(`_RcppBlaze_blaze_version`, single)
 }
 
-testWrap <- function() {
-    .Call(`_RcppBlaze_testWrap`)
-}
-
 #' linear model fitting function based on RcppBlaze
 #'
 #' \code{fastLmPure} provides the estimates of the linear model based on \code{RcppBlaze}.

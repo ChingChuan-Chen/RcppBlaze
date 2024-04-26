@@ -64,7 +64,6 @@ namespace Rcpp {
     result[i] = Rcpp::internal::caster<r_object_type, Type>(y[i]);        \
   }
 
-
     // exporter for StaticVector since its constructor does not need size
     template <typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
     class Exporter< blaze::StaticVector<Type, N, TF, AF, PF> > {
@@ -457,9 +456,9 @@ namespace Rcpp {
           RCPPBLAZE_S4_MAT_COO;
           for (u=0UL; u < nonZeroSize; ++u) {
             if (TF == blaze::rowVector) {
-              result.append((size_t)j[v], x[v]);
+              result.append((size_t)j[u], x[u]);
             } else {
-              result.append((size_t)i[v], x[v]);
+              result.append((size_t)i[u], x[u]);
             }
           }
         } else if (matrixClass == "dgRMatrix" || object.is("dgRMatrix")) {

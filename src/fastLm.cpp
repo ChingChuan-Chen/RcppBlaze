@@ -13,56 +13,6 @@
 #include <RcppBlaze.h>
 using Rcpp::_;
 
-// [[Rcpp::export]]
-Rcpp::List testWrap() {
-  blaze::StaticMatrix<double, 3UL, 3UL> D{
-    {  3.0,  0.0,  0.0 },
-    {  8.0,  0.0,  0.0 },
-    { -2.0, -1.0,  4.0 }
-  };
-
-  auto rs1 = blaze::rows<0UL, 2UL>(D);
-  auto rs2 = blaze::rows(D, {0UL, 2UL});
-
-  blaze::CompressedMatrix<double> E(3UL, 3UL);
-  E.reserve(5);
-  E.append(0, 0, 3.0);
-  E.finalize(0);
-  E.append(1, 0, 8.0);
-  E.finalize(1);
-  E.append(2, 0, -2.0);
-  E.append(2, 1, -1.0);
-  E.append(2, 2, 4.0);
-  E.finalize(2);
-
-  auto rs3 = blaze::rows<0UL, 2UL>(E);
-  auto rs4 = blaze::rows(E, {0UL, 2UL});
-
-  return Rcpp::List::create(
-    _["row0"] = rs1,
-    _["row1"] = rs2,
-    _["row2"] = rs3,
-    _["row3"] = rs4
-  );
-/*
-  blaze::StaticVector<double, 3UL> a;
-  a = {1.5, -2.5, 4.5};
-
-  blaze::StaticVector<double, 3UL> b;
-  b = {-1.5, 2.5, 0.0};
-
-  return Rcpp::List::create(
-    _["2.0 + a"] = Rcpp::RcppBlaze::blaze_dv_expr_wrap(2.0 + a)
-    _["2.0 - a"] = 2.0 - a,
-    _["2.0 * a"] = 2.0 * a,
-    _["a+b"] = a + b,
-    _["a-b"] = a - b,
-    _["a*b"] = a * b
-  );
-  */
-}
-
-
 enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
 
 Rcpp::List QRsolver(const blaze::DynamicMatrix<double>& X, const blaze::DynamicVector<double>& y) {

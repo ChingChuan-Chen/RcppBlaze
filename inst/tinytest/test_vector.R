@@ -33,7 +33,7 @@ expect_equal(vector_wrap_res[["uv_double"]], rep(3, 6L), info = "uv_double")
 expect_equal(vector_wrap_res[["uv_cplx"]], rep(3.3-2.7*1i, 6L), info = "uv_cplx")
 expect_equal(vector_wrap_res[["cpv_int"]], expect_int_sparse_vector, info = "cpv_int")
 expect_equal(vector_wrap_res[["cpv_double"]], expect_dbl_sparse_vector, info = "cpv_double")
-expect_equal(vector_wrap_res[["cpv_double_rv"]], t(expect_dbl_sparse_vector), info = "cpv_double_rv")
+expect_equal(vector_wrap_res[["cpv_double_rv"]], as.csc.matrix(t(expect_dbl_sparse_vector)), info = "cpv_double_rv")
 expect_equal(vector_wrap_res[["cpv_float"]], expect_dbl_sparse_vector, info = "cpv_float", tolerance = 1e-6)
 expect_equal(vector_wrap_res[["zv_double"]], Matrix(0, 6L, 1L), info = "zv_double")
 
