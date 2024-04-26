@@ -14,10 +14,10 @@ inlineCxxPlugin <-  function() {
   openmpFlag <- ifelse(Sys.info()[["sysname"]] == "Darwin", "", "$(SHLIB_OPENMP_CFLAGS)")
   getSettings <- Rcpp.plugin.maker(
     include.before = "#include <RcppBlaze.h>",
-    libs = paste0(openmpFlag, "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)"),
+    libs = paste(openmpFlag, "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)"),
     package = c("RcppBlaze")
   )
   settings <- getSettings()
-  settings$env$PKG_CPPFLAGS <- paste("-I../inst/include", openmpflag)
+  settings$env$PKG_CPPFLAGS <- paste("-I../inst/include", openmpFlag)
   return(settings)
 }
