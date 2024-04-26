@@ -3,7 +3,7 @@
 //  \file blaze/util/threadpool/Task.h
 //  \brief Header file for the Task base class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,7 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/function.hpp>
+#include <functional>
 
 
 namespace blaze {
@@ -57,7 +57,7 @@ namespace threadpool {
 /*!\brief Handle for a single, executable task.
 // \ingroup threads
 */
-typedef boost::function<void(void)>  Task;
+using Task = std::function<void(void)>;
 //*************************************************************************************************
 
 } // namespace threadpool

@@ -3,7 +3,7 @@
 //  \file blaze/util/Random.h
 //  \brief Implementation of a random number generator.
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -42,32 +42,24 @@
 
 #include <ctime>
 #include <limits>
-#include <boost/random/uniform_int.hpp>
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/uniform_smallint.hpp>
+#include <random>
 #include <blaze/system/Random.h>
 #include <blaze/util/Assert.h>
 #include <blaze/util/Complex.h>
+#include <blaze/util/EnableIf.h>
 #include <blaze/util/NonCreatable.h>
 #include <blaze/util/Types.h>
+#include <blaze/util/typetraits/IsFloatingPoint.h>
+#include <blaze/util/typetraits/IsIntegral.h>
+#include <blaze/util/typetraits/RemoveCV.h>
+#include <blaze/util/typetraits/RemoveCVRef.h>
 
 
 namespace blaze {
 
 //=================================================================================================
 //
-//  ::blaze NAMESPACE FORWARD DECLARATIONS
-//
-//=================================================================================================
-
-template< typename > class Rand;
-
-
-
-
-//=================================================================================================
-//
-//  CLASS DEFINITION
+//  DOXYGEN DOCUMENTATION
 //
 //=================================================================================================
 
@@ -120,38 +112,85 @@ template< typename > class Rand;
    complex<float> c3 = rand< complex<float> >( 2.0F, 3.0F, 1.0F, 5.0F );
    \endcode
 
-// \note: In order to reproduce certain series of random numbers, the seed of the random number
+// \note In order to reproduce certain series of random numbers, the seed of the random number
 // generator has to be set explicitly via the setSeed() function. Otherwise a random seed is used
 // for the random number generation.
 */
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  ::blaze NAMESPACE FORWARD DECLARATIONS
+//
+//=================================================================================================
+
+//*************************************************************************************************
+/*!\name Random number functions */
+//@{
+template< typename T >
+T rand();
+
+template< typename T, typename... Args >
+T rand( Args&&... args );
+
+template< typename T >
+void randomize( T&& value );
+
+template< typename T, typename... Args >
+void randomize( T&& value, Args&&... args );
+
+uint32_t defaultSeed();
+
+template< typename RNG = DefaultRNG >
+uint32_t getSeed();
+
+template< typename RNG = DefaultRNG >
+void setSeed( uint32_t seed );
+//@}
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  CLASS DEFINITION
+//
+//=================================================================================================
+
+//*************************************************************************************************
 /*!\brief Random number generator.
 // \ingroup random
 //
 // The Random class encapsulates the initialization of the given random number generator with
 // a pseudo-random seed obtained by the std::time() function. Currently, the mersenne-twister
-// mt19937 as provided by the boost library is used per default. For more information see the
-// class description of the boost library:
+// mt19937 as provided by the C++ standard library is used per default. For more information
+// see the for instance the following documentation of the random number functionality of the
+// C++11 standard library:
 //
-//   http://www.boost.org/doc/libs/1_35_0/libs/random/random-generators.html#mersenne_twister\n
-//   http://www.boost.org/doc/libs/1_35_0/boost/random/mersenne_twister.hpp
+//   http://en.cppreference.com/w/cpp/numeric/random
 */
-template< typename Type >  // Type of the random number generator
-class Random : private NonCreatable
+template< typename RNG = DefaultRNG >  // Type of the random number generator
+class Random
+   : private NonCreatable
 {
  private:
    //**Member variables****************************************************************************
    /*!\name Member variables */
    //@{
    static uint32_t seed_;  //!< The current seed for the variate generator.
-   static Type     rng_;   //!< The mersenne twister variate generator.
+   static RNG      rng_;   //!< The mersenne twister variate generator.
    //@}
    //**********************************************************************************************
 
    //**Friend declarations*************************************************************************
    /*! \cond BLAZE_INTERNAL */
-   template< typename T > friend class Rand;
-                          friend uint32_t getSeed();
-                          friend void     setSeed( uint32_t seed );
+   template< typename, typename > friend class Rand;
+   template< typename > friend uint32_t getSeed();
+   template< typename > friend void     setSeed( uint32_t seed );
    /*! \endcond */
    //**********************************************************************************************
 };
@@ -166,8 +205,8 @@ class Random : private NonCreatable
 //
 //=================================================================================================
 
-template< typename Type > uint32_t Random<Type>::seed_( static_cast<uint32_t>( std::time(0) ) );
-template< typename Type > Type     Random<Type>::rng_ ( seed_ );
+template< typename RNG > uint32_t Random<RNG>::seed_( defaultSeed() );
+template< typename RNG > RNG      Random<RNG>::rng_ ( defaultSeed() );
 
 
 
@@ -179,109 +218,109 @@ template< typename Type > Type     Random<Type>::rng_ ( seed_ );
 //=================================================================================================
 
 //*************************************************************************************************
-/*!\brief Default implementation of the Rand class for integral data types.
+/*!\brief Default implementation of the Rand class.
 // \ingroup random
 //
-// This default implementation of the Rand class creates random, integral numbers in the range
+// This default implementation of the Rand class does not provide any functionality. It needs to
+// be specialized for specific types.
+*/
+template< typename T         // Type of the random number
+        , typename = void >  // Restricting condition
+class Rand
+{};
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  RAND SPECIALIZATION (INTEGRAL TYPES)
+//
+//=================================================================================================
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the Rand class for integral data types.
+// \ingroup random
+//
+// This specialization of the Rand class creates random integral numbers in the range
 // \f$ [0..max] \f$, where \a max is the maximal value of the given data type \a T.
 */
 template< typename T >  // Type of the random number
-class Rand
+class Rand< T, EnableIf_t< IsIntegral_v<T> > >
 {
  public:
-   //**Generate functions**************************************************************************
-   /*!\name Generate functions */
-   //@{
-   inline T generate() const;
-   inline T generate( T min, T max ) const;
-   //@}
+   //**********************************************************************************************
+   /*!\brief Generation of a random value in the range \f$ [0..max] \f$.
+   //
+   // \return The generated random value.
+   //
+   // This \a generate function creates a random number in the range \f$ [0..max] \f$, where \a max
+   // is the maximal value of the given data type \a T.
+   */
+   inline T generate() const
+   {
+      std::uniform_int_distribution<T> dist( 0, std::numeric_limits<T>::max() );
+      return dist( Random<>::rng_ );
+   }
    //**********************************************************************************************
 
-   //**Randomize functions*************************************************************************
-   /*!\name Randomize functions */
-   //@{
-   inline void randomize( T& value ) const;
-   inline void randomize( T& value, T min, T max ) const;
-   //@}
+   //**********************************************************************************************
+   /*!\brief Generation of a random value in the range \f$ [min..max] \f$.
+   //
+   // \param min The smallest possible random value.
+   // \param max The largest possible random value.
+   // \return The generated random value.
+   //
+   // This \a generate function creates a random number in the range \f$ [min..max] \f$, where
+   // \a min must be smaller or equal to \a max. Note that this requirement is only checked in
+   // debug mode. In release mode, no check is performed to enforce the validity of the values.
+   // Therefore the returned value is undefined if \a min is larger than \a max.
+   */
+   inline T generate( T min, T max ) const
+   {
+      BLAZE_INTERNAL_ASSERT( min <= max, "Invalid min/max value pair" );
+      std::uniform_int_distribution<T> dist( min, max );
+      return dist( Random<>::rng_ );
+   }
+   //**********************************************************************************************
+
+   //**********************************************************************************************
+   /*!\brief Randomization of the given variable with a new value in the range \f$ [0..max] \f$.
+   //
+   // \param value The variable to be randomized.
+   // \return void
+   //
+   // This function randomizes the given variable to a new value in the range \f$ [0..max] \f$,
+   // where \a max is the maximal value of the given data type \a T.
+   */
+   inline void randomize( T& value ) const
+   {
+      value = generate();
+   }
+   //**********************************************************************************************
+
+   //**********************************************************************************************
+   /*!\brief Randomization of the given variable with a new value in the range \f$ [min..max] \f$.
+   //
+   // \param value The variable to be randomized.
+   // \param min The smallest possible random value.
+   // \param max The largest possible random value.
+   // \return void
+   //
+   // This function randomizes the given variable to a new value in the range \f$ [min..max] \f$,
+   // where \a min must be smaller or equal to \a max. Note that this requirement is only checked
+   // in debug mode. In release mode, no check is performed to enforce the validity of the values.
+   // Therefore the returned value is undefined if \a min is larger than \a max.
+   */
+   inline void randomize( T& value, T min, T max ) const
+   {
+      value = generate( min, max );
+   }
    //**********************************************************************************************
 };
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Generation of a random value in the range \f$ [0..max] \f$.
-//
-// \return The generated random value.
-//
-// This \a generate function creates a random number in the range \f$ [0..max] \f$, where \a max
-// is the maximal value of the given data type \a T.
-*/
-template< typename T >  // Type of the random number
-inline T Rand<T>::generate() const
-{
-   boost::uniform_int<T> dist( 0, std::numeric_limits<T>::max() );
-   return dist( Random<RNG>::rng_ );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Generation of a random value in the range \f$ [min..max] \f$.
-//
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return The generated random value.
-//
-// This \a generate function creates a random number in the range \f$ [min..max] \f$, where
-// \a min must be smaller or equal to \a max. Note that this requirement is only checked in
-// debug mode. In release mode, no check is performed to enforce the validity of the values.
-// Therefore the returned value is undefined if \a min is larger than \a max.
-*/
-template< typename T >  // Type of the random number
-inline T Rand<T>::generate( T min, T max ) const
-{
-   BLAZE_INTERNAL_ASSERT( min <= max, "Invalid min/max value pair" );
-   boost::uniform_smallint<T> dist( min, max );
-   return dist( Random<RNG>::rng_ );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Randomization of the given variable with a new value in the range \f$ [0..max] \f$.
-//
-// \param value The variable to be randomized.
-// \return void
-//
-// This function randomizes the given variable to a new value in the range \f$ [0..max] \f$,
-// where \a max is the maximal value of the given data type \a T.
-*/
-template< typename T >  // Type of the random number
-inline void Rand<T>::randomize( T& value ) const
-{
-   value = generate();
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Randomization of the given variable with a new value in the range \f$ [min..max] \f$.
-//
-// \param value The variable to be randomized.
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return void
-//
-// This function randomizes the given variable to a new value in the range \f$ [min..max] \f$, where
-// \a min must be smaller or equal to \a max. Note that this requirement is only checked in debug
-// mode. In release mode, no check is performed to enforce the validity of the values. Therefore
-// the returned value is undefined if \a min is larger than \a max.
-*/
-template< typename T >  // Type of the random number
-inline void Rand<T>::randomize( T& value, T min, T max ) const
-{
-   value = generate( min, max );
-}
+/*! \endcond */
 //*************************************************************************************************
 
 
@@ -289,355 +328,89 @@ inline void Rand<T>::randomize( T& value, T min, T max ) const
 
 //=================================================================================================
 //
-//  RAND SPECIALIZATION (FLOAT)
+//  RAND SPECIALIZATION (FLOATING POINT TYPES)
 //
 //=================================================================================================
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Specialization of the Rand class template for single precision floating point values.
+/*!\brief Specialization of the Rand class template for floating point types.
 // \ingroup random
 //
-// This specialization of the Rand class creates random, single precision values in the range
+// This specialization of the Rand class creates random floating point numbers in the range
 // \f$ [0..1) \f$.
 */
-template<>
-class Rand<float>
+template< typename T >  // Type of the random number
+class Rand< T, EnableIf_t< IsFloatingPoint_v<T> > >
 {
  public:
-   //**Generate functions**************************************************************************
-   /*!\name Generate functions */
-   //@{
-   inline float generate() const;
-   inline float generate( float min, float max ) const;
-   //@}
+   //**********************************************************************************************
+   /*!\brief Generation of a random single precision value in the range \f$ [0..1) \f$.
+   //
+   // \return The generated random single precision value.
+   //
+   // This function creates a random single precision value in the range \f$ [0..1) \f$.
+   */
+   inline T generate() const
+   {
+      std::uniform_real_distribution<T> dist( 0.0, 1.0 );
+      return dist( Random<>::rng_ );
+   }
    //**********************************************************************************************
 
-   //**Randomize functions*************************************************************************
-   /*!\name Randomize functions */
-   //@{
-   inline void randomize( float& value ) const;
-   inline void randomize( float& value, float min, float max ) const;
-   //@}
    //**********************************************************************************************
+   /*!\brief Generation of a random single precision value in the range \f$ [min..max] \f$.
+   //
+   // \param min The smallest possible random value.
+   // \param max The largest possible random value.
+   // \return The generated random single precision value.
+   //
+   // This function creates a random single precision number in the range \f$ [min..max] \f$, where
+   // \a min must be smaller or equal to \a max. Note that this requirement is only checked in debug
+   // mode. In release mode, no check is performed to enforce the validity of the values. Therefore
+   // the returned value is undefined if \a min is larger than \a max.
+   */
+   inline T generate( T min, T max ) const
+   {
+      BLAZE_INTERNAL_ASSERT( min <= max, "Invalid min/max values" );
+      std::uniform_real_distribution<T> dist( min, max );
+      return dist( Random<>::rng_ );
+   }
+   //*************************************************************************************************
+
+   //*************************************************************************************************
+   /*!\brief Randomization of the given single precision variable to a value in in the range \f$ [0..1) \f$.
+   //
+   // \param value The variable to be randomized.
+   // \return void
+   //
+   // This function randomizes the given single precision variable to a value in the range \f$ [0..1) \f$.
+   */
+   inline void randomize( T& value ) const
+   {
+      value = generate();
+   }
+   //*************************************************************************************************
+
+   //*************************************************************************************************
+   /*!\brief Randomization of the given single precision variable to a value in the range \f$ [min..max] \f$.
+   //
+   // \param value The variable to be randomized.
+   // \param min The smallest possible random value.
+   // \param max The largest possible random value.
+   // \return void
+   //
+   // This function randomizes the given single precision variable to a value in the range
+   // \f$ [min..max] \f$, where \a min must be smaller or equal to \a max. Note that this requirement
+   // is only checked in debug mode. In release mode, no check is performed to enforce the validity
+   // of the values. Therefore the returned value is undefined if \a min is larger than \a max.
+   */
+   inline void randomize( T& value, T min, T max ) const
+   {
+      value = generate( min, max );
+   }
+   //*************************************************************************************************
 };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random single precision value in the range \f$ [0..1) \f$.
-//
-// \return The generated random single precision value.
-//
-// This function creates a random single precision value in the range \f$ [0..1) \f$.
-*/
-inline float Rand<float>::generate() const
-{
-   boost::uniform_real<float> dist( 0.0, 1.0 );
-   return dist( Random<RNG>::rng_ );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random single precision value in the range \f$ [min..max] \f$.
-//
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return The generated random single precision value.
-//
-// This function creates a random single precision number in the range \f$ [min..max] \f$, where
-// \a min must be smaller or equal to \a max. Note that this requirement is only checked in debug
-// mode. In release mode, no check is performed to enforce the validity of the values. Therefore
-// the returned value is undefined if \a min is larger than \a max.
-*/
-inline float Rand<float>::generate( float min, float max ) const
-{
-   BLAZE_INTERNAL_ASSERT( min <= max, "Invalid min/max values" );
-   boost::uniform_real<float> dist( min, max );
-   return dist( Random<RNG>::rng_ );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of the given single precision variable to a value in in the range \f$ [0..1) \f$.
-//
-// \param value The variable to be randomized.
-// \return void
-//
-// This function randomizes the given single precision variable to a value in the range \f$ [0..1) \f$.
-*/
-inline void Rand<float>::randomize( float& value ) const
-{
-   value = generate();
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of the given single precision variable to a value in the range \f$ [min..max] \f$.
-//
-// \param value The variable to be randomized.
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return void
-//
-// This function randomizes the given single precision variable to a value in the range
-// \f$ [min..max] \f$, where \a min must be smaller or equal to \a max. Note that this requirement
-// is only checked in debug mode. In release mode, no check is performed to enforce the validity
-// of the values. Therefore the returned value is undefined if \a min is larger than \a max.
-*/
-inline void Rand<float>::randomize( float& value, float min, float max ) const
-{
-   value = generate( min, max );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-
-
-//=================================================================================================
-//
-//  RAND SPECIALIZATION (DOUBLE)
-//
-//=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Specialization of the Rand class template for double precision floating point values.
-// \ingroup random
-//
-// This specialization of the Rand class creates random, double precision values in the range
-// \f$ [0..1) \f$.
-*/
-template<>
-class Rand<double>
-{
- public:
-   //**Generate functions**************************************************************************
-   /*!\name Generate functions */
-   //@{
-   inline double generate() const;
-   inline double generate( double min, double max ) const;
-   //@}
-   //**********************************************************************************************
-
-   //**Randomize functions*************************************************************************
-   /*!\name Randomize functions */
-   //@{
-   inline void randomize( double& value ) const;
-   inline void randomize( double& value, double min, double max ) const;
-   //@}
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random double precision value in the range \f$ [0..1) \f$.
-//
-// \return The generated random double precision value.
-//
-// This function creates a random double precision value in the range \f$ [0..1) \f$.
-*/
-inline double Rand<double>::generate() const
-{
-   boost::uniform_real<double> dist( 0.0, 1.0 );
-   return dist( Random<RNG>::rng_ );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random double precision value in the range \f$ [min..max] \f$.
-//
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return The generated random double precision value.
-//
-// This function creates a random double precision number in the range \f$ [min..max] \f$, where
-// \a min must be smaller or equal to \a max. Note that this requirement is only checked in debug
-// mode. In release mode, no check is performed to enforce the validity of the values. Therefore
-// the returned value is undefined if \a min is larger than \a max.
-*/
-inline double Rand<double>::generate( double min, double max ) const
-{
-   BLAZE_INTERNAL_ASSERT( min <= max, "Invalid min/max values" );
-   boost::uniform_real<double> dist( min, max );
-   return dist( Random<RNG>::rng_ );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of the given double precision variable to a value in in the range \f$ [0..1) \f$.
-//
-// \param value The variable to be randomized.
-// \return void
-//
-// This function randomizes the given double precision variable to a value in the range \f$ [0..1) \f$.
-*/
-inline void Rand<double>::randomize( double& value ) const
-{
-   value = generate();
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of the given double precision variable to a value in the range \f$ [min..max] \f$.
-//
-// \param value The variable to be randomized.
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return void
-//
-// This function randomizes the given double precision variable to a value in the range
-// \f$ [min..max] \f$, where \a min must be smaller or equal to \a max. Note that this requirement
-// is only checked in debug mode. In release mode, no check is performed to enforce the validity
-// of the values. Therefore the returned value is undefined if \a min is larger than \a max.
-*/
-inline void Rand<double>::randomize( double& value, double min, double max ) const
-{
-   value = generate( min, max );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-
-
-//=================================================================================================
-//
-//  RAND SPECIALIZATION (LONG DOUBLE)
-//
-//=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Specialization of the Rand class template for extended precision floating point values.
-// \ingroup random
-//
-// This specialization of the Rand class creates random, extended precision values in the range
-// \f$ [0..1) \f$.
-*/
-template<>
-class Rand<long double>
-{
- public:
-   //**Generate functions**************************************************************************
-   /*!\name Generate functions */
-   //@{
-   inline long double generate() const;
-   inline long double generate( long double min, long double max ) const;
-   //@}
-   //**********************************************************************************************
-
-   //**Randomize functions*************************************************************************
-   /*!\name Randomize functions */
-   //@{
-   inline void randomize( long double& value ) const;
-   inline void randomize( long double& value, long double min, long double max ) const;
-   //@}
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random extended precision value in the range \f$ [0..1) \f$.
-//
-// \return The generated random extended precision value.
-//
-// This function creates a random extended precision value in the range \f$ [0..1) \f$.
-*/
-inline long double Rand<long double>::generate() const
-{
-   boost::uniform_real<long double> dist( 0.0, 1.0 );
-   return dist( Random<RNG>::rng_ );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random extended precision value in the range \f$ [min..max] \f$.
-//
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return The generated random extended precision value.
-//
-// This function creates a random extended precision number in the range \f$ [min..max] \f$, where
-// \a min must be smaller or equal to \a max. Note that this requirement is only checked in debug
-// mode. In release mode, no check is performed to enforce the validity of the values. Therefore
-// the returned value is undefined if \a min is larger than \a max.
-*/
-inline long double Rand<long double>::generate( long double min, long double max ) const
-{
-   BLAZE_INTERNAL_ASSERT( min <= max, "Invalid min/max values" );
-   boost::uniform_real<long double> dist( min, max );
-   return dist( Random<RNG>::rng_ );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of the given extended precision variable to a value in in the range \f$ [0..1) \f$.
-//
-// \param value The variable to be randomized.
-// \return void
-//
-// This function randomizes the given extended precision variable to a value in the range \f$ [0..1) \f$.
-*/
-inline void Rand<long double>::randomize( long double& value ) const
-{
-   value = generate();
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of the given extended precision variable to a value in the range \f$ [min..max] \f$.
-//
-// \param value The variable to be randomized.
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return void
-//
-// This function randomizes the given extended precision variable to a value in the range
-// \f$ [min..max] \f$, where \a min must be smaller or equal to \a max. Note that this requirement
-// is only checked in debug mode. In release mode, no check is performed to enforce the validity
-// of the values. Therefore the returned value is undefined if \a min is larger than \a max.
-*/
-inline void Rand<long double>::randomize( long double& value, long double min, long double max ) const
-{
-   value = generate( min, max );
-}
 /*! \endcond */
 //*************************************************************************************************
 
@@ -661,169 +434,125 @@ template< typename T >  // Type of the values
 class Rand< complex<T> >
 {
  public:
-   //**Generate functions**************************************************************************
-   /*!\name Generate functions */
-   //@{
-   inline const complex<T> generate() const;
-   inline const complex<T> generate( const T& min, const T& max ) const;
+   //**********************************************************************************************
+   /*!\brief Generation of a random complex number.
+   //
+   // \return The generated random complex number.
+   //
+   // This function generates a random complex number, where both the real and the imaginary part
+   // are initialized with random values in the full range of the data type \a T.
+   */
+   inline const complex<T> generate() const
+   {
+      Rand<T> tmp;
+      return complex<T>( tmp.generate(), tmp.generate() );
+   }
+   //**********************************************************************************************
+
+   //**********************************************************************************************
+   /*!\brief Generation of a random complex number in the range \f$ [min..max] \f$.
+   //
+   // \param min The smallest possible random value.
+   // \param max The largest possible random value.
+   // \return The generated random complex number.
+   //
+   // This function generates a random complex number, where both the real and the imaginary part
+   // are initialized with random values in the range \f$ [min..max] \f$. Note that \a min must be
+   // smaller or equal to \a max. This requirement is only checked in debug mode. In release mode,
+   // no check is performed to enforce the validity of the values. Therefore the returned value is
+   // undefined if \a min is larger than \a max.
+   */
+   inline const complex<T> generate( const T& min, const T& max ) const
+   {
+      Rand<T> tmp;
+      return complex<T>( tmp.generate( min, max ), tmp.generate( min, max ) );
+   }
+   //*************************************************************************************************
+
+   //*************************************************************************************************
+   /*!\brief Generation of a random complex number.
+   //
+   // \param realmin The smallest possible random value for the real part.
+   // \param realmax The largest possible random value for the real part
+   // \param realmin The smallest possible random value for the imaginary part.
+   // \param realmax The largest possible random value for the imaginary part.
+   // \return The generated random complex number.
+   //
+   // This function creates a random, complex number, where the real part is in the range
+   // \f$ [realmin..realmax] \f$ and the imaginary part is in the range \f$ [imagmin..imagmax] \f$.
+   // \a realmin must be smaller or equal to \a realmax and \a imagmin must be smaller or equal to
+   // \a imagmax. These requirements are only checked in debug mode. In release mode, no check is
+   // performed to enforce the validity of the values. Therefore the returned value is undefined
+   // if \a realmin is larger than \a realmax or \a imagmin is larger than \a imagmax.
+   */
    inline const complex<T> generate( const T& realmin, const T& realmax,
-                                     const T& imagmin, const T& imagmax ) const;
-   //@}
-   //**********************************************************************************************
+                                     const T& imagmin, const T& imagmax ) const
+   {
+      Rand<T> tmp;
+      return complex<T>( tmp.generate( realmin, realmax ), tmp.generate( imagmin, imagmax ) );
+   }
+   //*************************************************************************************************
 
-   //**Randomize functions*************************************************************************
-   /*!\name Randomize functions */
-   //@{
-   inline void randomize( complex<T>& value ) const;
-   inline void randomize( complex<T>& value, const T& min, const T& max ) const;
+   //*************************************************************************************************
+   /*!\brief Randomization of a complex number.
+   //
+   // \param value The variable to be randomized.
+   // \return void
+   //
+   // This function randomizes the given complex number. Both the real and the imaginary part are
+   // initialized with random values in the full range of the data type \a T.
+   */
+   inline void randomize( complex<T>& value ) const
+   {
+      value = generate();
+   }
+   //*************************************************************************************************
+
+   //*************************************************************************************************
+   /*!\brief Randomization of a complex number to values in the range \f$ [min..max] \f$.
+   //
+   // \param value The variable to be randomized.
+   // \param min The smallest possible random value.
+   // \param max The largest possible random value.
+   // \return void
+   //
+   // This function randomizes the given complex number. Both the real and the imaginary part are
+   // initialized with random values in the range \f$ [min..max] \f$. Note that \a min must be
+   // smaller or equal to \a max. This requirement is only checked in debug mode. In release mode,
+   // no check is performed to enforce the validity of the values. Therefore the returned value is
+   // undefined if \a min is larger than \a max.
+   */
+   inline void randomize( complex<T>& value, const T& min, const T& max ) const
+   {
+      value = generate( min, max );
+   }
+   //*************************************************************************************************
+
+   //*************************************************************************************************
+   /*!\brief Randomization of a complex number.
+   //
+   // \param value The variable to be randomized.
+   // \param realmin The smallest possible random value for the real part.
+   // \param realmax The largest possible random value for the real part
+   // \param realmin The smallest possible random value for the imaginary part.
+   // \param realmax The largest possible random value for the imaginary part.
+   // \return void
+   //
+   // This function randomizes the given complex number. The real part is set to a random value in
+   // the range \f$ [realmin..realmax] \f$ and the imaginary part is set to a value in the range
+   // \f$ [imagmin..imagmax] \f$. \a realmin must be smaller or equal to \a realmax and \a imagmin
+   // must be smaller or equal to \a imagmax. These requirements are only checked in debug mode.
+   // In release mode, no check is performed to enforce the validity of the values. Therefore the
+   // returned value is undefined if \a realmin is larger than \a realmax or \a imagmin is larger
+   // than \a imagmax.
+   */
    inline void randomize( complex<T>& value, const T& realmin, const T& realmax,
-                                             const T& imagmin, const T& imagmax ) const;
-   //@}
-   //**********************************************************************************************
+                                             const T& imagmin, const T& imagmax ) const
+   {
+      value = generate( realmin, realmax, imagmin, imagmax );
+   }
+   //*************************************************************************************************
 };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random complex number.
-//
-// \return The generated random complex number.
-//
-// This function generates a random complex number, where both the real and the imaginary part
-// are initialized with random values in the full range of the data type \a T.
-*/
-template< typename T >  // Type of the values
-inline const complex<T> Rand< complex<T> >::generate() const
-{
-   Rand<T> tmp;
-   return complex<T>( tmp.generate(), tmp.generate() );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random complex number in the range \f$ [min..max] \f$.
-//
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return The generated random complex number.
-//
-// This function generates a random complex number, where both the real and the imaginary part
-// are initialized with random values in the range \f$ [min..max] \f$. Note that \a min must be
-// smaller or equal to \a max. This requirement is only checked in debug mode. In release mode,
-// no check is performed to enforce the validity of the values. Therefore the returned value is
-// undefined if \a min is larger than \a max.
-*/
-template< typename T >  // Type of the values
-inline const complex<T> Rand< complex<T> >::generate( const T& min, const T& max ) const
-{
-   Rand<T> tmp;
-   return complex<T>( tmp.generate( min, max ), tmp.generate( min, max ) );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Generation of a random complex number.
-//
-// \param realmin The smallest possible random value for the real part.
-// \param realmax The largest possible random value for the real part
-// \param realmin The smallest possible random value for the imaginary part.
-// \param realmax The largest possible random value for the imaginary part.
-// \return The generated random complex number.
-//
-// This function creates a random, complex number, where the real part is in the range
-// \f$ [realmin..realmax] \f$ and the imaginary part is in the range \f$ [imagmin..imagmax] \f$.
-// \a realmin must be smaller or equal to \a realmax and \a imagmin must be smaller or equal to
-// \a imagmax. These requirements are only checked in debug mode. In release mode, no check is
-// performed to enforce the validity of the values. Therefore the returned value is undefined
-// if \a realmin is larger than \a realmax or \a imagmin is larger than \a imagmax.
-*/
-template< typename T >  // Type of the values
-inline const complex<T> Rand< complex<T> >::generate( const T& realmin, const T& realmax,
-                                                      const T& imagmin, const T& imagmax ) const
-{
-   Rand<T> tmp;
-   return complex<T>( tmp.generate( realmin, realmax ), tmp.generate( imagmin, imagmax ) );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of a complex number.
-//
-// \param value The variable to be randomized.
-// \return void
-//
-// This function randomizes the given complex number. Both the real and the imaginary part are
-// initialized with random values in the full range of the data type \a T.
-*/
-template< typename T >  // Type of the values
-inline void Rand< complex<T> >::randomize( complex<T>& value ) const
-{
-   value = generate();
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of a complex number to values in the range \f$ [min..max] \f$.
-//
-// \param value The variable to be randomized.
-// \param min The smallest possible random value.
-// \param max The largest possible random value.
-// \return void
-//
-// This function randomizes the given complex number. Both the real and the imaginary part are
-// initialized with random values in the range \f$ [min..max] \f$. Note that \a min must be
-// smaller or equal to \a max. This requirement is only checked in debug mode. In release mode,
-// no check is performed to enforce the validity of the values. Therefore the returned value is
-// undefined if \a min is larger than \a max.
-*/
-template< typename T >  // Type of the values
-inline void Rand< complex<T> >::randomize( complex<T>& value, const T& min, const T& max ) const
-{
-   value = generate( min, max );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Randomization of a complex number.
-//
-// \param value The variable to be randomized.
-// \param realmin The smallest possible random value for the real part.
-// \param realmax The largest possible random value for the real part
-// \param realmin The smallest possible random value for the imaginary part.
-// \param realmax The largest possible random value for the imaginary part.
-// \return void
-//
-// This function randomizes the given complex number. The real part is set to a random value in
-// the range \f$ [realmin..realmax] \f$ and the imaginary part is set to a value in the range
-// \f$ [imagmin..imagmax] \f$. \a realmin must be smaller or equal to \a realmax and \a imagmin
-// must be smaller or equal to \a imagmax. These requirements are only checked in debug mode.
-// In release mode, no check is performed to enforce the validity of the values. Therefore the
-// returned value is undefined if \a realmin is larger than \a realmax or \a imagmin is larger
-// than \a imagmax.
-*/
-template< typename T >  // Type of the values
-inline void Rand< complex<T> >::randomize( complex<T>& value, const T& realmin, const T& realmax,
-                                                              const T& imagmin, const T& imagmax ) const
-{
-   value = generate( realmin, realmax, imagmin, imagmax );
-}
 /*! \endcond */
 //*************************************************************************************************
 
@@ -835,51 +564,6 @@ inline void Rand< complex<T> >::randomize( complex<T>& value, const T& realmin, 
 //  RANDOM NUMBER FUNCTIONS
 //
 //=================================================================================================
-
-//*************************************************************************************************
-/*!\name Random number functions */
-//@{
-template< typename T >
-inline T rand();
-
-template< typename T, typename A1 >
-inline T rand( const A1& a1 );
-
-template< typename T, typename A1, typename A2 >
-inline T rand( const A1& a1, const A2& a2 );
-
-template< typename T, typename A1, typename A2, typename A3 >
-inline T rand( const A1& a1, const A2& a2, const A3& a3 );
-
-template< typename T, typename A1, typename A2, typename A3, typename A4 >
-inline T rand( const A1& a1, const A2& a2, const A3& a3, const A4& a4 );
-
-template< typename T, typename A1, typename A2, typename A3, typename A4, typename A5 >
-inline T rand( const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5 );
-
-template< typename T >
-inline void randomize( T& value );
-
-template< typename T, typename A1 >
-inline void randomize( T& value, const A1& a1 );
-
-template< typename T, typename A1, typename A2 >
-inline void randomize( T& value, const A1& a1, const A2& a2 );
-
-template< typename T, typename A1, typename A2, typename A3 >
-inline void randomize( T& value, const A1& a1, const A2& a2, const A3& a3 );
-
-template< typename T, typename A1, typename A2, typename A3, typename A4 >
-inline void randomize( T& value, const A1& a1, const A2& a2, const A3& a3, const A4& a4 );
-
-template< typename T, typename A1, typename A2, typename A3, typename A4, typename A5 >
-inline void randomize( T& value, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5 );
-
-inline uint32_t getSeed();
-inline void     setSeed( uint32_t seed );
-//@}
-//*************************************************************************************************
-
 
 //*************************************************************************************************
 /*!\brief Random number function.
@@ -898,7 +582,7 @@ inline void     setSeed( uint32_t seed );
 template< typename T >  // Type of the random number
 inline T rand()
 {
-   Rand<T> tmp;
+   Rand< RemoveCV_t<T> > tmp;
    return tmp.generate();
 }
 //*************************************************************************************************
@@ -908,116 +592,17 @@ inline T rand()
 /*!\brief Random number function.
 // \ingroup random
 //
-// \param a1 First argument for the random number generation.
+// \param args The arguments for the random number generation.
 // \return The generated random number.
 //
-// This rand() function creates a random number based on the given argument \a a1.
+// This rand() function creates a random number based on the given arguments \a args.
 */
-template< typename T     // Type of the random number
-        , typename A1 >  // Type of the first argument
-inline T rand( const A1& a1 )
+template< typename T          // Type of the random number
+        , typename... Args >  // Types of the optional arguments
+inline T rand( Args&&... args )
 {
-   Rand<T> tmp;
-   return tmp.generate( a1 );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Random number function.
-// \ingroup random
-//
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \return The generated random number.
-//
-// This rand() function creates a random number based on the given arguments \a a1 and \a a2.
-*/
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2 >  // Type of the second argument
-inline T rand( const A1& a1, const A2& a2 )
-{
-   Rand<T> tmp;
-   return tmp.generate( a1, a2 );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Random number function.
-// \ingroup random
-//
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \param a3 Third argument for the random number generation.
-// \return The generated random number.
-//
-// This rand() function creates a random number based on the given arguments \a a1, \a a2, and
-// \a a3.
-*/
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2    // Type of the second argument
-        , typename A3 >  // Type of the third argument
-inline T rand( const A1& a1, const A2& a2, const A3& a3 )
-{
-   Rand<T> tmp;
-   return tmp.generate( a1, a2, a3 );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Random number function.
-// \ingroup random
-//
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \param a3 Third argument for the random number generation.
-// \param a4 Fourth argument for the random number generation.
-// \return The generated random number.
-//
-// This rand() function creates a random number based on the given arguments \a a1, \a a2, \a a3,
-// and \a a4.
-*/
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2    // Type of the second argument
-        , typename A3    // Type of the third argument
-        , typename A4 >  // Type of the fourth argument
-inline T rand( const A1& a1, const A2& a2, const A3& a3, const A4& a4 )
-{
-   Rand<T> tmp;
-   return tmp.generate( a1, a2, a3, a4 );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Random number function.
-// \ingroup random
-//
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \param a3 Third argument for the random number generation.
-// \param a4 Fourth argument for the random number generation.
-// \param a5 Fifth argument for the random number generation.
-// \return The generated random number.
-//
-// This rand() function creates a random number based on the given arguments \a a1, \a a2, \a a3,
-// \a a4, and \a a5.
-*/
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2    // Type of the second argument
-        , typename A3    // Type of the third argument
-        , typename A4    // Type of the fourth argument
-        , typename A5 >  // Type of the fifth argument
-inline T rand( const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5 )
-{
-   Rand<T> tmp;
-   return tmp.generate( a1, a2, a3, a4, a5 );
+   Rand< RemoveCV_t<T> > tmp;
+   return tmp.generate( std::forward<Args>( args )... );
 }
 //*************************************************************************************************
 
@@ -1038,10 +623,10 @@ inline T rand( const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5&
 // elements, \f$ [0..1) \f$ for floating point elements).
 */
 template< typename T >  // Type of the random number
-inline void randomize( T& value )
+inline void randomize( T&& value )
 {
-   Rand<T> tmp;
-   tmp.randomize( value );
+   Rand< RemoveCVRef_t<T> > tmp;
+   tmp.randomize( std::forward<T>( value ) );
 }
 //*************************************************************************************************
 
@@ -1051,121 +636,31 @@ inline void randomize( T& value )
 // \ingroup random
 //
 // \param value The value to be randomized.
-// \param a1 First argument for the random number generation.
+// \param args The arguments for the random number generation.
 // \return void
 //
-// This randomize() function randomizes the given variable based on the given argument \a a1.
+// This randomize() function randomizes the given variable based on the given arguments \a args.
 */
-template< typename T     // Type of the random number
-        , typename A1 >  // Type of the first argument
-inline void randomize( T& value, const A1& a1 )
+template< typename T          // Type of the random number
+        , typename... Args >  // Types of the optional arguments
+inline void randomize( T&& value, Args&&... args )
 {
-   Rand<T> tmp;
-   tmp.randomize( value, a1 );
+   Rand< RemoveCVRef_t<T> > tmp;
+   tmp.randomize( std::forward<T>( value ), std::forward<Args>( args )... );
 }
 //*************************************************************************************************
 
 
 //*************************************************************************************************
-/*!\brief Randomization of a given variable.
+/*!\brief Returns the default random seed.
 // \ingroup random
 //
-// \param value The value to be randomized.
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \return void
-//
-// This randomize() function randomizes the given variable based on the given argument \a a1
-// and \a a2
+// \return The default random seed.
 */
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2 >  // Type of the second argument
-inline void randomize( T& value, const A1& a1, const A2& a2 )
+inline uint32_t defaultSeed()
 {
-   Rand<T> tmp;
-   tmp.randomize( value, a1, a2 );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Randomization of a given variable.
-// \ingroup random
-//
-// \param value The value to be randomized.
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \param a3 Third argument for the random number generation.
-// \return void
-//
-// This randomize() function randomizes the given variable based on the given argument \a a1,
-// \a a2, and \a a3.
-*/
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2    // Type of the second argument
-        , typename A3 >  // Type of the third argument
-inline void randomize( T& value, const A1& a1, const A2& a2, const A3& a3 )
-{
-   Rand<T> tmp;
-   tmp.randomize( value, a1, a2, a3 );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Randomization of a given variable.
-// \ingroup random
-//
-// \param value The value to be randomized.
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \param a3 Third argument for the random number generation.
-// \param a4 Fourth argument for the random number generation.
-// \return void
-//
-// This randomize() function randomizes the given variable based on the given argument \a a1,
-// \a a2, \a a3, and \a a4.
-*/
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2    // Type of the second argument
-        , typename A3    // Type of the third argument
-        , typename A4 >  // Type of the fourth argument
-inline void randomize( T& value, const A1& a1, const A2& a2, const A3& a3, const A4& a4 )
-{
-   Rand<T> tmp;
-   tmp.randomize( value, a1, a2, a3, a4 );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Randomization of a given variable.
-// \ingroup random
-//
-// \param value The value to be randomized.
-// \param a1 First argument for the random number generation.
-// \param a2 Second argument for the random number generation.
-// \param a3 Third argument for the random number generation.
-// \param a4 Fourth argument for the random number generation.
-// \param a5 Fifth argument for the random number generation.
-// \return void
-//
-// This randomize() function randomizes the given variable based on the given argument \a a1,
-// \a a2, \a a3, \a a4, and \a a5.
-*/
-template< typename T     // Type of the random number
-        , typename A1    // Type of the first argument
-        , typename A2    // Type of the second argument
-        , typename A3    // Type of the third argument
-        , typename A4    // Type of the fourth argument
-        , typename A5 >  // Type of the fifth argument
-inline void randomize( T& value, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5 )
-{
-   Rand<T> tmp;
-   tmp.randomize( value, a1, a2, a3, a4, a5 );
+   static const uint32_t seed = static_cast<uint32_t>( std::time(0) );
+   return seed;
 }
 //*************************************************************************************************
 
@@ -1176,6 +671,7 @@ inline void randomize( T& value, const A1& a1, const A2& a2, const A3& a3, const
 //
 // \return The current seed of the random number generator.
 */
+template< typename RNG >  // Type of the random number generator
 inline uint32_t getSeed()
 {
    return Random<RNG>::seed_;
@@ -1193,6 +689,7 @@ inline uint32_t getSeed()
 // This function can be used to set the seed for the random number generation in order to
 // create a reproducible series of random numbers.
 */
+template< typename RNG >  // Type of the random number generator
 inline void setSeed( uint32_t seed )
 {
    Random<RNG>::seed_ = seed;

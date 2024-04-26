@@ -3,7 +3,7 @@
 //  \file blaze/util/policies/DefaultDelete.h
 //  \brief Header file for the DefaultDelete policy classes.
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,7 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/checked_delete.hpp>
+#include <blaze/util/CheckedDelete.h>
 
 
 namespace blaze {
@@ -98,7 +98,7 @@ struct DefaultDelete
 template< typename Type >
 inline void DefaultDelete<Type>::operator()( Type* ptr ) const
 {
-   boost::checked_delete( ptr );
+   checkedDelete( ptr );
 }
 //*************************************************************************************************
 
@@ -148,7 +148,7 @@ struct DefaultDelete<Type[]>
 template< typename Type >
 inline void DefaultDelete<Type[]>::operator()( Type* ptr ) const
 {
-   boost::checked_array_delete( ptr );
+   checkedArrayDelete( ptr );
 }
 /*! \endcond */
 //*************************************************************************************************

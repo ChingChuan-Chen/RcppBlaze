@@ -1,25 +1,13 @@
-## Copyright (C) 2010 - 2013 Dirk Eddelbuettel, Romain Francois and Douglas Bates
-## Copyright (C) 2014        Dirk Eddelbuettel
-## Copyright (C) 2017        Chingchuan Chen
+## Copyright (C) 2010 - 2024 Dirk Eddelbuettel, Romain Francois and Douglas Bates
+## Copyright (C) 2017 - 2024 Ching-Chuan Chen
 ##
-## This file is based on RcppArmadillo.package.skeleton.R,
-## RcppArmadillo.package.skeleton.Rd, RcppEigen.package.skeleton.R
-## and RcppEigen.package.skeleton.Rd from RcppArmadillo and RcppEigen.
-##
+## This file is based on files from RcppArmadillo.
 ## This file is part of RcppBlaze.
 ##
 ## RcppBlaze is free software: you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 2 of the License, or
-## (at your option) any later version.
-##
-## RcppBlaze is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with RcppBlaze  If not, see <http://www.gnu.org/licenses/>.
+## under the terms of the 3-Clause BSD License. You should have received
+## a copy of 3-Clause BSD License along with RcppBlaze.
+## If not, see https://opensource.org/license/BSD-3-Clause.
 
 #' Create a skeleton for a new package that intends to use RcppBlaze
 #'
@@ -31,8 +19,8 @@
 #' In addition to \link[utils]{package.skeleton} :
 #'
 #' The \samp{DESCRIPTION} file gains a Depends line requesting that
-#' the package depends on Rcpp and RcppArmadillo and
-#' a LinkingTo line so that the package finds Rcpp and RcppArmadillo header files.
+#' the package depends on Rcpp and RcppBlaze and
+#' a LinkingTo line so that the package finds Rcpp and RcppBlaze header files.
 #'
 #' The \samp{NAMESPACE}, if any, gains a \code{useDynLib} directive.
 #'
@@ -50,7 +38,7 @@
 #' eventually by removed from the generated package.
 #'
 #' @param name,list,environment,path,force,code_files see \link[utils]{package.skeleton}.
-#' @param example_code If TRUE, example c++ code using RcppBlaze is added to the package.
+#' @param example_code If \code{TRUE}, example c++ code using \strong{RcppBlaze} is added to the package.
 #' @return Nothing, used for its side effects.
 #' @references
 #' Read the \emph{Writing R Extensions} manual for more details.
@@ -61,17 +49,19 @@
 #' @seealso \link[utils]{package.skeleton}
 #' @examples
 #' \dontrun{
-#' RcppBlaze.package.skeleton( "foobar" )
+#' RcppBlaze.package.skeleton("foobar")
 #' }
 #' @importFrom utils package.skeleton packageDescription
 #' @export
-RcppBlaze.package.skeleton <- function(name = "anRpackage",
-                                       list = character(),
-                                       environment = .GlobalEnv,
-                                       path = ".",
-                                       force = FALSE,
-                                       code_files = character(),
-                                       example_code = TRUE) {
+RcppBlaze.package.skeleton <- function(
+    name = "anRpackage",
+    list = character(),
+    environment = .GlobalEnv,
+    path = ".",
+    force = FALSE,
+    code_files = character(),
+    example_code = TRUE
+) {
 
   env <- parent.frame(1)
 
@@ -90,7 +80,7 @@ RcppBlaze.package.skeleton <- function(name = "anRpackage",
   ## first let the traditional version do its business
   call <- match.call()
   call[[1]] <- skelFunUsed
-  if (! haveKitten) {                 # in the package.skeleton() case
+  if (!haveKitten) {                 # in the package.skeleton() case
     if ("example_code" %in% names(call)) {
       call[["example_code"]] <- NULL    # remove the example_code argument
     }
@@ -99,11 +89,13 @@ RcppBlaze.package.skeleton <- function(name = "anRpackage",
     }
   }
 
-  tryCatch(eval(call, envir = env),
-           error = function(e) {
-             cat(paste(e, "\n")) # print error
-             stop(paste("error while calling `", skelFunName, "`", sep=""))
-           })
+  tryCatch(
+    eval(call, envir = env),
+    error = function(e) {
+      cat(paste(e, "\n")) # print error
+      stop(paste("error while calling `", skelFunName, "`", sep=""))
+    }
+  )
 
   message("\nAdding RcppBlaze settings")
 
@@ -113,26 +105,31 @@ RcppBlaze.package.skeleton <- function(name = "anRpackage",
   ## Add Rcpp to the DESCRIPTION
   DESCRIPTION <- file.path(root, "DESCRIPTION")
   if (file.exists(DESCRIPTION)) {
-    x <- cbind(read.dcf(DESCRIPTION),
-               "Imports" = sprintf("Rcpp (>= %s), BH (>= %s), RcppBlaze (>= %s)",
-                                   packageDescription("Rcpp")[["Version"]],
-                                   packageDescription("BH")[["Version"]],
-                                   packageDescription("RcppBlaze")[["Version"]]),
-               "LinkingTo" = "Rcpp, BH, RcppBlaze")
+    x <- cbind(
+      read.dcf(DESCRIPTION),
+      "Imports" = sprintf(
+        "Rcpp (>= %s), RcppBlaze (>= %s)",
+        packageDescription("Rcpp")[["Version"]],
+        packageDescription("BH")[["Version"]],
+        packageDescription("RcppBlaze")[["Version"]]
+      ),
+      "LinkingTo" = "Rcpp, RcppBlaze"
+    )
     write.dcf(x, file = DESCRIPTION)
-    message(" >> added Imports: Rcpp, BH, RcppBlaze")
-    message(" >> added LinkingTo: Rcpp, BH, RcppBlaze")
+    message(" >> added Imports: Rcpp, RcppBlaze")
+    message(" >> added LinkingTo: Rcpp, RcppBlaze")
   }
 
   ## add a useDynLib to NAMESPACE,
   NAMESPACE <- file.path(root, "NAMESPACE")
   lines <- readLines(NAMESPACE)
-  if (! grepl("useDynLib", lines)) {
-    lines <- c(sprintf("useDynLib(%s)", name),
-               "import(BH)",
-               "import(RcppBlaze)",
-               "importFrom(Rcpp, evalCpp)",        ## ensures Rcpp instantiation
-               lines)
+  if (!grepl("useDynLib", lines)) {
+    lines <- c(
+      sprintf("useDynLib(%s)", name),
+      "import(RcppBlaze)",
+      "importFrom(Rcpp, evalCpp)",        ## ensures Rcpp instantiation
+      lines
+    )
     writeLines(lines, con = NAMESPACE)
     message(" >> added useDynLib and importFrom directives to NAMESPACE")
   }

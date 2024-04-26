@@ -3,7 +3,7 @@
 //  \file blaze/util/constraints/Vectorizable.h
 //  \brief Constraint on the data type
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,6 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/constraints/ConstraintTest.h>
-#include <blaze/util/Suffix.h>
 #include <blaze/util/typetraits/IsVectorizable.h>
 
 
@@ -54,22 +52,6 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_BE_VECTORIZABLE_TYPE_FAILED;
-template<> struct CONSTRAINT_MUST_BE_VECTORIZABLE_TYPE_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup constraints
 //
@@ -77,10 +59,7 @@ template<> struct CONSTRAINT_MUST_BE_VECTORIZABLE_TYPE_FAILED<true> { enum { val
 // is created.
 */
 #define BLAZE_CONSTRAINT_MUST_BE_VECTORIZABLE_TYPE(T) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_BE_VECTORIZABLE_TYPE_FAILED< blaze::IsVectorizable<T>::value >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_BE_VECTORIZABLE_TYPE_TYPEDEF, __LINE__ )
+   static_assert( blaze::IsVectorizable_v<T>, "Non-vectorizable type detected" )
 //*************************************************************************************************
 
 
@@ -93,22 +72,6 @@ template<> struct CONSTRAINT_MUST_BE_VECTORIZABLE_TYPE_FAILED<true> { enum { val
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_NOT_BE_VECTORIZABLE_TYPE_FAILED;
-template<> struct CONSTRAINT_MUST_NOT_BE_VECTORIZABLE_TYPE_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup constraints
 //
@@ -116,10 +79,7 @@ template<> struct CONSTRAINT_MUST_NOT_BE_VECTORIZABLE_TYPE_FAILED<true> { enum {
 // is created.
 */
 #define BLAZE_CONSTRAINT_MUST_NOT_BE_VECTORIZABLE_TYPE(T) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_NOT_BE_VECTORIZABLE_TYPE_FAILED< !blaze::IsVectorizable<T>::value >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_NOT_BE_VECTORIZABLE_TYPE_TYPEDEF, __LINE__ )
+   static_assert( !blaze::IsVectorizable_v<T>, "Vectorizable type detected" )
 //*************************************************************************************************
 
 } // namespace blaze

@@ -1,9 +1,9 @@
 //=================================================================================================
 /*!
 //  \file blaze/system/Alignment.h
-//  \brief System specific memory alignment definitions
+//  \brief Header file for the default alignment for all vectors and matrices of the Blaze library
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -36,33 +36,45 @@
 #define _BLAZE_SYSTEM_ALIGNMENT_H_
 
 
+//*************************************************************************************************
+// Includes
+//*************************************************************************************************
+
+#include <blaze/config/Alignment.h>
+#include <blaze/math/AlignmentFlag.h>
+
+
+namespace blaze {
+
 //=================================================================================================
 //
-//  ALIGNMENT MACRO
+//  ALIGNMENT FLAG
 //
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\def BLAZE_ALIGN(n)
-// \brief Platform dependent macro for the alignment of memory.
+/*!\brief The default alignment for all vectors and matrices of the Blaze library.
 // \ingroup system
+//
+// This value specifies the default alignment for all vectors and matrices of the Blaze library.
+// In case no explicit alignment is specified with the according vector type, this setting
+// is used.
+
+   \code
+   // Explicit specification of the alignment => the vector element are aligned
+   StaticVector<double,3UL,columnVector,aligned> a;
+
+   // No explicit specification of the alignment => use of the default alignment
+   StaticVector<double,3UL> b;
+   \endcode
+
+// The default alignment is defined via the BLAZE_DEFAULT_ALIGNMENT_FLAG compilation switch
+// (see the \ref alignment section). Valid settings for this value are blaze::aligned and
+// blaze::unaligned.
 */
-
-// GNU, Intel, PGI, and IBM C++ compiler
-#if (defined __GNUC__) || (defined __PGI) || (defined __IBMCPP__)
-#  define BLAZE_ALIGN( n ) __attribute__((aligned(n)))
-
-// Microsoft Visual C++ compiler
-#elif (defined _MSC_VER)
-#  define BLAZE_ALIGN( n ) __declspec(align(n))
-
-// Default case for other compilers
-#else
-#  error Compiler-specific alignment undefined!
-#endif
-
-/*! \endcond */
+constexpr AlignmentFlag defaultAlignmentFlag = BLAZE_DEFAULT_ALIGNMENT_FLAG;
 //*************************************************************************************************
+
+} // namespace blaze
 
 #endif

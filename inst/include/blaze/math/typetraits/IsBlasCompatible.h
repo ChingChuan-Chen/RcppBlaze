@@ -1,9 +1,9 @@
 //=================================================================================================
 /*!
-//  \file blaze/math/typetraits/IsBlasCompatible.h
-//  \brief Header file for the IsBlasCompatible type trait
+//  \file blaze/math/typetraits/IsBLASCompatible.h
+//  \brief Header file for the IsBLASCompatible type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,9 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 #include <blaze/util/typetraits/IsComplexDouble.h>
 #include <blaze/util/typetraits/IsComplexFloat.h>
 #include <blaze/util/typetraits/IsDouble.h>
@@ -58,54 +56,47 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsBlasCompatible type trait.
-// \ingroup math_type_traits
-*/
-template< typename T >
-struct IsBlasCompatibleHelper
-{
-   //**********************************************************************************************
-   enum { value = ( IsFloat<T>::value  || IsComplexFloat<T>::value ||
-                    IsDouble<T>::value || IsComplexDouble<T>::value ) };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time check for data types.
 // \ingroup math_type_traits
 //
 // This type trait tests whether or not the given template parameter is a data type compatible
 // to the BLAS standard. The BLAS standard supports \c float, \c double, \c complex<float> and
-// \c complex<double> values. If the type is BLAS compatible, the \a value member enumeration
-// is set to 1, the nested type definition \a Type is \a TrueType, and the class derives from
-// \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType, and the class derives
-// from \a FalseType.
+// \c complex<double> values. If the type is BLAS compatible, the \a value member constant is
+// set to \a true, the nested type definition \a Type is \a TrueType, and the class derives
+// from \a TrueType. Otherwise \a value is set to \a false, \a Type is \a FalseType, and the
+// class derives from \a FalseType.
 
    \code
-   blaze::IsBlasCompatible< float >::value         // Evaluates to 1
-   blaze::IsBlasCompatible< double >::Type         // Results in TrueType
-   blaze::IsBlasCompatible< complex<float> >       // Is derived from TrueType
-   blaze::IsBlasCompatible< int >::value           // Evaluates to 0
-   blaze::IsBlasCompatible< unsigned long >::Type  // Results in FalseType
-   blaze::IsBlasCompatible< long double >          // Is derived from FalseType
+   blaze::IsBLASCompatible< float >::value         // Evaluates to 1
+   blaze::IsBLASCompatible< double >::Type         // Results in TrueType
+   blaze::IsBLASCompatible< complex<float> >       // Is derived from TrueType
+   blaze::IsBLASCompatible< int >::value           // Evaluates to 0
+   blaze::IsBLASCompatible< unsigned long >::Type  // Results in FalseType
+   blaze::IsBLASCompatible< long double >          // Is derived from FalseType
    \endcode
 */
 template< typename T >
-struct IsBlasCompatible : public IsBlasCompatibleHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsBlasCompatibleHelper<T>::value };
-   typedef typename IsBlasCompatibleHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsBLASCompatible
+   : public BoolConstant< IsFloat_v<T> || IsDouble_v<T> || IsComplexFloat_v<T> || IsComplexDouble_v<T> >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsBLASCompatible type trait.
+// \ingroup math_type_traits
+//
+// The IsBLASCompatible_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsBLASCompatible class template. For instance, given the type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsBLASCompatible<T>::value;
+   constexpr bool value2 = blaze::IsBLASCompatible_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsBLASCompatible_v = IsBLASCompatible<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

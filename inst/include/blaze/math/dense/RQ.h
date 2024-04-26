@@ -3,7 +3,7 @@
 //  \file blaze/math/dense/RQ.h
 //  \brief Header file for the dense matrix in-place RQ decomposition
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,30 +40,25 @@
 // Includes
 //*************************************************************************************************
 
+#include <memory>
+#include <blaze/math/Aliases.h>
 #include <blaze/math/constraints/Adaptor.h>
-#include <blaze/math/constraints/BlasCompatible.h>
+#include <blaze/math/constraints/BLASCompatible.h>
 #include <blaze/math/constraints/Hermitian.h>
 #include <blaze/math/constraints/Lower.h>
-#include <blaze/math/constraints/StorageOrder.h>
 #include <blaze/math/constraints/StrictlyTriangular.h>
 #include <blaze/math/constraints/Symmetric.h>
 #include <blaze/math/constraints/UniTriangular.h>
-#include <blaze/math/constraints/Upper.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/DenseMatrix.h>
-#include <blaze/math/Functions.h>
 #include <blaze/math/lapack/gerqf.h>
 #include <blaze/math/lapack/orgrq.h>
 #include <blaze/math/lapack/ungrq.h>
-#include <blaze/math/traits/DerestrictTrait.h>
 #include <blaze/math/typetraits/IsResizable.h>
-#include <blaze/math/typetraits/IsRowMajorMatrix.h>
 #include <blaze/math/typetraits/IsSquare.h>
-#include <blaze/math/typetraits/RemoveAdaptor.h>
-#include <blaze/math/views/DenseSubmatrix.h>
 #include <blaze/math/views/Submatrix.h>
-#include <blaze/util/constraints/SameType.h>
-#include <blaze/util/Exception.h>
-#include <blaze/util/mpl/If.h>
+#include <blaze/util/algorithms/Min.h>
+#include <blaze/util/EnableIf.h>
 
 
 namespace blaze {
@@ -96,11 +91,9 @@ void rq( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& R, DenseMatrix<MT3
 // reconstruction of the \c Q matrix from the RQ decomposition.
 */
 template< typename MT1 >  // Type of matrix A
-inline typename EnableIf< IsBuiltin< typename MT1::ElementType > >::Type
-   rq_backend( MT1& A, const typename MT1::ElementType* tau )
+inline auto rq_backend( MT1& A, const ElementType_t<MT1>* tau )
+   -> EnableIf_t<IsBuiltin_v< ElementType_t<MT1> > >
 {
-   BLAZE_CONSTRAINT_MUST_BE_COLUMN_MAJOR_MATRIX_TYPE( MT1 );
-
    orgrq( A, tau );
 }
 /*! \endcond */
@@ -120,11 +113,9 @@ inline typename EnableIf< IsBuiltin< typename MT1::ElementType > >::Type
 // reconstruction of the \c Q matrix from the RQ decomposition.
 */
 template< typename MT1 >  // Type of matrix A
-inline typename EnableIf< IsComplex< typename MT1::ElementType > >::Type
-   rq_backend( MT1& A, const typename MT1::ElementType* tau )
+inline auto rq_backend( MT1& A, const ElementType_t<MT1>* tau )
+   -> EnableIf_t<IsComplex_v< ElementType_t<MT1> > >
 {
-   BLAZE_CONSTRAINT_MUST_BE_COLUMN_MAJOR_MATRIX_TYPE( MT1 );
-
    ungrq( A, tau );
 }
 /*! \endcond */
@@ -177,7 +168,7 @@ inline typename EnableIf< IsComplex< typename MT1::ElementType > >::Type
 // \c complex<double> element type. The attempt to call the function with matrices of any other
 // element type results in a compile time error!
 //
-// \note This function can only be used if the fitting LAPACK library is available and linked to
+// \note This function can only be used if a fitting LAPACK library is available and linked to
 // the executable. Otherwise a call to this function will result in a linker error.
 */
 template< typename MT1  // Type of matrix A
@@ -189,65 +180,65 @@ template< typename MT1  // Type of matrix A
 void rq( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& R, DenseMatrix<MT3,SO3>& Q )
 {
    BLAZE_CONSTRAINT_MUST_NOT_BE_STRICTLY_TRIANGULAR_MATRIX_TYPE( MT1 );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT1::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT1> );
 
    BLAZE_CONSTRAINT_MUST_NOT_BE_SYMMETRIC_MATRIX_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_HERMITIAN_MATRIX_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_UNITRIANGULAR_MATRIX_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_STRICTLY_TRIANGULAR_MATRIX_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_LOWER_MATRIX_TYPE( MT2 );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT2::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT2> );
 
    BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT3 );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT3::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT3> );
 
-   typedef typename RemoveAdaptor<MT1>::Type  UMT1;
-   typedef typename If< IsRowMajorMatrix<UMT1>, typename UMT1::OppositeType, UMT1 >::Type  Tmp;
-   typedef typename MT1::ElementType  ET1;
+   using ET1 = ElementType_t<MT1>;
 
-   BLAZE_CONSTRAINT_MUST_BE_COLUMN_MAJOR_MATRIX_TYPE( Tmp );
-   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( ET1, typename Tmp::ElementType );
-
-   const size_t m( (~A).rows() );
-   const size_t n( (~A).columns() );
+   const size_t m( (*A).rows() );
+   const size_t n( (*A).columns() );
    const size_t mindim( min( m, n ) );
 
-   if( ( !IsResizable<MT2>::value && ( (~R).rows() != m || (~R).columns() != mindim ) ) ||
-       ( !IsResizable<MT3>::value && ( (~Q).rows() != mindim || (~Q).columns() != n ) ) ) {
+   if( ( !IsResizable_v<MT2> && ( (*R).rows() != m || (*R).columns() != mindim ) ) ||
+       ( !IsResizable_v<MT3> && ( (*Q).rows() != mindim || (*Q).columns() != n ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Dimensions of fixed size matrix do not match" );
    }
 
-   if( IsSquare<MT2>::value && m != mindim ) {
+   if( IsSquare_v<MT2> && m != mindim ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Square matrix cannot be resized to m-by-min(m,n)" );
    }
 
-   Tmp tmp( ~A );
-   UniqueArray<ET1> tau( new ET1[mindim] );
+   const std::unique_ptr<ET1[]> tau( new ET1[mindim] );
+   decltype(auto) r( derestrict( *R ) );
 
-   gerqf( tmp, tau.get() );
+   if( m < n )
+   {
+      (*Q) = A;
+      gerqf( *Q, tau.get() );
 
-   typename DerestrictTrait<MT2>::Type r( derestrict( ~R ) );
-   resize( ~R, m, mindim );
-   reset( r );
+      resize( *R, m, m, false );
+      reset( r );
 
-   const size_t ioffset( ( m > n )?( m-n ):( 0UL ) );
-   const size_t joffset( ( m < n )?( n-m ):( 0UL ) );
+      for( size_t i=0UL; i<m; ++i ) {
+         for( size_t j=i; j<m; ++j ) {
+            r(i,j) = (*Q)(i,j+n-m);
+         }
+      }
 
-   for( size_t i=0UL; i<ioffset; ++i ) {
-      for( size_t j=0UL; j<mindim; ++j ) {
-         r(i,j) = tmp(i,j);
+      rq_backend( *Q, tau.get() );
+   }
+   else
+   {
+      r = A;
+      gerqf( r, tau.get() );
+      (*Q) = submatrix( r, m-n, 0UL, n, n );
+      rq_backend( *Q, tau.get() );
+
+      for( size_t i=m-n; i<m; ++i ) {
+         for( size_t j=0UL; j<i+n-m; ++j ) {
+            reset( r(i,j) );
+         }
       }
    }
-
-   for( size_t i=ioffset; i<m; ++i ) {
-      for( size_t j=i-ioffset; j<mindim; ++j ) {
-         r(i,j) = tmp(i,j+joffset);
-      }
-   }
-
-   rq_backend( tmp, tau.get() );
-
-   (~Q) = submatrix( tmp, ioffset, 0UL, min( m, n ), n );
 }
 //*************************************************************************************************
 

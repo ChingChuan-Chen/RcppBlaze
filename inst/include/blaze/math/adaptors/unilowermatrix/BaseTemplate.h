@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/unilowermatrix/BaseTemplate.h
 //  \brief Header file for the implementation of the base template of the UniLowerMatrix
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/IsColumnMajorMatrix.h>
 #include <blaze/math/typetraits/IsDenseMatrix.h>
+#include <blaze/math/typetraits/StorageOrder.h>
 
 
 namespace blaze {
@@ -68,8 +68,12 @@ namespace blaze {
 // can be specified via the first template parameter:
 
    \code
+   namespace blaze {
+
    template< typename MT, bool SO, bool DF >
    class UniLowerMatrix;
+
+   } // namespace blaze
    \endcode
 
 //  - MT: specifies the type of the matrix to be adapted. UniLowerMatrix can be used with any
@@ -205,7 +209,7 @@ namespace blaze {
    using blaze::UniLowerMatrix;
    using blaze::columnMajor;
 
-   typedef UniLowerMatrix< CompressedMatrix<double,columnMajor> >  CompressedUniLower;
+   using CompressedUniLower = UniLowerMatrix< CompressedMatrix<double,columnMajor> >;
 
    // Default constructed, row-major 3x3 unilower compressed matrix
    CompressedUniLower A( 3 );
@@ -261,7 +265,7 @@ namespace blaze {
    using blaze::unpadded;
    using blaze::rowMajor;
 
-   typedef UniLowerMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >  CustomUniLower;
+   using CustomUniLower = UniLowerMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >;
 
    // Creating a 3x3 unilower custom matrix from a properly initialized array
    double array[9] = { 1.0, 0.0, 0.0,
@@ -464,15 +468,19 @@ namespace blaze {
    DynamicMatrix<double,rowMajor> G( 3, 3 );     // Initialized as strictly lower matrix
    CompressedMatrix<double,rowMajor> H( 3, 3 );  // Initialized as strictly lower matrix
 
-   E = A + B;   // Matrix addition and assignment to a row-major unilower matrix
-   F = A - C;   // Matrix subtraction and assignment to a column-major unilower matrix
-   F = A * D;   // Matrix multiplication between a dense and a sparse matrix
+   E = A + B;   // Matrix addition and assignment to a row-major unilower matrix (includes runtime check)
+   F = A - C;   // Matrix subtraction and assignment to a column-major unilower matrix (only compile time check)
+   F = A * D;   // Matrix multiplication between a dense and a sparse matrix (includes runtime check)
 
    E += G;      // Addition assignment (note that G is a strictly lower matrix)
    F -= H;      // Subtraction assignment (note that H is a strictly lower matrix)
-   F *= A * D;  // Multiplication assignment
+   F *= A * D;  // Multiplication assignment (includes runtime check)
    \endcode
 
+// Note that it is possible to assign any kind of matrix to an unilower matrix. In case the matrix
+// to be assigned is not unilower at compile time, a runtime check is performed.
+//
+//
 // \n \section unilowermatrix_performance Performance Considerations
 //
 // The \b Blaze library tries to exploit the properties of lower (uni)-triangular matrices whenever
@@ -567,9 +575,9 @@ namespace blaze {
    C = A * B;  // Results in a lower matrix; no runtime overhead
    \endcode
 */
-template< typename MT                               // Type of the adapted matrix
-        , bool SO = IsColumnMajorMatrix<MT>::value  // Storage order of the adapted matrix
-        , bool DF = IsDenseMatrix<MT>::value >      // Density flag
+template< typename MT                      // Type of the adapted matrix
+        , bool SO = StorageOrder_v<MT>     // Storage order of the adapted matrix
+        , bool DF = IsDenseMatrix_v<MT> >  // Density flag
 class UniLowerMatrix
 {};
 //*************************************************************************************************

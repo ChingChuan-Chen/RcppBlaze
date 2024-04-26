@@ -3,7 +3,7 @@
 //  \file blaze/util/typetraits/MakeUnsigned.h
 //  \brief Header file for the MakeUnsigned type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,7 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/make_unsigned.hpp>
+#include <type_traits>
 
 
 namespace blaze {
@@ -55,13 +55,13 @@ namespace blaze {
 /*!\brief Compile time type conversion into an unsigned integral type.
 // \ingroup type_traits
 //
-// This type trait provides the feature to convert the given integral or enumeration type \a T to
+// This type trait provides the feature to convert the given integral or constant type \a T to
 // the corresponding unsigned integral data type with the same size and with the same cv-qualifiers.
 // Note that in case \a T is bool or a non-integral data type, a compilation error is created.
 
    \code
    enum MyEnum { ... };
-   
+
    blaze::MakeUnsigned<int>::Type                  // Results in 'unsigned int'
    blaze::MakeUnsigned<const unsigned int>::Type   // Results in 'const unsigned int'
    blaze::MakeUnsigned<const unsigned long>::Type  // Results in 'const unsigned long'
@@ -75,10 +75,28 @@ struct MakeUnsigned
  public:
    //**********************************************************************************************
    /*! \cond BLAZE_INTERNAL */
-   typedef typename boost::make_unsigned<T>::type  Type;
+   using Type = typename std::make_unsigned<T>::type;
    /*! \endcond */
    //**********************************************************************************************
 };
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary alias declaration for the MakeUnsigned type trait.
+// \ingroup type_traits
+//
+// The MakeUnsigned_t alias declaration provides a convenient shortcut to access the nested \a Type
+// of the MakeUnsigned class template. For instance, given the type \a T the following two type
+// definitions are identical:
+
+   \code
+   using Type1 = typename blaze::MakeUnsigned<T>::Type;
+   using Type2 = blaze::MakeUnsigned_t<T>;
+   \endcode
+*/
+template< typename T >
+using MakeUnsigned_t = typename MakeUnsigned<T>::Type;
 //*************************************************************************************************
 
 } // namespace blaze

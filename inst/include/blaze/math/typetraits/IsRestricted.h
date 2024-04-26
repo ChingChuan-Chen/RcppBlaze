@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsRestricted.h
 //  \brief Header file for the IsRestricted type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/FalseType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -59,16 +58,16 @@ namespace blaze {
 // This type trait tests whether the given data type has a restricted data access. Examples are
 // the LowerMatrix and UpperMatrix adaptors that don't allow write access to the elements in the
 // upper or lower part of the matrix, respectively. In case the data type has a restricted data
-// access, the \a value member enumeration is set to 1, the nested type definition \a Type is
-// \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to 0, \a Type
-// is \a FalseType, and the class derives from \a FalseType. Examples:
+// access, the \a value member constant is set to \a true, the nested type definition \a Type
+// is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to \a false,
+// \a Type is \a FalseType, and the class derives from \a FalseType. Examples:
 
    \code
-   typedef blaze::StaticVector<int,3UL>  VectorType;
-   typedef blaze::DynamicMatrix<double>  MatrixType;
+   using VectorType = blaze::StaticVector<int,3UL>;
+   using MatrixType = blaze::DynamicMatrix<double>;
 
-   typedef blaze::LowerMatrix< blaze::DynamicMatrix<double> >  Lower;
-   typedef blaze::LowerMatrix< blaze::CompressedMatrix<int> >  Upper;
+   using Lower = blaze::LowerMatrix< blaze::DynamicMatrix<double> >;
+   using Upper = blaze::LowerMatrix< blaze::CompressedMatrix<int> >;
 
    blaze::IsRestricted< Lower >::value            // Evaluates to 1
    blaze::IsRestricted< const Upper >::Type       // Results in TrueType
@@ -79,16 +78,9 @@ namespace blaze {
    \endcode
 */
 template< typename T >
-struct IsRestricted : public FalseType
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = 0 };
-   typedef FalseType  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsRestricted
+   : public FalseType
+{};
 //*************************************************************************************************
 
 
@@ -98,14 +90,9 @@ struct IsRestricted : public FalseType
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsRestricted< const T > : public IsRestricted<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsRestricted<T>::value };
-   typedef typename IsRestricted<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsRestricted< const T >
+   : public IsRestricted<T>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -116,14 +103,9 @@ struct IsRestricted< const T > : public IsRestricted<T>::Type
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsRestricted< volatile T > : public IsRestricted<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsRestricted<T>::value };
-   typedef typename IsRestricted<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsRestricted< volatile T >
+   : public IsRestricted<T>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -134,15 +116,28 @@ struct IsRestricted< volatile T > : public IsRestricted<T>::Type
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsRestricted< const volatile T > : public IsRestricted<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsRestricted<T>::value };
-   typedef typename IsRestricted<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsRestricted< const volatile T >
+   : public IsRestricted<T>
+{};
 /*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsRestricted type trait.
+// \ingroup math_type_traits
+//
+// The IsRestricted_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsRestricted class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsRestricted<T>::value;
+   constexpr bool value2 = blaze::IsRestricted_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsRestricted_v = IsRestricted<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/unilowermatrix/Sparse.h
 //  \brief UniLowerMatrix specialization for sparse matrices
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,48 +40,51 @@
 // Includes
 //*************************************************************************************************
 
-#include <algorithm>
+#include <iterator>
+#include <utility>
 #include <vector>
 #include <blaze/math/adaptors/Forward.h>
 #include <blaze/math/adaptors/unilowermatrix/BaseTemplate.h>
 #include <blaze/math/adaptors/unilowermatrix/UniLowerElement.h>
 #include <blaze/math/adaptors/unilowermatrix/UniLowerProxy.h>
 #include <blaze/math/adaptors/unilowermatrix/UniLowerValue.h>
-#include <blaze/math/constraints/Expression.h>
+#include <blaze/math/Aliases.h>
+#include <blaze/math/constraints/Computation.h>
 #include <blaze/math/constraints/Hermitian.h>
 #include <blaze/math/constraints/Lower.h>
 #include <blaze/math/constraints/Resizable.h>
+#include <blaze/math/constraints/Scalar.h>
 #include <blaze/math/constraints/SparseMatrix.h>
+#include <blaze/math/constraints/Static.h>
 #include <blaze/math/constraints/StorageOrder.h>
 #include <blaze/math/constraints/Symmetric.h>
+#include <blaze/math/constraints/Transformation.h>
+#include <blaze/math/constraints/Uniform.h>
 #include <blaze/math/constraints/Upper.h>
+#include <blaze/math/constraints/View.h>
+#include <blaze/math/dense/InitializerMatrix.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/SparseMatrix.h>
-#include <blaze/math/Functions.h>
-#include <blaze/math/shims/Clear.h>
+#include <blaze/math/InitializerList.h>
 #include <blaze/math/shims/IsDefault.h>
-#include <blaze/math/shims/Move.h>
+#include <blaze/math/shims/IsOne.h>
 #include <blaze/math/sparse/SparseMatrix.h>
-#include <blaze/math/typetraits/Columns.h>
 #include <blaze/math/typetraits/IsComputation.h>
-#include <blaze/math/typetraits/IsResizable.h>
 #include <blaze/math/typetraits/IsSquare.h>
 #include <blaze/math/typetraits/IsStrictlyLower.h>
 #include <blaze/math/typetraits/IsStrictlyTriangular.h>
 #include <blaze/math/typetraits/IsUniLower.h>
 #include <blaze/math/typetraits/IsUniTriangular.h>
 #include <blaze/math/typetraits/IsUpper.h>
-#include <blaze/math/typetraits/Rows.h>
+#include <blaze/math/typetraits/Size.h>
+#include <blaze/util/algorithms/Max.h>
 #include <blaze/util/Assert.h>
 #include <blaze/util/constraints/Const.h>
-#include <blaze/util/constraints/Numeric.h>
 #include <blaze/util/constraints/Pointer.h>
 #include <blaze/util/constraints/Reference.h>
 #include <blaze/util/constraints/Volatile.h>
-#include <blaze/util/DisableIf.h>
 #include <blaze/util/EnableIf.h>
-#include <blaze/util/Exception.h>
 #include <blaze/util/StaticAssert.h>
-#include <blaze/util/typetraits/IsNumeric.h>
 #include <blaze/util/Types.h>
 
 
@@ -108,32 +111,45 @@ class UniLowerMatrix<MT,SO,false>
 {
  private:
    //**Type definitions****************************************************************************
-   typedef typename MT::OppositeType   OT;  //!< Opposite type of the sparse matrix.
-   typedef typename MT::TransposeType  TT;  //!< Transpose type of the sparse matrix.
-   typedef typename MT::ElementType    ET;  //!< Element type of the sparse matrix.
+   using OT = OppositeType_t<MT>;   //!< Opposite type of the sparse matrix.
+   using TT = TransposeType_t<MT>;  //!< Transpose type of the sparse matrix.
+   using ET = ElementType_t<MT>;    //!< Element type of the sparse matrix.
    //**********************************************************************************************
 
  public:
    //**Type definitions****************************************************************************
-   typedef UniLowerMatrix<MT,SO,false>  This;            //!< Type of this UniLowerMatrix instance.
-   typedef This                         ResultType;      //!< Result type for expression template evaluations.
-   typedef UniLowerMatrix<OT,!SO,false> OppositeType;    //!< Result type with opposite storage order for expression template evaluations.
-   typedef UniUpperMatrix<TT,!SO,false> TransposeType;   //!< Transpose type for expression template evaluations.
-   typedef ET                           ElementType;     //!< Type of the matrix elements.
-   typedef typename MT::ReturnType      ReturnType;      //!< Return type for expression template evaluations.
-   typedef const This&                  CompositeType;   //!< Data type for composite expression templates.
-   typedef UniLowerProxy<MT>            Reference;       //!< Reference to a non-constant matrix value.
-   typedef typename MT::ConstReference  ConstReference;  //!< Reference to a constant matrix value.
-   typedef typename MT::ConstIterator   ConstIterator;   //!< Iterator over constant elements.
+   using This           = UniLowerMatrix<MT,SO,false>;   //!< Type of this UniLowerMatrix instance.
+   using BaseType       = SparseMatrix<This,SO>;         //!< Base type of this UniLowerMatrix instance.
+   using ResultType     = This;                          //!< Result type for expression template evaluations.
+   using OppositeType   = UniLowerMatrix<OT,!SO,false>;  //!< Result type with opposite storage order for expression template evaluations.
+   using TransposeType  = UniUpperMatrix<TT,!SO,false>;  //!< Transpose type for expression template evaluations.
+   using ElementType    = ET;                            //!< Type of the matrix elements.
+   using TagType        = TagType_t<MT>;                //!< Tag type of this UniLowerMatrix instance.
+   using ReturnType     = ReturnType_t<MT>;              //!< Return type for expression template evaluations.
+   using CompositeType  = const This&;                   //!< Data type for composite expression templates.
+   using Reference      = UniLowerProxy<MT>;             //!< Reference to a non-constant matrix value.
+   using ConstReference = ConstReference_t<MT>;          //!< Reference to a constant matrix value.
+   using ConstIterator  = ConstIterator_t<MT>;           //!< Iterator over constant elements.
    //**********************************************************************************************
 
    //**Rebind struct definition********************************************************************
    /*!\brief Rebind mechanism to obtain a UniLowerMatrix with different data/element type.
    */
-   template< typename ET >  // Data type of the other matrix
+   template< typename NewType >  // Data type of the other matrix
    struct Rebind {
       //! The type of the other UniLowerMatrix.
-      typedef UniLowerMatrix< typename MT::template Rebind<ET>::Other >  Other;
+      using Other = UniLowerMatrix< typename MT::template Rebind<NewType>::Other >;
+   };
+   //**********************************************************************************************
+
+   //**Resize struct definition********************************************************************
+   /*!\brief Resize mechanism to obtain a UniLowerMatrix with different fixed dimensions.
+   */
+   template< size_t NewM    // Number of rows of the other matrix
+           , size_t NewN >  // Number of columns of the other matrix
+   struct Resize {
+      //! The type of the other UniLowerMatrix.
+      using Other = UniLowerMatrix< typename MT::template Resize<NewM,NewN>::Other >;
    };
    //**********************************************************************************************
 
@@ -144,20 +160,20 @@ class UniLowerMatrix<MT,SO,false>
    {
     public:
       //**Type definitions*************************************************************************
-      typedef typename MT::Iterator  IteratorType;  //!< Type of the underlying sparse matrix iterators.
+      using IteratorType = Iterator_t<MT>;  //!< Type of the underlying sparse matrix iterators.
 
-      typedef std::forward_iterator_tag  IteratorCategory;  //!< The iterator category.
-      typedef UniLowerElement<MT>        ValueType;         //!< Type of the underlying elements.
-      typedef ValueType                  PointerType;       //!< Pointer return type.
-      typedef ValueType                  ReferenceType;     //!< Reference return type.
-      typedef ptrdiff_t                  DifferenceType;    //!< Difference between two iterators.
+      using IteratorCategory = std::forward_iterator_tag;  //!< The iterator category.
+      using ValueType        = UniLowerElement<MT>;        //!< Type of the underlying elements.
+      using PointerType      = ValueType;                  //!< Pointer return type.
+      using ReferenceType    = ValueType;                  //!< Reference return type.
+      using DifferenceType   = ptrdiff_t;                  //!< Difference between two iterators.
 
       // STL iterator requirements
-      typedef IteratorCategory  iterator_category;  //!< The iterator category.
-      typedef ValueType         value_type;         //!< Type of the underlying elements.
-      typedef PointerType       pointer;            //!< Pointer return type.
-      typedef ReferenceType     reference;          //!< Reference return type.
-      typedef DifferenceType    difference_type;    //!< Difference between two iterators.
+      using iterator_category = IteratorCategory;  //!< The iterator category.
+      using value_type        = ValueType;         //!< Type of the underlying elements.
+      using pointer           = PointerType;       //!< Pointer return type.
+      using reference         = ReferenceType;     //!< Reference return type.
+      using difference_type   = DifferenceType;    //!< Difference between two iterators.
       //*******************************************************************************************
 
       //**Default constructor**********************************************************************
@@ -287,24 +303,31 @@ class UniLowerMatrix<MT,SO,false>
 
    //**Compilation flags***************************************************************************
    //! Compilation switch for the expression template assignment strategy.
-   enum { smpAssignable = 0 };
+   static constexpr bool smpAssignable = false;
    //**********************************************************************************************
 
    //**Constructors********************************************************************************
    /*!\name Constructors */
    //@{
-   explicit inline UniLowerMatrix();
+            inline UniLowerMatrix();
    explicit inline UniLowerMatrix( size_t n );
-   explicit inline UniLowerMatrix( size_t n, size_t nonzeros );
-   explicit inline UniLowerMatrix( size_t n, const std::vector<size_t>& nonzeros );
+            inline UniLowerMatrix( size_t n, size_t nonzeros );
+            inline UniLowerMatrix( size_t n, const std::vector<size_t>& nonzeros );
+            inline UniLowerMatrix( initializer_list< initializer_list<ElementType> > list );
 
-                                      inline UniLowerMatrix( const UniLowerMatrix& m );
-   template< typename MT2, bool SO2 > inline UniLowerMatrix( const Matrix<MT2,SO2>& m );
+   inline UniLowerMatrix( const UniLowerMatrix& m );
+   inline UniLowerMatrix( UniLowerMatrix&& m ) noexcept;
+
+   template< typename MT2, bool SO2 >
+   inline UniLowerMatrix( const Matrix<MT2,SO2>& m );
    //@}
    //**********************************************************************************************
 
    //**Destructor**********************************************************************************
-   // No explicitly declared destructor.
+   /*!\name Destructor */
+   //@{
+   ~UniLowerMatrix() = default;
+   //@}
    //**********************************************************************************************
 
    //**Data access functions***********************************************************************
@@ -326,63 +349,87 @@ class UniLowerMatrix<MT,SO,false>
    //**Assignment operators************************************************************************
    /*!\name Assignment operators */
    //@{
+   inline UniLowerMatrix& operator=( initializer_list< initializer_list<ElementType> > list );
+
    inline UniLowerMatrix& operator=( const UniLowerMatrix& rhs );
+   inline UniLowerMatrix& operator=( UniLowerMatrix&& rhs ) noexcept;
 
    template< typename MT2, bool SO2 >
-   inline typename DisableIf< IsComputation<MT2>, UniLowerMatrix& >::Type
-      operator=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator=( const Matrix<MT2,SO2>& rhs )
+      -> DisableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename EnableIf< IsComputation<MT2>, UniLowerMatrix& >::Type
-      operator=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator=( const Matrix<MT2,SO2>& rhs )
+      -> EnableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename DisableIf< IsComputation<MT2>, UniLowerMatrix& >::Type
-      operator+=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator+=( const Matrix<MT2,SO2>& rhs )
+      -> DisableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename EnableIf< IsComputation<MT2>, UniLowerMatrix& >::Type
-      operator+=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator+=( const Matrix<MT2,SO2>& rhs )
+      -> EnableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename DisableIf< IsComputation<MT2>, UniLowerMatrix& >::Type
-      operator-=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator-=( const Matrix<MT2,SO2>& rhs )
+      -> DisableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename EnableIf< IsComputation<MT2>, UniLowerMatrix& >::Type
-      operator-=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator-=( const Matrix<MT2,SO2>& rhs )
+      -> EnableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline UniLowerMatrix& operator*=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator%=( const Matrix<MT2,SO2>& rhs ) -> UniLowerMatrix&;
    //@}
    //**********************************************************************************************
 
    //**Utility functions***************************************************************************
    /*!\name Utility functions */
    //@{
-   inline size_t   rows() const;
-   inline size_t   columns() const;
-   inline size_t   capacity() const;
-   inline size_t   capacity( size_t i ) const;
-   inline size_t   nonZeros() const;
-   inline size_t   nonZeros( size_t i ) const;
-   inline void     reset();
-   inline void     reset( size_t i );
-   inline void     clear();
-   inline Iterator set( size_t i, size_t j, const ElementType& value );
-   inline Iterator insert( size_t i, size_t j, const ElementType& value );
+   inline size_t rows() const noexcept;
+   inline size_t columns() const noexcept;
+   inline size_t capacity() const noexcept;
+   inline size_t capacity( size_t i ) const noexcept;
+   inline size_t nonZeros() const;
+   inline size_t nonZeros( size_t i ) const;
+   inline void   reset();
+   inline void   reset( size_t i );
+   inline void   clear();
+   inline void   resize ( size_t n, bool preserve=true );
+   inline void   reserve( size_t nonzeros );
+   inline void   reserve( size_t i, size_t nonzeros );
+   inline void   trim();
+   inline void   trim( size_t i );
+   inline void   shrinkToFit();
+   inline void   swap( UniLowerMatrix& m ) noexcept;
+
+   static constexpr size_t maxNonZeros() noexcept;
+   static constexpr size_t maxNonZeros( size_t n ) noexcept;
+   //@}
+   //**********************************************************************************************
+
+   //**Insertion functions*************************************************************************
+   /*!\name Insertion functions */
+   //@{
+   inline Iterator set     ( size_t i, size_t j, const ElementType& value );
+   inline Iterator insert  ( size_t i, size_t j, const ElementType& value );
+   inline void     append  ( size_t i, size_t j, const ElementType& value, bool check=false );
+   inline void     finalize( size_t i );
+   //@}
+   //**********************************************************************************************
+
+   //**Erase functions*****************************************************************************
+   /*!\name Erase functions */
+   //@{
    inline void     erase( size_t i, size_t j );
    inline Iterator erase( size_t i, Iterator pos );
    inline Iterator erase( size_t i, Iterator first, Iterator last );
-   inline void     resize ( size_t n, bool preserve=true );
-   inline void     reserve( size_t nonzeros );
-   inline void     reserve( size_t i, size_t nonzeros );
-   inline void     trim();
-   inline void     trim( size_t i );
-   inline void     swap( UniLowerMatrix& m ) /* throw() */;
 
-   static inline size_t maxNonZeros();
-   static inline size_t maxNonZeros( size_t n );
+   template< typename Pred >
+   inline void erase( Pred predicate );
+
+   template< typename Pred >
+   inline void erase( size_t i, Iterator first, Iterator last, Pred predicate );
    //@}
    //**********************************************************************************************
 
@@ -398,28 +445,20 @@ class UniLowerMatrix<MT,SO,false>
    //@}
    //**********************************************************************************************
 
-   //**Low-level utility functions*****************************************************************
-   /*!\name Low-level utility functions */
-   //@{
-   inline void append  ( size_t i, size_t j, const ElementType& value, bool check=false );
-   inline void finalize( size_t i );
-   //@}
-   //**********************************************************************************************
-
    //**Debugging functions*************************************************************************
    /*!\name Debugging functions */
    //@{
-   inline bool isIntact() const;
+   inline bool isIntact() const noexcept;
    //@}
    //**********************************************************************************************
 
    //**Expression template evaluation functions****************************************************
    /*!\name Expression template evaluation functions */
    //@{
-   template< typename Other > inline bool canAlias ( const Other* alias ) const;
-   template< typename Other > inline bool isAliased( const Other* alias ) const;
+   template< typename Other > inline bool canAlias ( const Other* alias ) const noexcept;
+   template< typename Other > inline bool isAliased( const Other* alias ) const noexcept;
 
-   inline bool canSMPAssign() const;
+   inline bool canSMPAssign() const noexcept;
    //@}
    //**********************************************************************************************
 
@@ -449,15 +488,18 @@ class UniLowerMatrix<MT,SO,false>
    BLAZE_CONSTRAINT_MUST_NOT_BE_POINTER_TYPE         ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_CONST                ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_VOLATILE             ( MT );
-   BLAZE_CONSTRAINT_MUST_NOT_BE_EXPRESSION_TYPE      ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_VIEW_TYPE            ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE     ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_TRANSFORMATION_TYPE  ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_UNIFORM_TYPE         ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_SYMMETRIC_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_HERMITIAN_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_LOWER_MATRIX_TYPE    ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_UPPER_MATRIX_TYPE    ( MT );
    BLAZE_CONSTRAINT_MUST_BE_MATRIX_WITH_STORAGE_ORDER( OT, !SO );
    BLAZE_CONSTRAINT_MUST_BE_MATRIX_WITH_STORAGE_ORDER( TT, !SO );
-   BLAZE_CONSTRAINT_MUST_BE_NUMERIC_TYPE( ElementType );
-   BLAZE_STATIC_ASSERT( Rows<MT>::value == Columns<MT>::value );
+   BLAZE_CONSTRAINT_MUST_BE_SCALAR_TYPE( ElementType );
+   BLAZE_STATIC_ASSERT( ( Size_v<MT,0UL> == Size_v<MT,1UL> ) );
    //**********************************************************************************************
 };
 /*! \endcond */
@@ -500,7 +542,7 @@ template< typename MT  // Type of the adapted sparse matrix
 inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( size_t n )
    : matrix_( n, n, n )  // The adapted sparse matrix
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    for( size_t i=0UL; i<n; ++i ) {
       matrix_.append( i, i, ElementType(1) );
@@ -528,7 +570,7 @@ template< typename MT  // Type of the adapted sparse matrix
 inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( size_t n, size_t nonzeros )
    : matrix_( n, n, max( nonzeros, n ) )  // The adapted sparse matrix
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    for( size_t i=0UL; i<n; ++i ) {
       matrix_.append( i, i, ElementType(1) );
@@ -560,7 +602,7 @@ template< typename MT  // Type of the adapted sparse matrix
 inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( size_t n, const std::vector<size_t>& nonzeros )
    : matrix_( n, n, nonzeros )  // The adapted sparse matrix
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    for( size_t i=0UL; i<n; ++i )
    {
@@ -573,6 +615,45 @@ inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( size_t n, const std::vector<
    }
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief List initialization of all matrix elements.
+//
+// \param list The initializer list.
+// \exception std::invalid_argument Invalid setup of unilower matrix.
+//
+// This constructor provides the option to explicitly initialize the elements of the unilower
+// matrix by means of an initializer list:
+
+   \code
+   using blaze::rowMajor;
+
+   blaze::UniLowerMatrix< blaze::CompressedMatrix<int,rowMajor> > A{ { 1, 0, 0 },
+                                                                     { 2, 1 },
+                                                                     { 4, 5, 1 } };
+   \endcode
+
+// The matrix is sized according to the size of the initializer list and all matrix elements are
+// initialized with the values from the given list. Missing values are initialized with default
+// values. In case the matrix cannot be resized and the dimensions of the initializer list don't
+// match or if the given list does not represent an unilower matrix, a \a std::invalid_argument
+// exception is thrown.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( initializer_list< initializer_list<ElementType> > list )
+   : matrix_( list )  // The adapted sparse matrix
+{
+   if( !isUniLower( matrix_ ) ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid setup of unilower matrix" );
+   }
+
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -598,6 +679,24 @@ inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( const UniLowerMatrix& m )
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
+/*!\brief The move constructor for UniLowerMatrix.
+//
+// \param m The unilower matrix to be moved into this instance.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( UniLowerMatrix&& m ) noexcept
+   : matrix_( std::move( m.matrix_ ) )  // The adapted sparse matrix
+{
+   BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
 /*!\brief Conversion constructor from different matrices.
 //
 // \param m Matrix to be copied.
@@ -611,13 +710,13 @@ template< typename MT   // Type of the adapted sparse matrix
 template< typename MT2  // Type of the foreign matrix
         , bool SO2 >    // Storage order of the foreign matrix
 inline UniLowerMatrix<MT,SO,false>::UniLowerMatrix( const Matrix<MT2,SO2>& m )
-   : matrix_( ~m )  // The adapted sparse matrix
+   : matrix_( *m )  // The adapted sparse matrix
 {
-   if( !IsUniLower<MT2>::value && !isUniLower( matrix_ ) ) {
+   if( !IsUniLower_v<MT2> && !isUniLower( matrix_ ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid setup of unilower matrix" );
    }
 
-   if( !IsUniLower<MT2>::value )
+   if( !IsUniLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -911,6 +1010,53 @@ inline typename UniLowerMatrix<MT,SO,false>::ConstIterator
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
+/*!\brief List assignment to all matrix elements.
+//
+// \param list The initializer list.
+// \exception std::invalid_argument Invalid assignment to unilower matrix.
+//
+// This assignment operator offers the option to directly assign to all elements of the unilower
+// matrix by means of an initializer list:
+
+   \code
+   using blaze::rowMajor;
+
+   blaze::UniLowerMatrix< blaze::CompressedMatrix<int,rowMajor> > A;
+   A = { { 1, 0, 0 },
+         { 2, 1 },
+         { 4, 5, 1 } };
+   \endcode
+
+// The matrix is resized according to the size of the initializer list and all matrix elements
+// are assigned the values from the given list. Missing values are assigned default values. In
+// case the matrix cannot be resized and the dimensions of the initializer list don't match or
+// if the given list does not represent an unilower matrix, a \a std::invalid_argument exception
+// is thrown.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline UniLowerMatrix<MT,SO,false>&
+   UniLowerMatrix<MT,SO,false>::operator=( initializer_list< initializer_list<ElementType> > list )
+{
+   const InitializerMatrix<ElementType> tmp( list, list.size() );
+
+   if( !isUniLower( tmp ) ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
+   }
+
+   matrix_ = list;
+
+   BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+
+   return *this;
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
 /*!\brief Copy assignment operator for UniLowerMatrix.
 //
 // \param rhs Matrix to be copied.
@@ -925,6 +1071,29 @@ inline UniLowerMatrix<MT,SO,false>&
    UniLowerMatrix<MT,SO,false>::operator=( const UniLowerMatrix& rhs )
 {
    matrix_ = rhs.matrix_;
+
+   BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+
+   return *this;
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Move assignment operator for UniLowerMatrix.
+//
+// \param rhs The matrix to be moved into this instance.
+// \return Reference to the assigned matrix.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline UniLowerMatrix<MT,SO,false>&
+   UniLowerMatrix<MT,SO,false>::operator=( UniLowerMatrix&& rhs ) noexcept
+{
+   matrix_ = std::move( rhs.matrix_ );
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
    BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
@@ -952,16 +1121,16 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename DisableIf< IsComputation<MT2>, UniLowerMatrix<MT,SO,false>& >::Type
-   UniLowerMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+inline auto UniLowerMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+   -> DisableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >
 {
-   if( IsStrictlyTriangular<MT2>::value || ( !IsUniLower<MT2>::value && !isUniLower( ~rhs ) ) ) {
+   if( IsStrictlyTriangular_v<MT2> || ( !IsUniLower_v<MT2> && !isUniLower( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
    }
 
-   matrix_ = ~rhs;
+   matrix_ = decllow( *rhs );
 
-   if( !IsUniLower<MT2>::value )
+   if( !IsUniLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -990,27 +1159,27 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename EnableIf< IsComputation<MT2>, UniLowerMatrix<MT,SO,false>& >::Type
-   UniLowerMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+inline auto UniLowerMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+   -> EnableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >
 {
-   if( IsStrictlyTriangular<MT2>::value || ( !IsSquare<MT2>::value && !isSquare( ~rhs ) ) ) {
+   if( IsStrictlyTriangular_v<MT2> || ( !IsSquare_v<MT2> && !isSquare( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
    }
 
-   if( IsUniLower<MT2>::value ) {
-      matrix_ = ~rhs;
+   if( IsUniLower_v<MT2> ) {
+      matrix_ = *rhs;
    }
    else {
-      MT tmp( ~rhs );
+      MT tmp( *rhs );
 
       if( !isUniLower( tmp ) ) {
          BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
       }
 
-      move( matrix_, tmp );
+      matrix_ = std::move( tmp );
    }
 
-   if( !IsUniLower<MT2>::value )
+   if( !IsUniLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -1039,17 +1208,17 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename DisableIf< IsComputation<MT2>, UniLowerMatrix<MT,SO,false>& >::Type
-   UniLowerMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+inline auto UniLowerMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+   -> DisableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >
 {
-   if( IsUpper<MT2>::value || IsUniTriangular<MT2>::value ||
-       ( !IsStrictlyLower<MT2>::value && !isStrictlyLower( ~rhs ) ) ) {
+   if( IsUpper_v<MT2> || IsUniTriangular_v<MT2> ||
+       ( !IsStrictlyLower_v<MT2> && !isStrictlyLower( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
    }
 
-   matrix_ += ~rhs;
+   matrix_ += decllow( *rhs );
 
-   if( !IsStrictlyLower<MT2>::value )
+   if( !IsStrictlyLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -1078,28 +1247,28 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename EnableIf< IsComputation<MT2>, UniLowerMatrix<MT,SO,false>& >::Type
-   UniLowerMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+inline auto UniLowerMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+   -> EnableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >
 {
-   if( IsUpper<MT2>::value || IsUniTriangular<MT2>::value ||
-       ( !IsSquare<MT2>::value && !isSquare( ~rhs ) ) ) {
+   if( IsUpper_v<MT2> || IsUniTriangular_v<MT2> ||
+       ( !IsSquare_v<MT2> && !isSquare( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
    }
 
-   if( IsStrictlyLower<MT2>::value ) {
-      matrix_ += ~rhs;
+   if( IsStrictlyLower_v<MT2> ) {
+      matrix_ += *rhs;
    }
    else {
-      typename MT2::ResultType tmp( ~rhs );
+      const ResultType_t<MT2> tmp( *rhs );
 
       if( !isStrictlyLower( tmp ) ) {
          BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
       }
 
-      matrix_ += tmp;
+      matrix_ += decllow( tmp );
    }
 
-   if( !IsStrictlyLower<MT2>::value )
+   if( !IsStrictlyLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -1128,17 +1297,17 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename DisableIf< IsComputation<MT2>, UniLowerMatrix<MT,SO,false>& >::Type
-   UniLowerMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+inline auto UniLowerMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+   -> DisableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >
 {
-   if( IsUpper<MT2>::value || IsUniTriangular<MT2>::value ||
-       ( !IsStrictlyLower<MT2>::value && !isStrictlyLower( ~rhs ) ) ) {
+   if( IsUpper_v<MT2> || IsUniTriangular_v<MT2> ||
+       ( !IsStrictlyLower_v<MT2> && !isStrictlyLower( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
    }
 
-   matrix_ -= ~rhs;
+   matrix_ -= decllow( *rhs );
 
-   if( !IsStrictlyLower<MT2>::value )
+   if( !IsStrictlyLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -1167,28 +1336,28 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename EnableIf< IsComputation<MT2>, UniLowerMatrix<MT,SO,false>& >::Type
-   UniLowerMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+inline auto UniLowerMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+   -> EnableIf_t< IsComputation_v<MT2>, UniLowerMatrix& >
 {
-   if( IsUpper<MT2>::value || IsUniTriangular<MT2>::value ||
-       ( !IsSquare<MT2>::value && !isSquare( ~rhs ) ) ) {
+   if( IsUpper_v<MT2> || IsUniTriangular_v<MT2> ||
+       ( !IsSquare_v<MT2> && !isSquare( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
    }
 
-   if( IsStrictlyLower<MT2>::value ) {
-      matrix_ -= ~rhs;
+   if( IsStrictlyLower_v<MT2> ) {
+      matrix_ -= *rhs;
    }
    else {
-      typename MT2::ResultType tmp( ~rhs );
+      const ResultType_t<MT2> tmp( *rhs );
 
       if( !isStrictlyLower( tmp ) ) {
          BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
       }
 
-      matrix_ -= tmp;
+      matrix_ -= decllow( tmp );
    }
 
-   if( !IsStrictlyLower<MT2>::value )
+   if( !IsStrictlyLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -1202,36 +1371,39 @@ inline typename EnableIf< IsComputation<MT2>, UniLowerMatrix<MT,SO,false>& >::Ty
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Multiplication assignment operator for the multiplication of a matrix (\f$ A*=B \f$).
+/*!\brief Schur product assignment operator for the multiplication of a matrix (\f$ A\circ=B \f$).
 //
-// \param rhs The right-hand side matrix for the multiplication.
+// \param rhs The right-hand side general matrix for the Schur product.
 // \return Reference to the matrix.
-// \exception std::invalid_argument Matrix sizes do not match.
+// \exception std::invalid_argument Invalid assignment to unilower matrix.
 //
-// In case the current sizes of the two matrices don't match, a \a std::invalid_argument exception
-// is thrown. Also note that the result of the multiplication operation must be an unilower matrix.
-// In case it is not, a \a std::invalid_argument exception is thrown.
+// In case the current sizes of the two matrices don't match, a \a std::invalid_argument
+// exception is thrown. Also note that the result of the Schur product operation must be an
+// unilower matrix, i.e. the given matrix must be a strictly lower matrix. In case the result
+// is not an unilower matrix, a \a std::invalid_argument exception is thrown.
 */
 template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline UniLowerMatrix<MT,SO,false>&
-   UniLowerMatrix<MT,SO,false>::operator*=( const Matrix<MT2,SO2>& rhs )
+inline auto UniLowerMatrix<MT,SO,false>::operator%=( const Matrix<MT2,SO2>& rhs )
+   -> UniLowerMatrix&
 {
-   if( matrix_.rows() != (~rhs).columns() ) {
+   if( !IsSquare_v<MT2> && !isSquare( *rhs ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
    }
 
-   MT tmp( matrix_ * ~rhs );
+   If_t< IsComputation_v<MT2>, ResultType_t<MT2>, const MT2& > tmp( *rhs );
 
-   if( !isUniLower( tmp ) ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
+   for( size_t i=0UL; i<(*rhs).rows(); ++i ) {
+      if( !isOne( tmp(i,i) ) ) {
+         BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to unilower matrix" );
+      }
    }
 
-   move( matrix_, tmp );
+   matrix_ %= tmp;
 
-   if( !IsUniLower<MT2>::value )
+   if( !IsUniLower_v<MT2> )
       resetUpper();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
@@ -1259,7 +1431,7 @@ inline UniLowerMatrix<MT,SO,false>&
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t UniLowerMatrix<MT,SO,false>::rows() const
+inline size_t UniLowerMatrix<MT,SO,false>::rows() const noexcept
 {
    return matrix_.rows();
 }
@@ -1275,7 +1447,7 @@ inline size_t UniLowerMatrix<MT,SO,false>::rows() const
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t UniLowerMatrix<MT,SO,false>::columns() const
+inline size_t UniLowerMatrix<MT,SO,false>::columns() const noexcept
 {
    return matrix_.columns();
 }
@@ -1291,7 +1463,7 @@ inline size_t UniLowerMatrix<MT,SO,false>::columns() const
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t UniLowerMatrix<MT,SO,false>::capacity() const
+inline size_t UniLowerMatrix<MT,SO,false>::capacity() const noexcept
 {
    return matrix_.capacity();
 }
@@ -1313,7 +1485,7 @@ inline size_t UniLowerMatrix<MT,SO,false>::capacity() const
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t UniLowerMatrix<MT,SO,false>::capacity( size_t i ) const
+inline size_t UniLowerMatrix<MT,SO,false>::capacity( size_t i ) const noexcept
 {
    return matrix_.capacity(i);
 }
@@ -1424,164 +1596,10 @@ template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline void UniLowerMatrix<MT,SO,false>::clear()
 {
-   using blaze::clear;
+   matrix_.clear();
 
-   if( IsResizable<MT>::value ) {
-      clear( matrix_ );
-   }
-   else {
-      reset();
-   }
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Setting elements of the unilower matrix.
-//
-// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param value The value of the element to be set.
-// \return Iterator to the set element.
-// \exception std::invalid_argument Invalid access to diagonal or upper matrix element.
-//
-// This function sets the value of an element of the unilower matrix. In case the unilower matrix
-// already contains an element with row index \a i and column index \a j its value is modified,
-// else a new element with the given \a value is inserted. The attempt to set an element on the
-// diagonal or in the upper part of the matrix (i.e. above the diagonal) will result in a
-// \a std::invalid_argument exception.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::Iterator
-   UniLowerMatrix<MT,SO,false>::set( size_t i, size_t j, const ElementType& value )
-{
-   if( i <= j ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or upper matrix element" );
-   }
-
-   return Iterator( matrix_.set( i, j, value ), ( SO ? j : i ) );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Inserting elements into the unilower matrix.
-//
-// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param value The value of the element to be inserted.
-// \return Iterator to the newly inserted element.
-// \exception std::invalid_argument Invalid sparse matrix access index.
-// \exception std::invalid_argument Invalid access to diagonal or upper matrix element.
-//
-// This function inserts a new element into the unilower matrix. However, duplicate elements are
-// not allowed. In case the unilower matrix already contains an element with row index \a i and
-// column index \a j, a \a std::invalid_argument exception is thrown. Also, the attempt to insert
-// an element on the diagonal or in the upper part of the matrix (i.e. above the diagonal) will
-// result in a \a std::invalid_argument exception.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::Iterator
-   UniLowerMatrix<MT,SO,false>::insert( size_t i, size_t j, const ElementType& value )
-{
-   if( i <= j ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or upper matrix element" );
-   }
-
-   return Iterator( matrix_.insert( i, j, value ), ( SO ? j : i ) );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Erasing elements from the unilower matrix.
-//
-// \param i The row index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \return void
-// \exception std::invalid_argument Invalid access to diagonal matrix element.
-//
-// This function erases a non-diagonal element from the unilower matrix. The attempt to erase a
-// diagonal element will result in a \a std::invalid_argument exception.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline void UniLowerMatrix<MT,SO,false>::erase( size_t i, size_t j )
-{
-   if( i == j ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal matrix element" );
-   }
-
-   matrix_.erase( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Erasing elements from the unilower matrix.
-//
-// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \param pos Iterator to the element to be erased.
-// \return Iterator to the element after the erased element.
-// \exception std::invalid_argument Invalid access to diagonal matrix element.
-//
-// This function erases a non-diagonal element from the unilower matrix. In case the unilower
-// matrix adapts a \a rowMajor sparse matrix the function erases an element from row \a i, in
-// case it adapts a \a columnMajor sparse matrix the function erases an element from column \a i.
-// The attempt to erase a diagonal element will result in a \a std::invalid_argument exception.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::Iterator
-   UniLowerMatrix<MT,SO,false>::erase( size_t i, Iterator pos )
-{
-   if( pos != matrix_.end(i) && pos->index() == i ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal matrix element" );
-   }
-
-   return Iterator( matrix_.erase( i, pos.base() ), i );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Erasing a range of elements from the unilower matrix.
-//
-// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \param first Iterator to first element to be erased.
-// \param last Iterator just past the last element to be erased.
-// \return Iterator to the element after the erased element.
-// \exception std::invalid_argument Invalid access to diagonal matrix element.
-//
-// This function erases a range of elements from the unilower matrix. In case the unilower matrix
-// adapts a \a rowMajor sparse matrix the function erases a range of elements from row \a i, in
-// case it adapts a \a columnMajor matrix the function erases a range of elements from column \a i.
-// The attempt to erase a diagonal element will result in a \a std::invalid_argument exception.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::Iterator
-   UniLowerMatrix<MT,SO,false>::erase( size_t i, Iterator first, Iterator last )
-{
-   for( Iterator element=first; element!=last; ++element ) {
-      if( element->index() == i ) {
-         BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal matrix element" );
-      }
-   }
-
-   return Iterator( matrix_.erase( i, first.base(), last.base() ), i );
+   BLAZE_INTERNAL_ASSERT( matrix_.rows()    == 0UL, "Invalid number of rows"    );
+   BLAZE_INTERNAL_ASSERT( matrix_.columns() == 0UL, "Invalid number of columns" );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1606,7 +1624,7 @@ template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 void UniLowerMatrix<MT,SO,false>::resize( size_t n, bool preserve )
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square unilower matrix detected" );
 
@@ -1713,15 +1731,34 @@ inline void UniLowerMatrix<MT,SO,false>::trim( size_t i )
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
+/*!\brief Requesting the removal of unused capacity.
+//
+// \return void
+//
+// This function minimizes the capacity of the matrix by removing unused capacity. Please note
+// that in case a reallocation occurs, all iterators (including end() iterators), all pointers
+// and references to elements of this matrix are invalidated.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline void UniLowerMatrix<MT,SO,false>::shrinkToFit()
+{
+   matrix_.shrinkToFit();
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
 /*!\brief Swapping the contents of two matrices.
 //
 // \param m The matrix to be swapped.
 // \return void
-// \exception no-throw guarantee.
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline void UniLowerMatrix<MT,SO,false>::swap( UniLowerMatrix& m ) /* throw() */
+inline void UniLowerMatrix<MT,SO,false>::swap( UniLowerMatrix& m ) noexcept
 {
    using std::swap;
 
@@ -1744,11 +1781,11 @@ inline void UniLowerMatrix<MT,SO,false>::swap( UniLowerMatrix& m ) /* throw() */
 */
 template< typename MT  // Type of the adapted dense matrix
         , bool SO >    // Storage order of the adapted dense matrix
-inline size_t UniLowerMatrix<MT,SO,false>::maxNonZeros()
+constexpr size_t UniLowerMatrix<MT,SO,false>::maxNonZeros() noexcept
 {
-   BLAZE_CONSTRAINT_MUST_NOT_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_STATIC_TYPE( MT );
 
-   return maxNonZeros( Rows<MT>::value );
+   return maxNonZeros( Size_v<MT,0UL> );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1766,7 +1803,7 @@ inline size_t UniLowerMatrix<MT,SO,false>::maxNonZeros()
 */
 template< typename MT  // Type of the adapted dense matrix
         , bool SO >    // Storage order of the adapted dense matrix
-inline size_t UniLowerMatrix<MT,SO,false>::maxNonZeros( size_t n )
+constexpr size_t UniLowerMatrix<MT,SO,false>::maxNonZeros( size_t n ) noexcept
 {
    return ( ( n + 1UL ) * n ) / 2UL;
 }
@@ -1801,32 +1838,36 @@ inline void UniLowerMatrix<MT,SO,false>::resetUpper()
 
 //=================================================================================================
 //
-//  LOOKUP FUNCTIONS
+//  INSERTION FUNCTIONS
 //
 //=================================================================================================
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Searches for a specific matrix element.
+/*!\brief Setting elements of the unilower matrix.
 //
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the element in case the index is found, end() iterator otherwise.
+// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param value The value of the element to be set.
+// \return Iterator to the set element.
+// \exception std::invalid_argument Invalid access to diagonal or upper matrix element.
 //
-// This function can be used to check whether a specific element is contained in the unilower
-// matrix. It specifically searches for the element with row index \a i and column index \a j.
-// In case the element is found, the function returns an row/column iterator to the element.
-// Otherwise an iterator just past the last non-zero element of row \a i or column \a j (the
-// end() iterator) is returned. Note that the returned unilower matrix iterator is subject to
-// invalidation due to inserting operations via the function call operator or the insert()
-// function!
+// This function sets the value of an element of the unilower matrix. In case the unilower matrix
+// already contains an element with row index \a i and column index \a j its value is modified,
+// else a new element with the given \a value is inserted. The attempt to set an element on the
+// diagonal or in the upper part of the matrix (i.e. above the diagonal) will result in a
+// \a std::invalid_argument exception.
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline typename UniLowerMatrix<MT,SO,false>::Iterator
-   UniLowerMatrix<MT,SO,false>::find( size_t i, size_t j )
+   UniLowerMatrix<MT,SO,false>::set( size_t i, size_t j, const ElementType& value )
 {
-   return Iterator( matrix_.find( i, j ), ( SO ? j : i ) );
+   if( i <= j ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or upper matrix element" );
+   }
+
+   return Iterator( matrix_.set( i, j, value ), ( SO ? j : i ) );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1834,146 +1875,35 @@ inline typename UniLowerMatrix<MT,SO,false>::Iterator
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Searches for a specific matrix element.
+/*!\brief Inserting elements into the unilower matrix.
 //
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the element in case the index is found, end() iterator otherwise.
+// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param value The value of the element to be inserted.
+// \return Iterator to the newly inserted element.
+// \exception std::invalid_argument Invalid sparse matrix access index.
+// \exception std::invalid_argument Invalid access to diagonal or upper matrix element.
 //
-// This function can be used to check whether a specific element is contained in the unilower
-// matrix. It specifically searches for the element with row index \a i and column index \a j.
-// In case the element is found, the function returns an row/column iterator to the element.
-// Otherwise an iterator just past the last non-zero element of row \a i or column \a j (the
-// end() iterator) is returned. Note that the returned unilower matrix iterator is subject to
-// invalidation due to inserting operations via the function call operator or the insert()
-// function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::ConstIterator
-   UniLowerMatrix<MT,SO,false>::find( size_t i, size_t j ) const
-{
-   return matrix_.find( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index not less then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index not less then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index not less then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index not less then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
-// iterator is subject to invalidation due to inserting operations via the function call
-// operator or the insert() function!
+// This function inserts a new element into the unilower matrix. However, duplicate elements are
+// not allowed. In case the unilower matrix already contains an element with row index \a i and
+// column index \a j, a \a std::invalid_argument exception is thrown. Also, the attempt to insert
+// an element on the diagonal or in the upper part of the matrix (i.e. above the diagonal) will
+// result in a \a std::invalid_argument exception.
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline typename UniLowerMatrix<MT,SO,false>::Iterator
-   UniLowerMatrix<MT,SO,false>::lowerBound( size_t i, size_t j )
+   UniLowerMatrix<MT,SO,false>::insert( size_t i, size_t j, const ElementType& value )
 {
-   return Iterator( matrix_.lowerBound( i, j ), ( SO ? j : i ) );
+   if( i <= j ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or upper matrix element" );
+   }
+
+   return Iterator( matrix_.insert( i, j, value ), ( SO ? j : i ) );
 }
 /*! \endcond */
 //*************************************************************************************************
 
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index not less then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index not less then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index not less then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index not less then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
-// iterator is subject to invalidation due to inserting operations via the function call
-// operator or the insert() function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::ConstIterator
-   UniLowerMatrix<MT,SO,false>::lowerBound( size_t i, size_t j ) const
-{
-   return matrix_.lowerBound( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index greater then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index greater then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index greater then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index greater then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
-// iterator is subject to invalidation due to inserting operations via the function call
-// operator or the insert() function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::Iterator
-   UniLowerMatrix<MT,SO,false>::upperBound( size_t i, size_t j )
-{
-   return Iterator( matrix_.upperBound( i, j ), ( SO ? j : i ) );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index greater then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index greater then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index greater then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index greater then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
-// iterator is subject to invalidation due to inserting operations via the function call
-// operator or the insert() function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename UniLowerMatrix<MT,SO,false>::ConstIterator
-   UniLowerMatrix<MT,SO,false>::upperBound( size_t i, size_t j ) const
-{
-   return matrix_.upperBound( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-
-
-//=================================================================================================
-//
-//  LOW-LEVEL UTILITY FUNCTIONS
-//
-//=================================================================================================
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
@@ -2033,7 +1963,7 @@ inline void UniLowerMatrix<MT,SO,false>::append( size_t i, size_t j, const Eleme
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or upper matrix element" );
    }
 
-   if( !check || !isDefault( value ) )
+   if( !check || !isDefault<strict>( value ) )
       matrix_.insert( i, j, value );
 }
 /*! \endcond */
@@ -2051,7 +1981,7 @@ inline void UniLowerMatrix<MT,SO,false>::append( size_t i, size_t j, const Eleme
 // After completion of row/column \a i via the append() function, this function can be called to
 // finalize row/column \a i and prepare the next row/column for insertion process via append().
 //
-// \note: Although finalize() does not allocate new memory, it still invalidates all iterators
+// \note Although finalize() does not allocate new memory, it still invalidates all iterators
 // returned by the end() functions!
 */
 template< typename MT  // Type of the adapted sparse matrix
@@ -2059,6 +1989,369 @@ template< typename MT  // Type of the adapted sparse matrix
 inline void UniLowerMatrix<MT,SO,false>::finalize( size_t i )
 {
    matrix_.trim( i );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  ERASE FUNCTIONS
+//
+//=================================================================================================
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing elements from the unilower matrix.
+//
+// \param i The row index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \return void
+// \exception std::invalid_argument Invalid access to diagonal matrix element.
+//
+// This function erases a non-diagonal element from the unilower matrix. The attempt to erase a
+// diagonal element will result in a \a std::invalid_argument exception.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline void UniLowerMatrix<MT,SO,false>::erase( size_t i, size_t j )
+{
+   if( i == j ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal matrix element" );
+   }
+
+   matrix_.erase( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing elements from the unilower matrix.
+//
+// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \param pos Iterator to the element to be erased.
+// \return Iterator to the element after the erased element.
+// \exception std::invalid_argument Invalid access to diagonal matrix element.
+//
+// This function erases a non-diagonal element from the unilower matrix. In case the unilower
+// matrix adapts a \a rowMajor sparse matrix the function erases an element from row \a i, in
+// case it adapts a \a columnMajor sparse matrix the function erases an element from column \a i.
+// The attempt to erase a diagonal element will result in a \a std::invalid_argument exception.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::Iterator
+   UniLowerMatrix<MT,SO,false>::erase( size_t i, Iterator pos )
+{
+   if( pos != matrix_.end(i) && pos->index() == i ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal matrix element" );
+   }
+
+   return Iterator( matrix_.erase( i, pos.base() ), i );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing a range of elements from the unilower matrix.
+//
+// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \param first Iterator to first element to be erased.
+// \param last Iterator just past the last element to be erased.
+// \return Iterator to the element after the erased element.
+// \exception std::invalid_argument Invalid access to diagonal matrix element.
+//
+// This function erases a range of elements from the unilower matrix. In case the unilower matrix
+// adapts a \a rowMajor sparse matrix the function erases a range of elements from row \a i, in
+// case it adapts a \a columnMajor matrix the function erases a range of elements from column \a i.
+// The attempt to erase a diagonal element will result in a \a std::invalid_argument exception.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::Iterator
+   UniLowerMatrix<MT,SO,false>::erase( size_t i, Iterator first, Iterator last )
+{
+   if( first == last )
+      return last;
+
+   if( ( !SO && last.base() == matrix_.end(i) ) ||
+       ( SO && first.base() == matrix_.begin(i) ) ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal matrix element" );
+   }
+
+   return Iterator( matrix_.erase( i, first.base(), last.base() ), i );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing specific elements from the unilower matrix.
+//
+// \param predicate The unary predicate for the element selection.
+// \return void.
+//
+// This function erases specific elements from the unilower matrix. The elements are selected by
+// the given unary predicate \a predicate, which is expected to accept a single argument of the
+// type of the elements and to be pure. The following example demonstrates how to remove all
+// elements that are smaller than a certain threshold value:
+
+   \code
+   blaze::UniLowerMatrix< CompressedMatrix<double,blaze::rowMajor> > A;
+   // ... Resizing and initialization
+
+   A.erase( []( double value ){ return value < 1E-8; } );
+   \endcode
+
+// \note The predicate is required to be pure, i.e. to produce deterministic results for elements
+// with the same value. The attempt to use an impure predicate leads to undefined behavior!
+*/
+template< typename MT      // Type of the adapted sparse matrix
+        , bool SO >        // Storage order of the adapted sparse matrix
+template< typename Pred >  // Type of the unary predicate
+inline void UniLowerMatrix<MT,SO,false>::erase( Pred predicate )
+{
+   if( SO ) {
+      for( size_t j=0UL; (j+1UL) < columns(); ++j ) {
+         matrix_.erase( j, matrix_.lowerBound(j+1UL,j), matrix_.end(j), predicate );
+      }
+   }
+   else {
+      for( size_t i=1UL; i<rows(); ++i ) {
+         matrix_.erase( i, matrix_.begin(i), matrix_.find(i,i), predicate );
+      }
+   }
+
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing specific elements from a range of the unilower matrix.
+//
+// \param i The row/column index of the elements to be erased. The index has to be in the range \f$[0..M-1]\f$.
+// \param first Iterator to first element of the range.
+// \param last Iterator just past the last element of the range.
+// \param predicate The unary predicate for the element selection.
+// \return void
+// \exception std::invalid_argument Invalid access to diagonal matrix element.
+//
+// This function erases specific elements from a range of elements of the unilower matrix. The
+// elements are selected by the given unary predicate \a predicate, which is expected to accept
+// a single argument of the type of the elements and to be pure. In case the storage order is
+// set to \a rowMajor the function erases a range of elements from row \a i, in case the storage
+// flag is set to \a columnMajor the function erases a range of elements from column \a i. The
+// following example demonstrates how to remove all elements that are smaller than a certain
+// threshold value:
+
+   \code
+   blaze::UniLowerMatrix< CompressedMatrix<double,blaze::rowMajor> > A;
+   // ... Resizing and initialization
+
+   A.erase( 2UL, A.begin(2UL), A.end(2UL), []( double value ){ return value < 1E-8; } );
+   \endcode
+
+// \note The predicate is required to be pure, i.e. to produce deterministic results for elements
+// with the same value. The attempt to use an impure predicate leads to undefined behavior!
+// \note The attempt to erase a diagonal element will result in a \a std::invalid_argument
+// exception.
+*/
+template< typename MT      // Type of the adapted sparse matrix
+        , bool SO >        // Storage order of the adapted sparse matrix
+template< typename Pred >  // Type of the unary predicate
+inline void UniLowerMatrix<MT,SO,false>::erase( size_t i, Iterator first, Iterator last, Pred predicate )
+{
+   if( first == last )
+      return;
+
+   if( ( !SO && last.base() == matrix_.end(i) && predicate( ElementType(1) ) ) ||
+       ( SO && first.base() == matrix_.begin(i) && predicate( ElementType(1) ) ) ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal matrix element" );
+   }
+
+   matrix_.erase( i, first.base(), last.base(), predicate );
+
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  LOOKUP FUNCTIONS
+//
+//=================================================================================================
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Searches for a specific matrix element.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the element in case the index is found, end() iterator otherwise.
+//
+// This function can be used to check whether a specific element is contained in the unilower
+// matrix. It specifically searches for the element with row index \a i and column index \a j.
+// In case the element is found, the function returns an row/column iterator to the element.
+// Otherwise an iterator just past the last non-zero element of row \a i or column \a j (the
+// end() iterator) is returned. Note that the returned unilower matrix iterator is subject to
+// invalidation due to inserting operations via the function call operator, the set() function
+// or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::Iterator
+   UniLowerMatrix<MT,SO,false>::find( size_t i, size_t j )
+{
+   return Iterator( matrix_.find( i, j ), ( SO ? j : i ) );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Searches for a specific matrix element.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the element in case the index is found, end() iterator otherwise.
+//
+// This function can be used to check whether a specific element is contained in the unilower
+// matrix. It specifically searches for the element with row index \a i and column index \a j.
+// In case the element is found, the function returns an row/column iterator to the element.
+// Otherwise an iterator just past the last non-zero element of row \a i or column \a j (the
+// end() iterator) is returned. Note that the returned unilower matrix iterator is subject to
+// invalidation due to inserting operations via the function call operator, the set() function
+// or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::ConstIterator
+   UniLowerMatrix<MT,SO,false>::find( size_t i, size_t j ) const
+{
+   return matrix_.find( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index not less then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index not less then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index not less then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index not less then the given row
+// index. In combination with the upperBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
+// iterator is subject to invalidation due to inserting operations via the function call
+// operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::Iterator
+   UniLowerMatrix<MT,SO,false>::lowerBound( size_t i, size_t j )
+{
+   return Iterator( matrix_.lowerBound( i, j ), ( SO ? j : i ) );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index not less then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index not less then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index not less then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index not less then the given row
+// index. In combination with the upperBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
+// iterator is subject to invalidation due to inserting operations via the function call
+// operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::ConstIterator
+   UniLowerMatrix<MT,SO,false>::lowerBound( size_t i, size_t j ) const
+{
+   return matrix_.lowerBound( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index greater then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index greater then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index greater then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index greater then the given row
+// index. In combination with the lowerBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
+// iterator is subject to invalidation due to inserting operations via the function call
+// operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::Iterator
+   UniLowerMatrix<MT,SO,false>::upperBound( size_t i, size_t j )
+{
+   return Iterator( matrix_.upperBound( i, j ), ( SO ? j : i ) );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index greater then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index greater then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index greater then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index greater then the given row
+// index. In combination with the lowerBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned unilower matrix
+// iterator is subject to invalidation due to inserting operations via the function call
+// operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename UniLowerMatrix<MT,SO,false>::ConstIterator
+   UniLowerMatrix<MT,SO,false>::upperBound( size_t i, size_t j ) const
+{
+   return matrix_.upperBound( i, j );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -2084,7 +2377,7 @@ inline void UniLowerMatrix<MT,SO,false>::finalize( size_t i )
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline bool UniLowerMatrix<MT,SO,false>::isIntact() const
+inline bool UniLowerMatrix<MT,SO,false>::isIntact() const noexcept
 {
    using blaze::isIntact;
 
@@ -2116,7 +2409,7 @@ inline bool UniLowerMatrix<MT,SO,false>::isIntact() const
 template< typename MT       // Type of the adapted sparse matrix
         , bool SO >         // Storage order of the adapted sparse matrix
 template< typename Other >  // Data type of the foreign expression
-inline bool UniLowerMatrix<MT,SO,false>::canAlias( const Other* alias ) const
+inline bool UniLowerMatrix<MT,SO,false>::canAlias( const Other* alias ) const noexcept
 {
    return matrix_.canAlias( alias );
 }
@@ -2138,7 +2431,7 @@ inline bool UniLowerMatrix<MT,SO,false>::canAlias( const Other* alias ) const
 template< typename MT       // Type of the adapted sparse matrix
         , bool SO >         // Storage order of the adapted sparse matrix
 template< typename Other >  // Data type of the foreign expression
-inline bool UniLowerMatrix<MT,SO,false>::isAliased( const Other* alias ) const
+inline bool UniLowerMatrix<MT,SO,false>::isAliased( const Other* alias ) const noexcept
 {
    return matrix_.isAliased( alias );
 }
@@ -2159,7 +2452,7 @@ inline bool UniLowerMatrix<MT,SO,false>::isAliased( const Other* alias ) const
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline bool UniLowerMatrix<MT,SO,false>::canSMPAssign() const
+inline bool UniLowerMatrix<MT,SO,false>::canSMPAssign() const noexcept
 {
    return matrix_.canSMPAssign();
 }

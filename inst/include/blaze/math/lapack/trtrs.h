@@ -3,7 +3,7 @@
 //  \file blaze/math/lapack/trtrs.h
 //  \brief Header file for the LAPACK triangular backward substitution functions (trtrs)
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,44 +40,24 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/cast.hpp>
+#include <blaze/math/Aliases.h>
 #include <blaze/math/constraints/Adaptor.h>
-#include <blaze/math/constraints/BlasCompatible.h>
+#include <blaze/math/constraints/BLASCompatible.h>
 #include <blaze/math/constraints/Computation.h>
+#include <blaze/math/constraints/ConstDataAccess.h>
+#include <blaze/math/constraints/Contiguous.h>
 #include <blaze/math/constraints/MutableDataAccess.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/DenseMatrix.h>
 #include <blaze/math/expressions/DenseVector.h>
+#include <blaze/math/lapack/clapack/trtrs.h>
 #include <blaze/math/typetraits/IsRowMajorMatrix.h>
 #include <blaze/util/Assert.h>
-#include <blaze/util/Complex.h>
 #include <blaze/util/constraints/SameType.h>
-#include <blaze/util/Exception.h>
-#include <blaze/util/StaticAssert.h>
+#include <blaze/util/NumericCast.h>
 
 
 namespace blaze {
-
-//=================================================================================================
-//
-//  LAPACK FORWARD DECLARATIONS
-//
-//=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-extern "C" {
-
-void strtrs_( char* uplo, char* trans, char* diag, int* n, int* nrhs, float*  A, int* lda, float*  B, int* ldb, int* info );
-void dtrtrs_( char* uplo, char* trans, char* diag, int* n, int* nrhs, double* A, int* lda, double* B, int* ldb, int* info );
-void ctrtrs_( char* uplo, char* trans, char* diag, int* n, int* nrhs, float*  A, int* lda, float*  B, int* ldb, int* info );
-void ztrtrs_( char* uplo, char* trans, char* diag, int* n, int* nrhs, double* A, int* lda, double* B, int* ldb, int* info );
-
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-
 
 //=================================================================================================
 //
@@ -88,216 +68,12 @@ void ztrtrs_( char* uplo, char* trans, char* diag, int* n, int* nrhs, double* A,
 //*************************************************************************************************
 /*!\name LAPACK triangular substitution functions (trtrs) */
 //@{
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const float* A,
-                   int lda, float* B, int ldb, int* info );
-
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const double* A,
-                   int lda, double* B, int ldb, int* info );
-
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const complex<float>* A,
-                   int lda, complex<float>* B, int ldb, int* info );
-
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const complex<double>* A,
-                   int lda, complex<double>* B, int ldb, int* info );
-
 template< typename MT, bool SO, typename VT, bool TF >
-inline void trtrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b,
-                   char uplo, char trans, char diag );
+void trtrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo, char trans, char diag );
 
 template< typename MT1, bool SO1, typename MT2, bool SO2 >
-inline void trtrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B,
-                   char uplo, char trans, char diag );
+void trtrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B, char uplo, char trans, char diag );
 //@}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a triangular single precision linear
-//        system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' in case of a lower matrix, \c 'U' in case of an upper matrix.
-// \param trans \c 'N' for \f$ A*X=B \f$, \c 'T' for \f$ A^T*X=B \f$, and \c C for \f$ A^H*X=B \f$.
-// \param diag \c 'U' in case of a unitriangular matrix, \c 'N' otherwise.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the single precision column-major square matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK strtrs() function to perform the substitution step to compute
-// the solution to the general system of linear equations \f$ A*X=B \f$, \f$ A^{T}*X=B \f$, or
-// \f$ A^{H}*X=B \f$, where \a A is a n-by-n matrix and \a X and \a B are column-major n-by-nrhs
-// matrices. The \a trans argument specifies the form of the linear system of equations:
-//
-//   - 'N': \f$ A*X=B \f$ (no transpose)
-//   - 'T': \f$ A^{T}*X=B \f$ (transpose)
-//   - 'C': \f$ A^{H}*X=B \f$ (conjugate transpose)
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the strtrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const float* A, int lda,
-                   float* B, int ldb, int* info )
-{
-   strtrs_( &uplo, &trans, &diag, &n, &nrhs, const_cast<float*>( A ), &lda, B, &ldb, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a triangular double precision linear
-//        system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' in case of a lower matrix, \c 'U' in case of an upper matrix.
-// \param trans \c 'N' for \f$ A*X=B \f$, \c 'T' for \f$ A^T*X=B \f$, and \c C for \f$ A^H*X=B \f$.
-// \param diag \c 'U' in case of a unitriangular matrix, \c 'N' otherwise.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the double precision column-major square matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK dtrtrs() function to perform the substitution step to compute
-// the solution to the general system of linear equations \f$ A*X=B \f$, \f$ A^{T}*X=B \f$, or
-// \f$ A^{H}*X=B \f$, where \a A is a n-by-n matrix and \a X and \a B are column-major n-by-nrhs
-// matrices. The \a trans argument specifies the form of the linear system of equations:
-//
-//   - 'N': \f$ A*X=B \f$ (no transpose)
-//   - 'T': \f$ A^{T}*X=B \f$ (transpose)
-//   - 'C': \f$ A^{H}*X=B \f$ (conjugate transpose)
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the dtrtrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const double* A, int lda,
-                   double* B, int ldb, int* info )
-{
-   dtrtrs_( &uplo, &trans, &diag, &n, &nrhs, const_cast<double*>( A ), &lda, B, &ldb, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a triangular single precision complex
-//        linear system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' in case of a lower matrix, \c 'U' in case of an upper matrix.
-// \param trans \c 'N' for \f$ A*X=B \f$, \c 'T' for \f$ A^T*X=B \f$, and \c C for \f$ A^H*X=B \f$.
-// \param diag \c 'U' in case of a unitriangular matrix, \c 'N' otherwise.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the single precision complex column-major square matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK ctrtrs() function to perform the substitution step to compute
-// the solution to the general system of linear equations \f$ A*X=B \f$, \f$ A^{T}*X=B \f$, or
-// \f$ A^{H}*X=B \f$, where \a A is a n-by-n matrix and \a X and \a B are column-major n-by-nrhs
-// matrices. The \a trans argument specifies the form of the linear system of equations:
-//
-//   - 'N': \f$ A*X=B \f$ (no transpose)
-//   - 'T': \f$ A^{T}*X=B \f$ (transpose)
-//   - 'C': \f$ A^{H}*X=B \f$ (conjugate transpose)
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the ctrtrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const complex<float>* A,
-                   int lda, complex<float>* B, int ldb, int* info )
-{
-   BLAZE_STATIC_ASSERT( sizeof( complex<float> ) == 2UL*sizeof( float ) );
-
-   ctrtrs_( &uplo, &trans, &diag, &n, &nrhs, const_cast<float*>( reinterpret_cast<const float*>( A ) ),
-            &lda, reinterpret_cast<float*>( B ), &ldb, info );
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief LAPACK kernel for the substitution step of solving a triangular double precision complex
-//        linear system of equations (\f$ A*X=B \f$).
-// \ingroup lapack_substitution
-//
-// \param uplo \c 'L' in case of a lower matrix, \c 'U' in case of an upper matrix.
-// \param trans \c 'N' for \f$ A*X=B \f$, \c 'T' for \f$ A^T*X=B \f$, and \c C for \f$ A^H*X=B \f$.
-// \param diag \c 'U' in case of a unitriangular matrix, \c 'N' otherwise.
-// \param n The number of rows/columns of the column-major matrix \f$[0..\infty)\f$.
-// \param nrhs The number of right-hand side vectors \f$[0..\infty)\f$.
-// \param A Pointer to the first element of the double precision complex column-major square matrix.
-// \param lda The total number of elements between two columns of the matrix \f$[0..\infty)\f$.
-// \param B Pointer to the first element of the column-major matrix.
-// \param ldb The total number of elements between two columns of matrix \a B \f$[0..\infty)\f$.
-// \param info Return code of the function call.
-// \return void
-//
-// This function uses the LAPACK ztrtrs() function to perform the substitution step to compute
-// the solution to the general system of linear equations \f$ A*X=B \f$, \f$ A^{T}*X=B \f$, or
-// \f$ A^{H}*X=B \f$, where \a A is a n-by-n matrix and \a X and \a B are column-major n-by-nrhs
-// matrices. The \a trans argument specifies the form of the linear system of equations:
-//
-//   - 'N': \f$ A*X=B \f$ (no transpose)
-//   - 'T': \f$ A^{T}*X=B \f$ (transpose)
-//   - 'C': \f$ A^{H}*X=B \f$ (conjugate transpose)
-//
-// The \a info argument provides feedback on the success of the function call:
-//
-//   - = 0: The function finished successfully.
-//   - < 0: If info = -i, the i-th argument had an illegal value.
-//
-// For more information on the ztrtrs() function, see the LAPACK online documentation browser:
-//
-//        http://www.netlib.org/lapack/explore-html/
-//
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
-*/
-inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const complex<double>* A,
-                   int lda, complex<double>* B, int ldb, int* info )
-{
-   BLAZE_STATIC_ASSERT( sizeof( complex<double> ) == 2UL*sizeof( double ) );
-
-   ztrtrs_( &uplo, &trans, &diag, &n, &nrhs, const_cast<double*>( reinterpret_cast<const double*>( A ) ),
-            &lda, reinterpret_cast<double*>( B ), &ldb, info );
-}
 //*************************************************************************************************
 
 
@@ -313,6 +89,7 @@ inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const comp
 // \param diag \c 'U' in case of a unitriangular matrix, \c 'N' otherwise.
 // \return void
 // \exception std::invalid_argument Invalid non-square matrix provided.
+// \exception std::invalid_argument Invalid right-hand side vector provided.
 // \exception std::invalid_argument Invalid uplo argument provided.
 // \exception std::invalid_argument Invalid trans argument provided.
 // \exception std::invalid_argument Invalid diag argument provided.
@@ -323,7 +100,7 @@ inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const comp
 //  - \f$ A  *x=b \f$ if \a A is column-major
 //  - \f$ A^T*x=b \f$ if \a A is row-major
 //
-// In this context the triangular system matrix \a A is a n-by-n matrix and \a x and \a b are
+// In this context the triangular system matrix \a A is a \a n-by-\a n matrix and \a x and \a b are
 // n-dimensional vectors. Note that the function only works for general, non-adapted matrices with
 // \c float, \c double, \c complex<float>, or \c complex<double> element type. The attempt to call
 // the function with adaptors or matrices of any other element type results in a compile time error!
@@ -364,11 +141,11 @@ inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const comp
    using blaze::rowMajor;
    using blaze::columnVector;
 
-   DynamicMatrix<double,rowMajor>  A( 2UL, 2UL );  // The system matrix A
-   DynamicVector<double,columnVector> b( 2UL );    // The right-hand side vector b
+   DynamicMatrix<double,rowMajor> A( 2UL, 2UL );  // The system matrix A
+   DynamicVector<double,columnVector> b( 2UL );   // The right-hand side vector b
    // ... Initialization
 
-   DynamicMatrix<double,rowMajor>  D( A );     // Temporary matrix to be decomposed
+   DynamicMatrix<double,rowMajor>     D( A );  // Temporary matrix to be decomposed
    DynamicVector<double,columnVector> x( b );  // Temporary vector for the solution
 
    trtrs( D, x, 'L', 'N', 'N' );
@@ -381,8 +158,9 @@ inline void trtrs( char uplo, char trans, char diag, int n, int nrhs, const comp
 //
 //        http://www.netlib.org/lapack/explore-html/
 //
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
+// \note This function can only be used if a fitting LAPACK library, which supports this function,
+// is available and linked to the executable. Otherwise a call to this function will result in a
+// linker error.
 */
 template< typename MT  // Type of the system matrix
         , bool SO      // Storage order of the system matrix
@@ -390,15 +168,23 @@ template< typename MT  // Type of the system matrix
         , bool TF >    // Transpose flag of the right-hand side vector
 inline void trtrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo, char trans, char diag )
 {
-   using boost::numeric_cast;
-
    BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( MT );
-   BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( MT );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT::ElementType );
+   BLAZE_CONSTRAINT_MUST_HAVE_CONST_DATA_ACCESS( MT );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT> );
 
-   if( !isSquare( ~A ) ) {
+   BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( VT );
+   BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( VT );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( VT );
+   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( ElementType_t<MT>, ElementType_t<VT> );
+
+   if( !isSquare( *A ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid non-square matrix provided" );
+   }
+
+   if( (*b).size() != (*A).rows() ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid right-hand side vector provided" );
    }
 
    if( uplo != 'L' && uplo != 'U' ) {
@@ -413,21 +199,21 @@ inline void trtrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid diag argument provided" );
    }
 
-   int n   ( numeric_cast<int>( (~A).rows() ) );
-   int nrhs( 1 );
-   int lda ( numeric_cast<int>( (~A).spacing() ) );
-   int ldb ( numeric_cast<int>( (~b).size() ) );
-   int info( 0 );
+   blas_int_t n   ( numeric_cast<blas_int_t>( (*A).rows() ) );
+   blas_int_t nrhs( 1 );
+   blas_int_t lda ( numeric_cast<blas_int_t>( (*A).spacing() ) );
+   blas_int_t ldb ( numeric_cast<blas_int_t>( (*b).size() ) );
+   blas_int_t info( 0 );
 
    if( n == 0 ) {
       return;
    }
 
-   if( IsRowMajorMatrix<MT>::value ) {
+   if( IsRowMajorMatrix_v<MT> ) {
       ( uplo == 'L' )?( uplo = 'U' ):( uplo = 'L' );
    }
 
-   trtrs( uplo, trans, diag, n, nrhs, (~A).data(), lda, (~b).data(), ldb, &info );
+   trtrs( uplo, trans, diag, n, nrhs, (*A).data(), lda, (*b).data(), ldb, &info );
 
    BLAZE_INTERNAL_ASSERT( info == 0, "Invalid function argument" );
 }
@@ -446,10 +232,10 @@ inline void trtrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo
 // \param diag \c 'U' in case of a unitriangular matrix, \c 'N' otherwise.
 // \return void
 // \exception std::invalid_argument Invalid non-square matrix provided.
+// \exception std::invalid_argument Invalid right-hand side matrix provided.
 // \exception std::invalid_argument Invalid uplo argument provided.
 // \exception std::invalid_argument Invalid trans argument provided.
 // \exception std::invalid_argument Invalid diag argument provided.
-// \exception std::invalid_argument Matrix sizes do not match.
 //
 // This function uses the LAPACK getrs() functions to perform the substitution step to compute
 // the solution to the triangular system of linear equations:
@@ -459,11 +245,11 @@ inline void trtrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo
 //  - \f$ A  *X^T=B^T \f$ if \a A is column-major and \a B is row-major
 //  - \f$ A^T*X^T=B^T \f$ if both \a A and \a B are row-major
 //
-// In this context the triangular system matrix \a A is a n-by-n matrix and \a X and \a B are
-// either row-major m-by-n matrices or column-major n-by-m matrices. Note that the function only
-// works for general, non-adapted matrices with \c float, \c double, \c complex<float>, or
-// \c complex<double> element type. The attempt to call the function with adaptors or matrices
-// of any other element type results in a compile time error!
+// In this context the triangular system matrix \a A is a \a n-by-\a n matrix and \a X and
+// \a B are either row-major \a m-by-\a n matrices or column-major \a n-by-\a m matrices. Note
+// that the function only works for general, non-adapted matrices with \c float, \c double,
+// \c complex<float>, or \c complex<double> element type. The attempt to call the function with
+// adaptors or matrices of any other element type results in a compile time error!
 //
 // If the function exits successfully, the matrix \a B contains the solutions of the linear system
 // of equations. The function fails if ...
@@ -519,8 +305,9 @@ inline void trtrs( const DenseMatrix<MT,SO>& A, DenseVector<VT,TF>& b, char uplo
 //
 //        http://www.netlib.org/lapack/explore-html/
 //
-// \note This function can only be used if the fitting LAPACK library is available and linked to
-// the executable. Otherwise a call to this function will result in a linker error.
+// \note This function can only be used if a fitting LAPACK library, which supports this function,
+// is available and linked to the executable. Otherwise a call to this function will result in a
+// linker error.
 */
 template< typename MT1  // Type of the system matrix
         , bool SO1      // Storage order of the system matrix
@@ -529,20 +316,19 @@ template< typename MT1  // Type of the system matrix
 inline void trtrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B,
                    char uplo, char trans, char diag )
 {
-   using boost::numeric_cast;
-
    BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT1 );
-   BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( MT1 );
+   BLAZE_CONSTRAINT_MUST_HAVE_CONST_DATA_ACCESS( MT1 );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( MT1 );
+   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( ElementType_t<MT1> );
+
+   BLAZE_CONSTRAINT_MUST_NOT_BE_ADAPTOR_TYPE( MT2 );
    BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE( MT2 );
-   BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( MT1 );
    BLAZE_CONSTRAINT_MUST_HAVE_MUTABLE_DATA_ACCESS( MT2 );
-   BLAZE_CONSTRAINT_MUST_BE_BLAS_COMPATIBLE_TYPE( typename MT1::ElementType );
-   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( typename MT1::ElementType, typename MT2::ElementType );
+   BLAZE_CONSTRAINT_MUST_BE_CONTIGUOUS_TYPE( MT2 );
+   BLAZE_CONSTRAINT_MUST_BE_SAME_TYPE( ElementType_t<MT1>, ElementType_t<MT2> );
 
-   typedef typename MT1::ElementType  ET;
-
-   if( !isSquare( ~A ) ) {
+   if( !isSquare( *A ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid non-square matrix provided" );
    }
 
@@ -558,26 +344,26 @@ inline void trtrs( const DenseMatrix<MT1,SO1>& A, DenseMatrix<MT2,SO2>& B,
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid diag argument provided" );
    }
 
-   int n   ( numeric_cast<int>( (~A).rows()    ) );
-   int mrhs( numeric_cast<int>( SO2 ? (~B).rows() : (~B).columns() ) );
-   int nrhs( numeric_cast<int>( SO2 ? (~B).columns() : (~B).rows() ) );
-   int lda ( numeric_cast<int>( (~A).spacing() ) );
-   int ldb ( numeric_cast<int>( (~B).spacing() ) );
-   int info( 0 );
+   blas_int_t n   ( numeric_cast<blas_int_t>( (*A).rows()    ) );
+   blas_int_t mrhs( numeric_cast<blas_int_t>( SO2 ? (*B).rows() : (*B).columns() ) );
+   blas_int_t nrhs( numeric_cast<blas_int_t>( SO2 ? (*B).columns() : (*B).rows() ) );
+   blas_int_t lda ( numeric_cast<blas_int_t>( (*A).spacing() ) );
+   blas_int_t ldb ( numeric_cast<blas_int_t>( (*B).spacing() ) );
+   blas_int_t info( 0 );
 
    if( n != mrhs ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Matrix sizes do not match" );
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid right-hand side matrix provided" );
    }
 
    if( n == 0 ) {
       return;
    }
 
-   if( IsRowMajorMatrix<MT1>::value ) {
+   if( IsRowMajorMatrix_v<MT1> ) {
       ( uplo == 'L' )?( uplo = 'U' ):( uplo = 'L' );
    }
 
-   trtrs( uplo, trans, diag, n, nrhs, (~A).data(), lda, (~B).data(), ldb, &info );
+   trtrs( uplo, trans, diag, n, nrhs, (*A).data(), lda, (*B).data(), ldb, &info );
 
    BLAZE_INTERNAL_ASSERT( info == 0, "Invalid function argument" );
 }

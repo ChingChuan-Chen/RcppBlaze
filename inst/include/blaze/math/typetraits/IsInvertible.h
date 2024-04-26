@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsInvertible.h
 //  \brief Header file for the IsInvertible type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,13 +40,12 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/IsBlasCompatible.h>
+#include <blaze/math/typetraits/IsBLASCompatible.h>
 #include <blaze/math/typetraits/IsDenseMatrix.h>
+#include <blaze/math/typetraits/IsScalar.h>
 #include <blaze/math/typetraits/UnderlyingElement.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
-#include <blaze/util/typetraits/IsLongDouble.h>
+#include <blaze/util/IntegralConstant.h>
+#include <blaze/util/typetraits/IsFloatingPoint.h>
 
 
 namespace blaze {
@@ -58,38 +57,17 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsInvertible type trait.
-// \ingroup math_type_traits
-*/
-template< typename T >
-struct IsInvertibleHelper
-{
-   //**********************************************************************************************
-   typedef typename UnderlyingElement<T>::Type  UET;
-   //**********************************************************************************************
-
-   //**********************************************************************************************
-   enum { value = ( IsBlasCompatible<T>::value || IsLongDouble<T>::value ||
-                    ( IsDenseMatrix<T>::value && IsBlasCompatible<UET>::value ) ) };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time check for data types.
 // \ingroup math_type_traits
 //
-// This type trait tests whether or not the given template parameter is invertible. The type
-// is considered to be invertible if it is either BLAS compatible (i.e. \c float, \c double,
-// \c complex<float>, or \c complex<double>), <tt>long double</tt>, or any dense matrix type
-// with a BLAS compatible element type. If the given type is invertible, the \a value member
-// enumeration is set to 1, the nested type definition \a Type is \a TrueType, and the class
-// derives from \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType, and the
-// class derives from \a FalseType.
+// This type trait tests whether or not the given template parameter is invertible. The
+// type is considered to be invertible if it is a floating point type (\c float, \c double,
+// or <tt>long double</tt>), any other scalar type with a floating point element type (e.g.
+// \c complex<float>, \c complex<double> or <tt>complex<long double></tt>) or any dense matrix
+// type with a BLAS compatible element type. If the given type is invertible, the \a value
+// member constant is set to \a true, the nested type definition \a Type is \a TrueType, and
+// the class derives from \a TrueType. Otherwise \a value is set to \a false, \a Type is
+// \a FalseType, and the class derives from \a FalseType.
 
    \code
    blaze::IsInvertible< float >::value                  // Evaluates to 1
@@ -101,16 +79,28 @@ struct IsInvertibleHelper
    \endcode
 */
 template< typename T >
-struct IsInvertible : public IsInvertibleHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsInvertibleHelper<T>::value };
-   typedef typename IsInvertibleHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsInvertible
+   : public BoolConstant< ( IsScalar_v<T> && IsFloatingPoint_v< UnderlyingElement_t<T> > ) ||
+                          ( IsDenseMatrix_v<T> && IsBLASCompatible_v< UnderlyingElement_t<T> > ) >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsInvertible type trait.
+// \ingroup math_type_traits
+//
+// The IsInvertible_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsInvertible class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsInvertible<T>::value;
+   constexpr bool value2 = blaze::IsInvertible_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsInvertible_v = IsInvertible<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

@@ -3,7 +3,7 @@
 //  \file blaze/math/expressions/DVecDVecCrossExpr.h
 //  \brief Header file for the dense vector/dense vector cross product expression
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,27 +40,29 @@
 // Includes
 //*************************************************************************************************
 
+#include <utility>
+#include <blaze/math/Aliases.h>
 #include <blaze/math/constraints/ColumnVector.h>
 #include <blaze/math/constraints/DenseVector.h>
+#include <blaze/math/constraints/RequiresEvaluation.h>
+#include <blaze/math/constraints/TransposeFlag.h>
 #include <blaze/math/dense/Forward.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/Computation.h>
 #include <blaze/math/expressions/CrossExpr.h>
 #include <blaze/math/expressions/DenseVector.h>
 #include <blaze/math/expressions/Forward.h>
 #include <blaze/math/shims/Serial.h>
+#include <blaze/math/SIMD.h>
 #include <blaze/math/traits/CrossTrait.h>
-#include <blaze/math/traits/MultExprTrait.h>
-#include <blaze/math/traits/SubExprTrait.h>
 #include <blaze/math/typetraits/IsComputation.h>
 #include <blaze/math/typetraits/IsExpression.h>
+#include <blaze/math/typetraits/IsPadded.h>
 #include <blaze/math/typetraits/IsTemporary.h>
-#include <blaze/math/typetraits/Size.h>
+#include <blaze/system/MacroDisable.h>
 #include <blaze/util/Assert.h>
-#include <blaze/util/constraints/Reference.h>
-#include <blaze/util/Exception.h>
-#include <blaze/util/logging/FunctionTrace.h>
-#include <blaze/util/mpl/SizeT.h>
-#include <blaze/util/SelectType.h>
+#include <blaze/util/FunctionTrace.h>
+#include <blaze/util/mpl/If.h>
 #include <blaze/util/Types.h>
 
 
@@ -79,22 +81,23 @@ namespace blaze {
 // The DVecDVecCrossExpr class represents the compile time expression for cross products
 // between dense vectors.
 */
-template< typename VT1    // Type of the left-hand side dense vector
-        , typename VT2 >  // Type of the right-hand side dense vector
-class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false >
-                        , private CrossExpr
-                        , private Computation
+template< typename VT1  // Type of the left-hand side dense vector
+        , typename VT2  // Type of the right-hand side dense vector
+        , bool TF >     // Transpose flag
+class DVecDVecCrossExpr
+   : public CrossExpr< DenseVector< DVecDVecCrossExpr<VT1,VT2,TF>, TF > >
+   , private Computation
 {
  private:
    //**Type definitions****************************************************************************
-   typedef typename VT1::ResultType     RT1;  //!< Result type of the left-hand side dense vector expression.
-   typedef typename VT2::ResultType     RT2;  //!< Result type of the right-hand side dense vector expression.
-   typedef typename VT1::ReturnType     RN1;  //!< Return type of the left-hand side dense vector expression.
-   typedef typename VT2::ReturnType     RN2;  //!< Return type of the right-hand side dense vector expression.
-   typedef typename VT1::CompositeType  CT1;  //!< Composite type of the left-hand side dense vector expression.
-   typedef typename VT2::CompositeType  CT2;  //!< Composite type of the right-hand side dense vector expression.
-   typedef typename VT1::ElementType    ET1;  //!< Element type of the left-hand side dense vector expression.
-   typedef typename VT2::ElementType    ET2;  //!< Element type of the right-hand side dense vector expression.
+   using RT1 = ResultType_t<VT1>;     //!< Result type of the left-hand side dense vector expression.
+   using RT2 = ResultType_t<VT2>;     //!< Result type of the right-hand side dense vector expression.
+   using RN1 = ReturnType_t<VT1>;     //!< Return type of the left-hand side dense vector expression.
+   using RN2 = ReturnType_t<VT2>;     //!< Return type of the right-hand side dense vector expression.
+   using CT1 = CompositeType_t<VT1>;  //!< Composite type of the left-hand side dense vector expression.
+   using CT2 = CompositeType_t<VT2>;  //!< Composite type of the right-hand side dense vector expression.
+   using ET1 = ElementType_t<VT1>;    //!< Element type of the left-hand side dense vector expression.
+   using ET2 = ElementType_t<VT2>;    //!< Element type of the right-hand side dense vector expression.
    //**********************************************************************************************
 
    //**Return type evaluation**********************************************************************
@@ -104,45 +107,306 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
        or matrix, \a returnExpr will be set to \a false and the subscript operator will
        return it's result by value. Otherwise \a returnExpr will be set to \a true and
        the subscript operator may return it's result as an expression. */
-   enum { returnExpr = !IsTemporary<RN1>::value && !IsTemporary<RN2>::value };
+   static constexpr bool returnExpr = ( !IsTemporary_v<RN1> && !IsTemporary_v<RN2> );
 
    //! Expression return type for the subscript operator.
-   typedef typename SubExprTrait< typename MultExprTrait<RN1,RN2>::Type
-                                , typename MultExprTrait<RN1,RN2>::Type >::Type  ExprReturnType;
+   using ExprReturnType = decltype( ( std::declval<RN1>() * std::declval<RN2>() ) -
+                                    ( std::declval<RN1>() * std::declval<RN2>() ) );
    //**********************************************************************************************
 
  public:
    //**Type definitions****************************************************************************
-   typedef DVecDVecCrossExpr<VT1,VT2>          This;           //!< Type of this DVecDVecCrossExpr instance.
-   typedef typename CrossTrait<RT1,RT2>::Type  ResultType;     //!< Result type for expression template evaluations.
-   typedef typename ResultType::TransposeType  TransposeType;  //!< Transpose type for expression template evaluations.
-   typedef typename ResultType::ElementType    ElementType;    //!< Resulting element type.
+   //! Type of this DVecDVecCrossExpr instance.
+   using This = DVecDVecCrossExpr<VT1,VT2,TF>;
+
+   //! Base type of this DVecDVecCrossExpr instance.
+   using BaseType = CrossExpr< DenseVector<This,TF> >;
+
+   using ResultType    = CrossTrait_t<RT1,RT2>;        //!< Result type for expression template evaluations.
+   using TransposeType = TransposeType_t<ResultType>;  //!< Transpose type for expression template evaluations.
+   using ElementType   = ElementType_t<ResultType>;    //!< Resulting element type.
 
    //! Return type for expression template evaluations.
-   typedef const typename SelectType< returnExpr, ExprReturnType, ElementType >::Type  ReturnType;
+   using ReturnType = const If_t< returnExpr, ExprReturnType, ElementType >;
 
    //! Data type for composite expression templates.
-   typedef const ResultType  CompositeType;
+   using CompositeType = If_t< !RequiresEvaluation_v<VT1> && !RequiresEvaluation_v<VT2>
+                             , const DVecDVecCrossExpr&
+                             , const ResultType >;
 
    //! Composite type of the left-hand side dense vector expression.
-   typedef typename SelectType< IsExpression<VT1>::value, const VT1, const VT1& >::Type  LeftOperand;
+   using LeftOperand = If_t< IsExpression_v<VT1>, const VT1, const VT1& >;
 
    //! Composite type of the right-hand side dense vector expression.
-   typedef typename SelectType< IsExpression<VT2>::value, const VT2, const VT2& >::Type  RightOperand;
+   using RightOperand = If_t< IsExpression_v<VT2>, const VT2, const VT2& >;
 
    //! Composite type of the left-hand side dense vector expression.
-   typedef typename SelectType< IsComputation<VT1>::value, const StaticVector<ET1,3UL,false>, CT1 >::Type  LT;
+   using LT = If_t< IsComputation_v<VT1>, const StaticVector<ET1,3UL,TF>, CT1 >;
 
    //! Composite type of the right-hand side dense vector expression.
-   typedef typename SelectType< IsComputation<VT2>::value, const StaticVector<ET2,3UL,false>, CT2 >::Type  RT;
+   using RT = If_t< IsComputation_v<VT2>, const StaticVector<ET2,3UL,TF>, CT2 >;
+   //**********************************************************************************************
+
+   //**ConstIterator class definition**************************************************************
+   /*!\brief Iterator over the elements of the dense vector.
+   */
+   class ConstIterator
+   {
+    public:
+      //**Type definitions*************************************************************************
+      using IteratorCategory = std::random_access_iterator_tag;  //!< The iterator category.
+      using ValueType        = ElementType;                      //!< Type of the underlying elements.
+      using PointerType      = ElementType*;                     //!< Pointer return type.
+      using ReferenceType    = ElementType&;                     //!< Reference return type.
+      using DifferenceType   = ptrdiff_t;                        //!< Difference between two iterators.
+
+      // STL iterator requirements
+      using iterator_category = IteratorCategory;  //!< The iterator category.
+      using value_type = ValueType;                //!< Type of the underlying elements.
+      using pointer = PointerType;                 //!< Pointer return type.
+      using reference = ReferenceType;             //!< Reference return type.
+      using difference_type = DifferenceType;      //!< Difference between two iterators.
+      //*******************************************************************************************
+
+      //**Constructor******************************************************************************
+      /*!\brief Constructor for the ConstIterator class.
+      //
+      // \param left Iterator to the initial left-hand side element.
+      // \param right Iterator to the initial right-hand side element.
+      // \param index Index to the initial element of the cross product.
+      */
+      inline BLAZE_DEVICE_CALLABLE ConstIterator( const LeftOperand& left, const RightOperand& right, size_t index )
+         : left_ ( left  )  // Reference to the left-hand side operand
+         , right_( right )  // Reference to the right-hand side operand
+         , index_( index )  // Index to the current element of the cross product
+      {}
+      //*******************************************************************************************
+
+      //**Addition assignment operator*************************************************************
+      /*!\brief Addition assignment operator.
+      //
+      // \param inc The increment of the iterator.
+      // \return The incremented iterator.
+      */
+      inline BLAZE_DEVICE_CALLABLE ConstIterator& operator+=( size_t inc ) {
+         index_ += inc;
+         return *this;
+      }
+      //*******************************************************************************************
+
+      //**Subtraction assignment operator**********************************************************
+      /*!\brief Subtraction assignment operator.
+      //
+      // \param dec The decrement of the iterator.
+      // \return The decremented iterator.
+      */
+      inline BLAZE_DEVICE_CALLABLE ConstIterator& operator-=( size_t dec ) {
+         index_ -= dec;
+         return *this;
+      }
+      //*******************************************************************************************
+
+      //**Prefix increment operator****************************************************************
+      /*!\brief Pre-increment operator.
+      //
+      // \return Reference to the incremented iterator.
+      */
+      inline BLAZE_DEVICE_CALLABLE ConstIterator& operator++() {
+         ++index_;
+         return *this;
+      }
+      //*******************************************************************************************
+
+      //**Postfix increment operator***************************************************************
+      /*!\brief Post-increment operator.
+      //
+      // \return The previous position of the iterator.
+      */
+      inline BLAZE_DEVICE_CALLABLE const ConstIterator operator++( int ) {
+         return ConstIterator( left_, right_, ++index_ );
+      }
+      //*******************************************************************************************
+
+      //**Prefix decrement operator****************************************************************
+      /*!\brief Pre-decrement operator.
+      //
+      // \return Reference to the decremented iterator.
+      */
+      inline BLAZE_DEVICE_CALLABLE ConstIterator& operator--() {
+         --index_;
+         return *this;
+      }
+      //*******************************************************************************************
+
+      //**Postfix decrement operator***************************************************************
+      /*!\brief Post-decrement operator.
+      //
+      // \return The previous position of the iterator.
+      */
+      inline BLAZE_DEVICE_CALLABLE const ConstIterator operator--( int ) {
+         return ConstIterator( left_, right_, --index_ );
+      }
+      //*******************************************************************************************
+
+      //**Element access operator******************************************************************
+      /*!\brief Direct access to the element at the current iterator position.
+      //
+      // \return The resulting value.
+      */
+      inline BLAZE_DEVICE_CALLABLE ReturnType operator*() const {
+         BLAZE_INTERNAL_ASSERT( index_ < 3UL, "Invalid vector access index" );
+         if( index_ == 0UL )
+            return left_[1UL] * right_[2UL] - left_[2UL] * right_[1UL];
+         else if( index_ == 1UL )
+            return left_[2UL] * right_[0UL] - left_[0UL] * right_[2UL];
+         else
+            return left_[0UL] * right_[1UL] - left_[1UL] * right_[0UL];
+      }
+      //*******************************************************************************************
+
+      //**Load function****************************************************************************
+      /*!\brief Access to the SIMD elements of the vector.
+      //
+      // \return The resulting SIMD element.
+      */
+      inline auto load() const noexcept {
+         BLAZE_INTERNAL_ASSERT( index_ == 0UL, "Invalid vector access index" );
+         LT x( serial( left_  ) );  // Evaluation of the left-hand side dense vector operand
+         RT y( serial( right_ ) );  // Evaluation of the right-hand side dense vector operand
+         return setall( x[1UL] * y[2UL] - x[2UL] * y[1UL]
+                      , x[2UL] * y[0UL] - x[0UL] * y[2UL]
+                      , x[0UL] * y[1UL] - x[1UL] * y[0UL] );
+      }
+      //*******************************************************************************************
+
+      //**Equality operator************************************************************************
+      /*!\brief Equality comparison between two ConstIterator objects.
+      //
+      // \param rhs The right-hand side iterator.
+      // \return \a true if the iterators refer to the same element, \a false if not.
+      */
+      inline BLAZE_DEVICE_CALLABLE bool operator==( const ConstIterator& rhs ) const {
+         return index_ == rhs.index_;
+      }
+      //*******************************************************************************************
+
+      //**Inequality operator**********************************************************************
+      /*!\brief Inequality comparison between two ConstIterator objects.
+      //
+      // \param rhs The right-hand side iterator.
+      // \return \a true if the iterators don't refer to the same element, \a false if they do.
+      */
+      inline BLAZE_DEVICE_CALLABLE bool operator!=( const ConstIterator& rhs ) const {
+         return index_ != rhs.index_;
+      }
+      //*******************************************************************************************
+
+      //**Less-than operator***********************************************************************
+      /*!\brief Less-than comparison between two ConstIterator objects.
+      //
+      // \param rhs The right-hand side iterator.
+      // \return \a true if the left-hand side iterator is smaller, \a false if not.
+      */
+      inline BLAZE_DEVICE_CALLABLE bool operator<( const ConstIterator& rhs ) const {
+         return index_ < rhs.index_;
+      }
+      //*******************************************************************************************
+
+      //**Greater-than operator********************************************************************
+      /*!\brief Greater-than comparison between two ConstIterator objects.
+      //
+      // \param rhs The right-hand side iterator.
+      // \return \a true if the left-hand side iterator is greater, \a false if not.
+      */
+      inline BLAZE_DEVICE_CALLABLE bool operator>( const ConstIterator& rhs ) const {
+         return index_ > rhs.index_;
+      }
+      //*******************************************************************************************
+
+      //**Less-or-equal-than operator**************************************************************
+      /*!\brief Less-than comparison between two ConstIterator objects.
+      //
+      // \param rhs The right-hand side iterator.
+      // \return \a true if the left-hand side iterator is smaller or equal, \a false if not.
+      */
+      inline BLAZE_DEVICE_CALLABLE bool operator<=( const ConstIterator& rhs ) const {
+         return index_ <= rhs.index_;
+      }
+      //*******************************************************************************************
+
+      //**Greater-or-equal-than operator***********************************************************
+      /*!\brief Greater-than comparison between two ConstIterator objects.
+      //
+      // \param rhs The right-hand side iterator.
+      // \return \a true if the left-hand side iterator is greater or equal, \a false if not.
+      */
+      inline BLAZE_DEVICE_CALLABLE bool operator>=( const ConstIterator& rhs ) const {
+         return index_ >= rhs.index_;
+      }
+      //*******************************************************************************************
+
+      //**Subtraction operator*********************************************************************
+      /*!\brief Calculating the number of elements between two iterators.
+      //
+      // \param rhs The right-hand side iterator.
+      // \return The number of elements between the two iterators.
+      */
+      inline BLAZE_DEVICE_CALLABLE DifferenceType operator-( const ConstIterator& rhs ) const {
+         return index_ - rhs.index_;
+      }
+      //*******************************************************************************************
+
+      //**Addition operator************************************************************************
+      /*!\brief Addition between a ConstIterator and an integral value.
+      //
+      // \param it The iterator to be incremented.
+      // \param inc The number of elements the iterator is incremented.
+      // \return The incremented iterator.
+      */
+      friend inline BLAZE_DEVICE_CALLABLE const ConstIterator operator+( const ConstIterator& it, size_t inc ) {
+         return ConstIterator( it.left_, it.right_, it.index_ + inc );
+      }
+      //*******************************************************************************************
+
+      //**Addition operator************************************************************************
+      /*!\brief Addition between an integral value and a ConstIterator.
+      //
+      // \param inc The number of elements the iterator is incremented.
+      // \param it The iterator to be incremented.
+      // \return The incremented iterator.
+      */
+      friend inline BLAZE_DEVICE_CALLABLE const ConstIterator operator+( size_t inc, const ConstIterator& it ) {
+         return ConstIterator( it.left_, it.right_, it.index_ + inc );
+      }
+      //*******************************************************************************************
+
+      //**Subtraction operator*********************************************************************
+      /*!\brief Subtraction between a ConstIterator and an integral value.
+      //
+      // \param it The iterator to be decremented.
+      // \param dec The number of elements the iterator is decremented.
+      // \return The decremented iterator.
+      */
+      friend inline BLAZE_DEVICE_CALLABLE const ConstIterator operator-( const ConstIterator& it, size_t dec ) {
+         return ConstIterator( it.left_, it.right_, it.index_ - dec );
+      }
+      //*******************************************************************************************
+
+    private:
+      //**Member variables*************************************************************************
+      const LeftOperand&  left_;   //!< Iterator to the current left-hand side element.
+      const RightOperand& right_;  //!< Iterator to the current right-hand side element.
+      size_t              index_;  //!< Index to the current element of the cross product.
+      //*******************************************************************************************
+   };
    //**********************************************************************************************
 
    //**Compilation flags***************************************************************************
    //! Compilation switch for the expression template evaluation strategy.
-   enum { vectorizable = 0 };
+   static constexpr bool simdEnabled = ( SIMDTrait<ElementType>::size >= 3UL );
 
    //! Compilation switch for the expression template assignment strategy.
-   enum { smpAssignable = 0 };
+   static constexpr bool smpAssignable = false;
    //**********************************************************************************************
 
    //**Constructor*********************************************************************************
@@ -151,7 +415,7 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // \param lhs The left-hand side operand of the cross product expression.
    // \param rhs The right-hand side operand of the cross product expression.
    */
-   explicit inline DVecDVecCrossExpr( const VT1& lhs, const VT2& rhs )
+   inline DVecDVecCrossExpr( const VT1& lhs, const VT2& rhs ) noexcept
       : lhs_( lhs )  // Left-hand side dense vector of the cross product expression
       , rhs_( rhs )  // Right-hand side dense vector of the cross product expression
    {
@@ -193,12 +457,48 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    }
    //**********************************************************************************************
 
+   //**Load function*******************************************************************************
+   /*!\brief Access to the SIMD elements of the vector.
+   //
+   // \param index Access index. The index has to be in the range \f$[0..N-1]\f$.
+   // \return Reference to the accessed values.
+   */
+   BLAZE_ALWAYS_INLINE auto load( size_t index ) const noexcept {
+      BLAZE_INTERNAL_ASSERT( index == 0UL, "Invalid vector access index" );
+      LT x( serial( lhs_ ) );  // Evaluation of the left-hand side dense vector operand
+      RT y( serial( rhs_ ) );  // Evaluation of the right-hand side dense vector operand
+      return setall( x[1UL] * y[2UL] - x[2UL] * y[1UL]
+                   , x[2UL] * y[0UL] - x[0UL] * y[2UL]
+                   , x[0UL] * y[1UL] - x[1UL] * y[0UL] );
+   }
+   //**********************************************************************************************
+
+   //**Begin function******************************************************************************
+   /*!\brief Returns an iterator to the first non-zero element of the dense vector.
+   //
+   // \return Iterator to the first non-zero element of the dense vector.
+   */
+   inline ConstIterator begin() const {
+      return ConstIterator( lhs_, rhs_, 0UL );
+   }
+   //**********************************************************************************************
+
+   //**End function********************************************************************************
+   /*!\brief Returns an iterator just past the last non-zero element of the dense vector.
+   //
+   // \return Iterator just past the last non-zero element of the dense vector.
+   */
+   inline ConstIterator end() const {
+      return ConstIterator( lhs_, rhs_, 3UL );
+   }
+   //**********************************************************************************************
+
    //**Size function*******************************************************************************
    /*!\brief Returns the current size/dimension of the vector.
    //
    // \return The size of the vector.
    */
-   inline size_t size() const {
+   constexpr size_t size() const noexcept {
       return 3UL;
    }
    //**********************************************************************************************
@@ -208,7 +508,7 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    //
    // \return The left-hand side dense vector operand.
    */
-   inline LeftOperand leftOperand() const {
+   inline LeftOperand leftOperand() const noexcept {
       return lhs_;
    }
    //**********************************************************************************************
@@ -218,7 +518,7 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    //
    // \return The right-hand side dense vector operand.
    */
-   inline RightOperand rightOperand() const {
+   inline RightOperand rightOperand() const noexcept {
       return rhs_;
    }
    //**********************************************************************************************
@@ -230,7 +530,7 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // \return \a true in case the expression can alias, \a false otherwise.
    */
    template< typename T >
-   inline bool canAlias( const T* alias ) const {
+   inline bool canAlias( const T* alias ) const noexcept {
       return ( lhs_.canAlias( alias ) || rhs_.canAlias( alias ) );
    }
    //**********************************************************************************************
@@ -242,7 +542,7 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // \return \a true in case an alias effect is detected, \a false otherwise.
    */
    template< typename T >
-   inline bool isAliased( const T* alias ) const {
+   inline bool isAliased( const T* alias ) const noexcept {
       return ( lhs_.isAliased( alias ) || rhs_.isAliased( alias ) );
    }
    //**********************************************************************************************
@@ -266,19 +566,19 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // vector cross product expression to a dense vector.
    */
    template< typename VT >  // Type of the target dense vector
-   friend inline void assign( DenseVector<VT,false>& lhs, const DVecDVecCrossExpr& rhs )
+   friend inline void assign( DenseVector<VT,TF>& lhs, const DVecDVecCrossExpr& rhs )
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == 3UL, "Invalid vector size" );
-      BLAZE_INTERNAL_ASSERT( (~rhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*rhs).size() == 3UL, "Invalid vector size" );
 
       LT x( serial( rhs.lhs_ ) );  // Evaluation of the left-hand side dense vector operand
       RT y( serial( rhs.rhs_ ) );  // Evaluation of the right-hand side dense vector operand
 
-      (~lhs)[0] = x[1UL]*y[2UL] - x[2UL]*y[1UL];
-      (~lhs)[1] = x[2UL]*y[0UL] - x[0UL]*y[2UL];
-      (~lhs)[2] = x[0UL]*y[1UL] - x[1UL]*y[0UL];
+      (*lhs)[0] = x[1UL]*y[2UL] - x[2UL]*y[1UL];
+      (*lhs)[1] = x[2UL]*y[0UL] - x[0UL]*y[2UL];
+      (*lhs)[2] = x[0UL]*y[1UL] - x[1UL]*y[0UL];
    }
    /*! \endcond */
    //**********************************************************************************************
@@ -296,19 +596,19 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // vector cross product expression to a sparse vector.
    */
    template< typename VT >  // Type of the target sparse vector
-   friend inline void assign( SparseVector<VT,false>& lhs, const DVecDVecCrossExpr& rhs )
+   friend inline void assign( SparseVector<VT,TF>& lhs, const DVecDVecCrossExpr& rhs )
    {
       BLAZE_FUNCTION_TRACE;
 
       BLAZE_CONSTRAINT_MUST_BE_DENSE_VECTOR_TYPE ( ResultType );
-      BLAZE_CONSTRAINT_MUST_BE_COLUMN_VECTOR_TYPE( ResultType );
-      BLAZE_CONSTRAINT_MUST_BE_REFERENCE_TYPE( typename ResultType::CompositeType );
+      BLAZE_CONSTRAINT_MUST_BE_VECTOR_WITH_TRANSPOSE_FLAG( ResultType, TF );
+      BLAZE_CONSTRAINT_MUST_NOT_REQUIRE_EVALUATION( ResultType );
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == 3UL, "Invalid vector size" );
-      BLAZE_INTERNAL_ASSERT( (~rhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*rhs).size() == 3UL, "Invalid vector size" );
 
       const ResultType tmp( serial( rhs ) );
-      assign( ~lhs, tmp );
+      assign( *lhs, tmp );
    }
    /*! \endcond */
    //**********************************************************************************************
@@ -326,19 +626,19 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // dense vector cross product expression to a dense vector.
    */
    template< typename VT >  // Type of the target dense vector
-   friend inline void addAssign( DenseVector<VT,false>& lhs, const DVecDVecCrossExpr& rhs )
+   friend inline void addAssign( DenseVector<VT,TF>& lhs, const DVecDVecCrossExpr& rhs )
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == 3UL, "Invalid vector size" );
-      BLAZE_INTERNAL_ASSERT( (~rhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*rhs).size() == 3UL, "Invalid vector size" );
 
       LT x( serial( rhs.lhs_ ) );  // Evaluation of the left-hand side dense vector operand
       RT y( serial( rhs.rhs_ ) );  // Evaluation of the right-hand side dense vector operand
 
-      (~lhs)[0] += x[1UL]*y[2UL] - x[2UL]*y[1UL];
-      (~lhs)[1] += x[2UL]*y[0UL] - x[0UL]*y[2UL];
-      (~lhs)[2] += x[0UL]*y[1UL] - x[1UL]*y[0UL];
+      (*lhs)[0] += x[1UL]*y[2UL] - x[2UL]*y[1UL];
+      (*lhs)[1] += x[2UL]*y[0UL] - x[0UL]*y[2UL];
+      (*lhs)[2] += x[0UL]*y[1UL] - x[1UL]*y[0UL];
    }
    /*! \endcond */
    //**********************************************************************************************
@@ -360,19 +660,19 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // dense vector cross product expression to a dense vector.
    */
    template< typename VT >  // Type of the target dense vector
-   friend inline void subAssign( DenseVector<VT,false>& lhs, const DVecDVecCrossExpr& rhs )
+   friend inline void subAssign( DenseVector<VT,TF>& lhs, const DVecDVecCrossExpr& rhs )
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == 3UL, "Invalid vector size" );
-      BLAZE_INTERNAL_ASSERT( (~rhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*rhs).size() == 3UL, "Invalid vector size" );
 
       LT x( serial( rhs.lhs_ ) );  // Evaluation of the left-hand side dense vector operand
       RT y( serial( rhs.rhs_ ) );  // Evaluation of the right-hand side dense vector operand
 
-      (~lhs)[0] -= x[1UL]*y[2UL] - x[2UL]*y[1UL];
-      (~lhs)[1] -= x[2UL]*y[0UL] - x[0UL]*y[2UL];
-      (~lhs)[2] -= x[0UL]*y[1UL] - x[1UL]*y[0UL];
+      (*lhs)[0] -= x[1UL]*y[2UL] - x[2UL]*y[1UL];
+      (*lhs)[1] -= x[2UL]*y[0UL] - x[0UL]*y[2UL];
+      (*lhs)[2] -= x[0UL]*y[1UL] - x[1UL]*y[0UL];
    }
    /*! \endcond */
    //**********************************************************************************************
@@ -394,19 +694,19 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // vector-dense vector cross product expression to a dense vector.
    */
    template< typename VT >  // Type of the target dense vector
-   friend inline void multAssign( DenseVector<VT,false>& lhs, const DVecDVecCrossExpr& rhs )
+   friend inline void multAssign( DenseVector<VT,TF>& lhs, const DVecDVecCrossExpr& rhs )
    {
       BLAZE_FUNCTION_TRACE;
 
-      BLAZE_INTERNAL_ASSERT( (~lhs).size() == 3UL, "Invalid vector size" );
-      BLAZE_INTERNAL_ASSERT( (~rhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*rhs).size() == 3UL, "Invalid vector size" );
 
       LT x( serial( rhs.lhs_ ) );  // Evaluation of the left-hand side dense vector operand
       RT y( serial( rhs.rhs_ ) );  // Evaluation of the right-hand side dense vector operand
 
-      (~lhs)[0] *= x[1UL]*y[2UL] - x[2UL]*y[1UL];
-      (~lhs)[1] *= x[2UL]*y[0UL] - x[0UL]*y[2UL];
-      (~lhs)[2] *= x[0UL]*y[1UL] - x[1UL]*y[0UL];
+      (*lhs)[0] *= x[1UL]*y[2UL] - x[2UL]*y[1UL];
+      (*lhs)[1] *= x[2UL]*y[0UL] - x[0UL]*y[2UL];
+      (*lhs)[2] *= x[0UL]*y[1UL] - x[1UL]*y[0UL];
    }
    /*! \endcond */
    //**********************************************************************************************
@@ -415,12 +715,46 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    // No special implementation for the multiplication assignment to sparse vectors.
    //**********************************************************************************************
 
+   //**Division assignment to dense vectors********************************************************
+   /*! \cond BLAZE_INTERNAL */
+   /*!\brief Division assignment of a dense vector-dense vector cross product to a dense vector.
+   // \ingroup dense_vector
+   //
+   // \param lhs The target left-hand side dense vector.
+   // \param rhs The right-hand side cross product expression divisor.
+   // \return void
+   //
+   // This function implements the performance optimized division assignment of a dense vector-
+   // dense vector cross product expression to a dense vector.
+   */
+   template< typename VT >  // Type of the target dense vector
+   friend inline void divAssign( DenseVector<VT,TF>& lhs, const DVecDVecCrossExpr& rhs )
+   {
+      BLAZE_FUNCTION_TRACE;
+
+      BLAZE_INTERNAL_ASSERT( (*lhs).size() == 3UL, "Invalid vector size" );
+      BLAZE_INTERNAL_ASSERT( (*rhs).size() == 3UL, "Invalid vector size" );
+
+      LT x( serial( rhs.lhs_ ) );  // Evaluation of the left-hand side dense vector operand
+      RT y( serial( rhs.rhs_ ) );  // Evaluation of the right-hand side dense vector operand
+
+      (*lhs)[0] /= x[1UL]*y[2UL] - x[2UL]*y[1UL];
+      (*lhs)[1] /= x[2UL]*y[0UL] - x[0UL]*y[2UL];
+      (*lhs)[2] /= x[0UL]*y[1UL] - x[1UL]*y[0UL];
+   }
+   /*! \endcond */
+   //**********************************************************************************************
+
+   //**Division assignment to sparse vectors*******************************************************
+   // No special implementation for the division assignment to sparse vectors.
+   //**********************************************************************************************
+
    //**Compile time checks*************************************************************************
    /*! \cond BLAZE_INTERNAL */
    BLAZE_CONSTRAINT_MUST_BE_DENSE_VECTOR_TYPE ( VT1 );
    BLAZE_CONSTRAINT_MUST_BE_DENSE_VECTOR_TYPE ( VT2 );
-   BLAZE_CONSTRAINT_MUST_BE_COLUMN_VECTOR_TYPE( VT1 );
-   BLAZE_CONSTRAINT_MUST_BE_COLUMN_VECTOR_TYPE( VT2 );
+   BLAZE_CONSTRAINT_MUST_BE_VECTOR_WITH_TRANSPOSE_FLAG( VT1, TF );
+   BLAZE_CONSTRAINT_MUST_BE_VECTOR_WITH_TRANSPOSE_FLAG( VT2, TF );
    /*! \endcond */
    //**********************************************************************************************
 };
@@ -454,24 +788,26 @@ class DVecDVecCrossExpr : public DenseVector< DVecDVecCrossExpr<VT1,VT2>, false 
    \endcode
 
 // The operator returns an expression representing a dense vector of the higher-order element
-// type of the two involved vector element types \a T1::ElementType and \a T2::ElementType.
-// Both vector types \a T1 and \a T2 as well as the two element types \a T1::ElementType and
-// \a T2::ElementType have to be supported by the CrossTrait class template.\n
+// type of the two involved vector element types \a VT1::ElementType and \a VT2::ElementType.
+// Both vector types \a VT1 and \a VT2 as well as the two element types \a VT1::ElementType
+// and \a VT2::ElementType have to be supported by the CrossTrait class template.\n
 // In case the current sizes of the two given vectors don't match, a \a std::invalid_argument
 // is thrown.
 */
-template< typename T1    // Type of the left-hand side dense vector
-        , typename T2 >  // Type of the right-hand side dense vector
-inline const DVecDVecCrossExpr<T1,T2>
-   operator%( const DenseVector<T1,false>& lhs, const DenseVector<T2,false>& rhs )
+template< typename VT1  // Type of the left-hand side dense vector
+        , typename VT2  // Type of the right-hand side dense vector
+        , bool TF >     // Transpose flag
+inline decltype(auto)
+   operator%( const DenseVector<VT1,TF>& lhs, const DenseVector<VT2,TF>& rhs )
 {
    BLAZE_FUNCTION_TRACE;
 
-   if( (~lhs).size() != 3UL || (~rhs).size() != 3UL ) {
+   if( (*lhs).size() != 3UL || (*rhs).size() != 3UL ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid vector size for cross product" );
    }
 
-   return DVecDVecCrossExpr<T1,T2>( ~lhs, ~rhs );
+   using ReturnType = const DVecDVecCrossExpr<VT1,VT2,TF>;
+   return ReturnType( *lhs, *rhs );
 }
 //*************************************************************************************************
 
@@ -480,14 +816,15 @@ inline const DVecDVecCrossExpr<T1,T2>
 
 //=================================================================================================
 //
-//  SIZE SPECIALIZATIONS
+//  ISPADDED SPECIALIZATIONS
 //
 //=================================================================================================
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-template< typename VT1, typename VT2 >
-struct Size< DVecDVecCrossExpr<VT1,VT2> > : public SizeT<3UL>
+template< typename VT1, typename VT2, bool TF >
+struct IsPadded< DVecDVecCrossExpr<VT1,VT2,TF> >
+   : public BoolConstant< DVecDVecCrossExpr<VT1,VT2,TF>::simdEnabled >
 {};
 /*! \endcond */
 //*************************************************************************************************

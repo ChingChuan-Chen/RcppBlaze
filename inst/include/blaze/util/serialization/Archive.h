@@ -3,7 +3,7 @@
 //  \file blaze/util/serialization/Archive.h
 //  \brief Header file for the Archive class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,12 +40,10 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/DisableIf.h>
+#include <memory>
 #include <blaze/util/EnableIf.h>
-#include <blaze/util/NonCopyable.h>
 #include <blaze/util/Types.h>
 #include <blaze/util/typetraits/IsNumeric.h>
-#include <blaze/util/UniquePtr.h>
 
 
 namespace blaze {
@@ -138,35 +136,35 @@ namespace blaze {
 // for any possible destination.
 */
 template< typename Stream >  // Type of the bound stream
-class Archive : private NonCopyable
+class Archive
 {
  public:
    //**Constructors********************************************************************************
    /*!\name Constructors */
    //@{
-   explicit inline Archive();
-
-   template< typename A1 >
-   explicit inline Archive( const A1& a1 );
-
-   template< typename A1, typename A2 >
-   explicit inline Archive( const A1& a1, const A2& a2 );
-
-   template< typename A1, typename A2, typename A3 >
-   explicit inline Archive( const A1& a1, const A2& a2, const A3& a3 );
-
-   template< typename A1, typename A2, typename A3, typename A4 >
-   explicit inline Archive( const A1& a1, const A2& a2, const A3& a3, const A4& a4 );
-
-   template< typename A1, typename A2, typename A3, typename A4, typename A5 >
-   explicit inline Archive( const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5 );
+   template< typename... Args >
+   explicit inline Archive( Args&&... args );
 
    explicit inline Archive( Stream& stream );
+
+   Archive( const Archive& ) = delete;
+   Archive( Archive&& ) = default;
    //@}
    //**********************************************************************************************
 
    //**Destructor**********************************************************************************
-   // No explicitly declared destructor.
+   /*!\name Destructor */
+   //@{
+   ~Archive() = default;
+   //@}
+   //**********************************************************************************************
+
+   //**Assignment operators************************************************************************
+   /*!\name Assignment operators */
+   //@{
+   Archive& operator=( const Archive& ) = delete;
+   Archive& operator=( Archive&& ) = default;
+   //@}
    //**********************************************************************************************
 
    //**Operators***********************************************************************************
@@ -181,34 +179,30 @@ class Archive : private NonCopyable
    /*!\name Serialization functions */
    //@{
    template< typename T >
-   typename EnableIf< IsNumeric<T>, Archive& >::Type
-      operator<<( const T& value );
+   EnableIf_t< IsNumeric_v<T>, Archive& > operator<<( const T& value );
 
    template< typename T >
-   typename DisableIf< IsNumeric<T>, Archive& >::Type
-      operator<<( const T& value );
+   DisableIf_t< IsNumeric_v<T>, Archive& > operator<<( const T& value );
 
    template< typename T >
-   typename EnableIf< IsNumeric<T>, Archive& >::Type
-      operator>>( T& value );
+   EnableIf_t< IsNumeric_v<T>, Archive& > operator>>( T& value );
 
    template< typename T >
-   typename DisableIf< IsNumeric<T>, Archive& >::Type
-      operator>>( T& value );
+   DisableIf_t< IsNumeric_v<T>, Archive& > operator>>( T& value );
 
    template< typename Type >
-   inline typename EnableIf< IsNumeric<Type>, Archive& >::Type
-      write( const Type* array, size_t count );
+   inline EnableIf_t< IsNumeric_v<Type>, Archive& > write( const Type* array, size_t count );
 
    template< typename Type >
-   inline typename EnableIf< IsNumeric<Type>, Archive& >::Type
-      read ( Type* array, size_t count );
+   inline EnableIf_t< IsNumeric_v<Type>, Archive& > read ( Type* array, size_t count );
    //@}
    //**********************************************************************************************
 
    //**Utility functions***************************************************************************
    /*!\name Utility functions */
    //@{
+   inline typename Stream::int_type peek() const;
+
    inline bool good() const;
    inline bool eof () const;
    inline bool fail() const;
@@ -221,15 +215,14 @@ class Archive : private NonCopyable
    //**********************************************************************************************
 
  private:
-
    //**Member variables****************************************************************************
    /*!\name Member variables */
    //@{
-   UniquePtr<Stream> ptr_;  //!< The dynamically allocated stream resource.
-                            /*!< In case no stream is bound to the archive from the outside,
-                                 this smart pointer handles the internally allocated stream
-                                 resource. */
-   Stream& stream_;         //!< Reference to the bound stream.
+   std::unique_ptr<Stream> ptr_;  //!< The dynamically allocated stream resource.
+                                  /*!< In case no stream is bound to the archive from the outside,
+                                       this smart pointer handles the internally allocated stream
+                                       resource. */
+   Stream& stream_;               //!< Reference to the bound stream.
    //@}
    //**********************************************************************************************
 };
@@ -247,118 +240,16 @@ class Archive : private NonCopyable
 //*************************************************************************************************
 /*!\brief Creating an archive with an internal stream resource.
 //
-// This function creates a new archive with an internal stream resource, which is created based
-// on the given argument \a a1.
-*/
-template< typename Stream >  // Type of the bound stream
-inline Archive<Stream>::Archive()
-   : ptr_   ( new Stream() )  // The dynamically allocated stream resource
-   , stream_( *ptr_.get() )   // Reference to the bound stream
-{}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Creating an archive with an internal stream resource.
-//
-// \param a1 The first stream argument.
+// \param args The stream arguments.
 //
 // This function creates a new archive with an internal stream resource, which is created based
-// on the given argument \a a1.
+// on the given arguments \a args.
 */
-template< typename Stream >  // Type of the bound stream
-template< typename A1 >      // Type of the first argument
-inline Archive<Stream>::Archive( const A1& a1 )
-   : ptr_   ( new Stream( a1 ) )  // The dynamically allocated stream resource
-   , stream_( *ptr_.get() )       // Reference to the bound stream
-{}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Creating an archive with an internal stream resource.
-//
-// \param a1 The first stream argument.
-// \param a2 The second stream argument.
-//
-// This function creates a new archive with an internal stream resource, which is created based
-// on the given arguments \a a1 and \a a2.
-*/
-template< typename Stream >  // Type of the bound stream
-template< typename A1        // Type of the first argument
-        , typename A2 >      // Type of the second argument
-inline Archive<Stream>::Archive( const A1& a1, const A2& a2 )
-   : ptr_   ( new Stream( a1, a2 ) )  // The dynamically allocated stream resource
-   , stream_( *ptr_.get() )           // Reference to the bound stream
-{}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Creating an archive with an internal stream resource.
-//
-// \param a1 The first stream argument.
-// \param a2 The second stream argument.
-// \param a3 The third stream argument.
-//
-// This function creates a new archive with an internal stream resource, which is created based
-// on the given arguments \a a1, \a a2, and \a a3.
-*/
-template< typename Stream >  // Type of the bound stream
-template< typename A1        // Type of the first argument
-        , typename A2        // Type of the second argument
-        , typename A3 >      // Type of the third argument
-inline Archive<Stream>::Archive( const A1& a1, const A2& a2, const A3& a3 )
-   : ptr_   ( new Stream( a1, a2, a3 ) )  // The dynamically allocated stream resource
-   , stream_( *ptr_.get() )               // Reference to the bound stream
-{}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Creating an archive with an internal stream resource.
-//
-// \param a1 The first stream argument.
-// \param a2 The second stream argument.
-// \param a3 The third stream argument.
-// \param a4 The fourth stream argument.
-//
-// This function creates a new archive with an internal stream resource, which is created based
-// on the given arguments \a a1, \a a2, \a a3, and \a a4.
-*/
-template< typename Stream >  // Type of the bound stream
-template< typename A1        // Type of the first argument
-        , typename A2        // Type of the second argument
-        , typename A3        // Type of the third argument
-        , typename A4 >      // Type of the fourth argument
-inline Archive<Stream>::Archive( const A1& a1, const A2& a2, const A3& a3, const A4& a4 )
-   : ptr_   ( new Stream( a1, a2, a3, a4 ) )  // The dynamically allocated stream resource
-   , stream_( *ptr_.get() )                   // Reference to the bound stream
-{}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*!\brief Creating an archive with an internal stream resource.
-//
-// \param a1 The first stream argument.
-// \param a2 The second stream argument.
-// \param a3 The third stream argument.
-// \param a4 The fourth stream argument.
-// \param a5 The fifth stream argument.
-//
-// This function creates a new archive with an internal stream resource, which is created based
-// on the given arguments \a a1, \a a2, \a a3, \a a4, and \a a5.
-*/
-template< typename Stream >  // Type of the bound stream
-template< typename A1        // Type of the first argument
-        , typename A2        // Type of the second argument
-        , typename A3        // Type of the third argument
-        , typename A4        // Type of the fourth argument
-        , typename A5 >      // Type of the fifth argument
-inline Archive<Stream>::Archive( const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5 )
-   : ptr_   ( new Stream( a1, a2, a3, a4, a5 ) )  // The dynamically allocated stream resource
-   , stream_( *ptr_.get() )                       // Reference to the bound stream
+template< typename Stream >   // Type of the bound stream
+template< typename... Args >  // Types of the optional arguments
+inline Archive<Stream>::Archive( Args&&... args )
+   : ptr_   ( new Stream( std::forward<Args>( args )... ) )  // The dynamically allocated stream resource
+   , stream_( *ptr_.get() )                                  // Reference to the bound stream
 {}
 //*************************************************************************************************
 
@@ -437,10 +328,9 @@ inline bool Archive<Stream>::operator!() const
 */
 template< typename Stream >  // Type of the bound stream
 template< typename T >       // Type of the value to be serialized
-typename EnableIf< IsNumeric<T>, Archive<Stream>& >::Type
-   Archive<Stream>::operator<<( const T& value )
+EnableIf_t< IsNumeric_v<T>, Archive<Stream>& > Archive<Stream>::operator<<( const T& value )
 {
-   typedef typename Stream::char_type  CharType;
+   using CharType = typename Stream::char_type;
    stream_.write( reinterpret_cast<const CharType*>( &value ), sizeof( T ) );
    return *this;
 }
@@ -455,8 +345,7 @@ typename EnableIf< IsNumeric<T>, Archive<Stream>& >::Type
 */
 template< typename Stream >  // Type of the bound stream
 template< typename T >       // Type of the object to be serialized
-typename DisableIf< IsNumeric<T>, Archive<Stream>& >::Type
-   Archive<Stream>::operator<<( const T& value )
+DisableIf_t< IsNumeric_v<T>, Archive<Stream>& > Archive<Stream>::operator<<( const T& value )
 {
    serialize( *this, value );
    return *this;
@@ -472,10 +361,9 @@ typename DisableIf< IsNumeric<T>, Archive<Stream>& >::Type
 */
 template< typename Stream >  // Type of the bound stream
 template< typename T >       // Type of the value to be deserialized
-typename EnableIf< IsNumeric<T>, Archive<Stream>& >::Type
-   Archive<Stream>::operator>>( T& value )
+EnableIf_t< IsNumeric_v<T>, Archive<Stream>& > Archive<Stream>::operator>>( T& value )
 {
-   typedef typename Stream::char_type  CharType;
+   using CharType = typename Stream::char_type;
    stream_.read( reinterpret_cast<CharType*>( &value ), sizeof( T ) );
    return *this;
 }
@@ -490,8 +378,7 @@ typename EnableIf< IsNumeric<T>, Archive<Stream>& >::Type
 */
 template< typename Stream >  // Type of the bound stream
 template< typename T >       // Type of the value to be deserialized
-typename DisableIf< IsNumeric<T>, Archive<Stream>& >::Type
-   Archive<Stream>::operator>>( T& value )
+DisableIf_t< IsNumeric_v<T>, Archive<Stream>& > Archive<Stream>::operator>>( T& value )
 {
    deserialize( *this, value );
    return *this;
@@ -510,10 +397,10 @@ typename DisableIf< IsNumeric<T>, Archive<Stream>& >::Type
 */
 template< typename Stream >  // Type of the bound stream
 template< typename Type >    // Type of the array elements
-inline typename EnableIf< IsNumeric<Type>, Archive<Stream>& >::Type
+inline EnableIf_t< IsNumeric_v<Type>, Archive<Stream>& >
    Archive<Stream>::write( const Type* array, size_t count )
 {
-   typedef typename Stream::char_type  CharType;
+   using CharType = typename Stream::char_type;
    stream_.write( reinterpret_cast<const CharType*>( array ), count*sizeof(Type) );
    return *this;
 }
@@ -533,10 +420,10 @@ inline typename EnableIf< IsNumeric<Type>, Archive<Stream>& >::Type
 */
 template< typename Stream >  // Type of the bound stream
 template< typename Type >    // Type of the array elements
-inline typename EnableIf< IsNumeric<Type>, Archive<Stream>& >::Type
+inline EnableIf_t< IsNumeric_v<Type>, Archive<Stream>& >
    Archive<Stream>::read( Type* array, size_t count )
 {
-   typedef typename Stream::char_type  CharType;
+   using CharType = typename Stream::char_type;
    stream_.read( reinterpret_cast<CharType*>( array ), count*sizeof(Type) );
    return *this;
 }
@@ -550,6 +437,19 @@ inline typename EnableIf< IsNumeric<Type>, Archive<Stream>& >::Type
 //  UTILITY FUNCTIONS
 //
 //=================================================================================================
+
+//*************************************************************************************************
+/*!\brief Reads the next character from the input stream without extracting it.
+//
+// \return The next character contained in the input stream.
+*/
+template< typename Stream >  // Type of the bound stream
+inline typename Stream::int_type Archive<Stream>::peek() const
+{
+   return stream_.peek();
+}
+//*************************************************************************************************
+
 
 //*************************************************************************************************
 /*!\brief Checks if no error has occurred, i.e. I/O operations are available.

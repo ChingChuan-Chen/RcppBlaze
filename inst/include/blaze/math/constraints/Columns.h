@@ -3,7 +3,7 @@
 //  \file blaze/math/constraints/Columns.h
 //  \brief Constraint on the data type
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,57 +40,26 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/Columns.h>
-#include <blaze/util/constraints/ConstraintTest.h>
-#include <blaze/util/mpl/Equal.h>
-#include <blaze/util/mpl/Not.h>
-#include <blaze/util/mpl/Or.h>
-#include <blaze/util/mpl/SizeT.h>
-#include <blaze/util/Suffix.h>
+#include <blaze/math/typetraits/IsColumns.h>
 
 
 namespace blaze {
 
 //=================================================================================================
 //
-//  MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS CONSTRAINT
+//  MUST_BE_COLUMNS_TYPE CONSTRAINT
 //
 //=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup math_constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS_FAILED;
-template<> struct CONSTRAINT_MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
 
 //*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup math_constraints
 //
-// In case the number of columns of the two given matrix types \a T1 and \a T2 can be evaluated
-// at compile time and in case the number of columns is not equal, a compilation error is created.
-// Note that in case the number of columns of either of the two matrix types cannot be determined
-// no compilation error is created.
+// In case the given data type \a T is not a column selection (i.e. a view on selected columns of
+// a dense or sparse matrix), a compilation error is created.
 */
-#define BLAZE_CONSTRAINT_MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS(T1,T2) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS_FAILED< ( \
-            blaze::Or< blaze::Equal< blaze::Columns<T1>, blaze::SizeT<0UL> > \
-                     , blaze::Equal< blaze::Columns<T2>, blaze::SizeT<0UL> > \
-                     , blaze::Equal< blaze::Columns<T1>, blaze::Columns<T2> > \
-                     >::value ) >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS_TYPEDEF, __LINE__ )
+#define BLAZE_CONSTRAINT_MUST_BE_COLUMNS_TYPE(T) \
+   static_assert( ::blaze::IsColumns_v<T>, "Non-columns type detected" )
 //*************************************************************************************************
 
 
@@ -98,44 +67,19 @@ template<> struct CONSTRAINT_MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS_FAILED<true> { en
 
 //=================================================================================================
 //
-//  MUST_NOT_HAVE_EQUAL_NUMBER_OF_COLUMNS CONSTRAINT
+//  MUST_NOT_BE_COLUMNS_TYPE CONSTRAINT
 //
 //=================================================================================================
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup math_constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_NOT_HAVE_EQUAL_NUMBER_OF_COLUMNS_FAILED;
-template<> struct CONSTRAINT_MUST_NOT_HAVE_EQUAL_NUMBER_OF_COLUMNS_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
 
 //*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup math_constraints
 //
-// In case the number of columns of the two given matrix types \a T1 and \a T2 can be evaluated at
-// compile time and in case the number of columns is equal, a compilation error is created. Note
-// that in case the number of columns of either of the two matrix types cannot be determined no
-// compilation error is created.
+// In case the given data type \a T is a column selection type (i.e. a view on selected columns
+// of a dense or sparse matrix), a compilation error is created.
 */
-#define BLAZE_CONSTRAINT_MUST_NOT_HAVE_EQUAL_NUMBER_OF_COLUMNS(T1,T2) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_HAVE_EQUAL_NUMBER_OF_COLUMNS_FAILED< ( \
-            blaze::Or< blaze::Equal< blaze::Columns<T1>, blaze::SizeT<0UL> > \
-                     , blaze::Equal< blaze::Columns<T2>, blaze::SizeT<0UL> > \
-                     , blaze::Not< blaze::Equal< blaze::Columns<T1>, blaze::Columns<T2> > > \
-                     >::value ) >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_NOT_HAVE_EQUAL_NUMBER_OF_COLUMNS_TYPEDEF, __LINE__ )
+#define BLAZE_CONSTRAINT_MUST_NOT_BE_COLUMNS_TYPE(T) \
+   static_assert( !::blaze::IsColumns_v<T>, "Columns type detected" )
 //*************************************************************************************************
 
 } // namespace blaze

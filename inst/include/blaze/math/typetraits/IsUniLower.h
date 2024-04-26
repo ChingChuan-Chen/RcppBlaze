@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsUniLower.h
 //  \brief Header file for the IsUniLower type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,10 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/FalseType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/math/typetraits/IsExpression.h>
+#include <blaze/util/EnableIf.h>
+#include <blaze/util/IntegralConstant.h>
+#include <blaze/util/typetraits/IsSame.h>
 
 
 namespace blaze {
@@ -53,25 +55,52 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+template< typename T > struct IsUniLower;
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Auxiliary helper struct for the IsUniLower type trait.
+// \ingroup math_traits
+*/
+template< typename T
+        , typename = void >
+struct IsUniLowerHelper
+   : public FalseType
+{};
+
+template< typename T >  // Type of the operand
+struct IsUniLowerHelper< T, EnableIf_t< IsExpression_v<T> && !IsSame_v<T,typename T::ResultType> > >
+   : public IsUniLower< typename T::ResultType >::Type
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
 /*!\brief Compile time check for lower unitriangular matrices.
 // \ingroup math_type_traits
 //
 // This type trait tests whether or not the given template parameter is a lower unitriangular
 // matrix type (i.e. a matrix type that is guaranteed to be lower unitriangular at compile time).
-// In case the type is a lower unitriangular matrix type, the \a value member enumeration is set
-// to 1, the nested type definition \a Type is \a TrueType, and the class derives from \a TrueType.
-// Otherwise \a value is set to 0, \a Type is \a FalseType, and the class derives from \a FalseType.
+// In case the type is a lower unitriangular matrix type, the \a value member constant is set
+// to \a true, the nested type definition \a Type is \a TrueType, and the class derives from
+// \a TrueType. Otherwise \a value is set to \a false, \a Type is \a FalseType, and the class
+// derives from \a FalseType.
 
    \code
    using blaze::rowMajor;
 
-   typedef blaze::StaticMatrix<double,3UL,3UL,rowMajor>  StaticMatrixType;
-   typedef blaze::DynamicMatrix<float,rowMajor>          DynamicMatrixType;
-   typedef blaze::CompressedMatrix<int,rowMajor>         CompressedMatrixType;
+   using StaticMatrixType     = blaze::StaticMatrix<double,3UL,3UL,rowMajor>;
+   using DynamicMatrixType    = blaze::DynamicMatrix<float,rowMajor>;
+   using CompressedMatrixType = blaze::CompressedMatrix<int,rowMajor>;
 
-   typedef blaze::UniLowerMatrix<StaticMatrixType>      UniLowerStaticType;
-   typedef blaze::UniLowerMatrix<DynamicMatrixType>     UniLowerDynamicType;
-   typedef blaze::UniLowerMatrix<CompressedMatrixType>  UniLowerCompressedType;
+   using UniLowerStaticType     = blaze::UniLowerMatrix<StaticMatrixType>;
+   using UniLowerDynamicType    = blaze::UniLowerMatrix<DynamicMatrixType>;
+   using UniLowerCompressedType = blaze::UniLowerMatrix<CompressedMatrixType>;
 
    blaze::IsUniLower< UniLowerStaticType >::value        // Evaluates to 1
    blaze::IsUniLower< const UniLowerDynamicType >::Type  // Results in TrueType
@@ -82,16 +111,9 @@ namespace blaze {
    \endcode
 */
 template< typename T >
-struct IsUniLower : public FalseType
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = 0 };
-   typedef FalseType  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsUniLower
+   : public IsUniLowerHelper<T>
+{};
 //*************************************************************************************************
 
 
@@ -101,14 +123,9 @@ struct IsUniLower : public FalseType
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsUniLower< const T > : public IsUniLower<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsUniLower<T>::value };
-   typedef typename IsUniLower<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsUniLower< const T >
+   : public IsUniLower<T>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -119,14 +136,9 @@ struct IsUniLower< const T > : public IsUniLower<T>::Type
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsUniLower< volatile T > : public IsUniLower<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsUniLower<T>::value };
-   typedef typename IsUniLower<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsUniLower< volatile T >
+   : public IsUniLower<T>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -137,15 +149,28 @@ struct IsUniLower< volatile T > : public IsUniLower<T>::Type
 // \ingroup math_type_traits
 */
 template< typename T >
-struct IsUniLower< const volatile T > : public IsUniLower<T>::Type
-{
- public:
-   //**********************************************************************************************
-   enum { value = IsUniLower<T>::value };
-   typedef typename IsUniLower<T>::Type  Type;
-   //**********************************************************************************************
-};
+struct IsUniLower< const volatile T >
+   : public IsUniLower<T>
+{};
 /*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsUniLower type trait.
+// \ingroup math_type_traits
+//
+// The IsUniLower_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsUniLower class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsUniLower<T>::value;
+   constexpr bool value2 = blaze::IsUniLower_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsUniLower_v = IsUniLower<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

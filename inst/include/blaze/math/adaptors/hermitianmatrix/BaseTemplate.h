@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/hermitianmatrix/BaseTemplate.h
 //  \brief Header file for the implementation of the base template of the HeritianMatrix
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,9 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/IsColumnMajorMatrix.h>
 #include <blaze/math/typetraits/IsDenseMatrix.h>
-#include <blaze/util/typetraits/IsNumeric.h>
+#include <blaze/math/typetraits/StorageOrder.h>
 
 
 namespace blaze {
@@ -69,8 +68,12 @@ namespace blaze {
 // be specified via the first template parameter:
 
    \code
+   namespace blaze {
+
    template< typename MT, bool SO, bool DF >
    class HermitianMatrix;
+
+   } // namespace blaze
    \endcode
 
 //  - MT: specifies the type of the matrix to be adapted. HermitianMatrix can be used with any
@@ -221,7 +224,7 @@ namespace blaze {
    using blaze::HermitianMatrix;
    using blaze::rowMajor;
 
-	typedef std::complex<double>  cplx;
+	using cplx = std::complex<double>;
 
    // Default constructed, row-major 3x3 Hermitian compressed matrix
    HermitianMatrix< CompressedMatrix<cplx,rowMajor> > A( 3 );
@@ -262,16 +265,16 @@ namespace blaze {
    A.erase( 0, 2 );  // Erasing the elements (0,2) and (2,0)
 
    // Construction from a Hermitian dense matrix
-   StaticMatrix<cplx,3UL,3UL> B( (  3.0,  0.0 ), (  8.0, 2.0 ), ( -2.0,  2.0 ),
-                                 (  8.0,  1.0 ), (  0.0, 0.0 ), ( -1.0, -1.0 ),
-                                 ( -2.0, -2.0 ), ( -1.0, 1.0 ), (  4.0,  0.0 ) );
+   StaticMatrix<cplx,3UL,3UL> B( { { cplx(  3.0,  0.0 ), cplx(  8.0, 2.0 ), cplx( -2.0,  2.0 ) },
+                                   { cplx(  8.0,  1.0 ), cplx(  0.0, 0.0 ), cplx( -1.0, -1.0 ) },
+                                   { cplx( -2.0, -2.0 ), cplx( -1.0, 1.0 ), cplx(  4.0,  0.0 ) } } );
 
    HermitianMatrix< DynamicMatrix<double,rowMajor> > C( B );  // OK
 
    // Assignment of a non-Hermitian dense matrix
-	StaticMatrix<cplx,3UL,3UL> D( (  3.0, 0.0 ), (  7.0, 2.0 ), ( 3.0, 2.0 ),
-                                 (  8.0, 1.0 ), (  0.0, 0.0 ), ( 6.0, 4.0 ),
-                                 ( -2.0, 2.0 ), ( -1.0, 1.0 ), ( 4.0, 0.0 ) );
+	StaticMatrix<cplx,3UL,3UL> D( { { cplx(  3.0, 0.0 ), cplx(  7.0, 2.0 ), cplx( 3.0, 2.0 ) },
+                                   { cplx(  8.0, 1.0 ), cplx(  0.0, 0.0 ), cplx( 6.0, 4.0 ) },
+                                   { cplx( -2.0, 2.0 ), cplx( -1.0, 1.0 ), cplx( 4.0, 0.0 ) } } );
 
    C = D;  // Throws an exception; Hermitian invariant would be violated!
    \endcode
@@ -288,7 +291,7 @@ namespace blaze {
    using blaze::HermitianMatrix;
    using blaze::rowMajor;
 
-	typedef std::complex<double>  cplx;
+	using cplx = std::complex<double>;
 
    // Setup of the Hermitian matrix
    //
@@ -319,7 +322,7 @@ namespace blaze {
    using blaze::unpadded;
    using blaze::rowMajor;
 
-   typedef HermitianMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >  CustomHermitian;
+   using CustomHermitian = HermitianMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >;
 
    // Creating a 3x3 Hermitian custom matrix from a properly initialized array
    double array[9] = { 1.0, 2.0, 4.0,
@@ -340,7 +343,7 @@ namespace blaze {
    using blaze::DynamicMatrix;
    using blaze::HermtianMatrix;
 
-	typedef std::complex<double>  cplx;
+	using cplx = std::complex<double>;
 
    // Setup of the Hermitian matrix
    //
@@ -447,7 +450,7 @@ namespace blaze {
    using blaze::rowMajor;
    using blaze::columnMajor;
 
-	typedef complex<float>  cplx;
+	using cplx = complex<float>;
 
    DynamicMatrix<cplx,rowMajor> A( 3, 3 );
    CompressedMatrix<cplx,rowMajor> B( 3, 3 );
@@ -458,19 +461,23 @@ namespace blaze {
    HermitianMatrix< HybridMatrix<cplx,3UL,3UL,rowMajor> > E;
    HermitianMatrix< StaticMatrix<cplx,3UL,3UL,columnMajor> > F;
 
-   E = A + B;     // Matrix addition and assignment to a row-major Hermitian matrix
-   F = C - D;     // Matrix subtraction and assignment to a column-major Hermitian matrix
-   F = A * D;     // Matrix multiplication between a dense and a sparse matrix
+   E = A + B;     // Matrix addition and assignment to a row-major Hermitian matrix (includes runtime check)
+   F = C - D;     // Matrix subtraction and assignment to a column-major Hermitian matrix (only compile time check)
+   F = A * D;     // Matrix multiplication between a dense and a sparse matrix (includes runtime check)
 
    C *= 2.0;      // In-place scaling of matrix C
-   E  = 2.0 * B;  // Scaling of matrix B
-   F  = C * 2.0;  // Scaling of matrix C
+   E  = 2.0 * B;  // Scaling of matrix B (includes runtime check)
+   F  = C * 2.0;  // Scaling of matrix C (only compile time check)
 
-   E += A - B;    // Addition assignment
-   F -= C + D;    // Subtraction assignment
-   F *= A * D;    // Multiplication assignment
+   E += A - B;    // Addition assignment (includes runtime check)
+   F -= C + D;    // Subtraction assignment (only compile time check)
+   F *= A * D;    // Multiplication assignment (includes runtime check)
    \endcode
 
+// Note that it is possible to assign any kind of matrix to a Hermitian matrix. In case the matrix
+// to be assigned is not Hermitian at compile time, a runtime check is performed.
+//
+//
 // \n \section hermitianmatrix_performance Performance Considerations
 //
 // When the Hermitian property of a matrix is known beforehands using the HermitianMatrix adaptor
@@ -554,13 +561,10 @@ namespace blaze {
    \code
    using blaze::DynamicMatrix;
    using blaze::HermitianMatrix;
-   using blaze::rowMajor;
    using blaze::columnMajor;
 
-   typedef HermitianMatrix< DynamicMatrix<double,columnMajor> >  DynamicHermitian;
-
-   DynamicHermitian A( 10UL );  // Both Hermitian and symmetric
-   DenseRow<DynamicHermitian> row5 = row( A, 5UL );
+   HermitianMatrix< DynamicMatrix<double,columnMajor> > A( 10UL );  // Both Hermitian and symmetric
+   auto row5 = row( A, 5UL );
    \endcode
 
 // Usually, a row view on a column-major matrix results in a considerable performance decrease in
@@ -605,9 +609,9 @@ namespace blaze {
    C = A * B;  // Is not guaranteed to result in a Hermitian matrix; some runtime overhead
    \endcode
 */
-template< typename MT                               // Type of the adapted matrix
-        , bool SO = IsColumnMajorMatrix<MT>::value  // Storage order of the adapted matrix
-        , bool DF = IsDenseMatrix<MT>::value >      // Density flag
+template< typename MT                      // Type of the adapted matrix
+        , bool SO = StorageOrder_v<MT>     // Storage order of the adapted matrix
+        , bool DF = IsDenseMatrix_v<MT> >  // Density flag
 class HermitianMatrix
 {};
 //*************************************************************************************************

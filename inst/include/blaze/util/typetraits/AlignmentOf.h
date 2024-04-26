@@ -3,7 +3,7 @@
 //  \file blaze/util/typetraits/AlignmentOf.h
 //  \brief Header file for the AlignmentOf type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,9 +40,10 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/alignment_of.hpp>
+#include <type_traits>
 #include <blaze/system/Vectorization.h>
 #include <blaze/util/Complex.h>
+#include <blaze/util/Types.h>
 #include <blaze/util/typetraits/IsVectorizable.h>
 
 
@@ -53,6 +54,108 @@ namespace blaze {
 //  CLASS DEFINITION
 //
 //=================================================================================================
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Auxiliary helper struct for the AlignmentOf type trait.
+// \ingroup type_traits
+*/
+template< typename T >
+struct AlignmentOfHelper
+{
+ private:
+   //**********************************************************************************************
+   static constexpr size_t defaultAlignment = std::alignment_of<T>::value;
+   //**********************************************************************************************
+
+ public:
+   //**********************************************************************************************
+   static constexpr size_t value =
+#if BLAZE_AVX512BW_MODE
+      ( IsVectorizable_v<T> )?( 64UL ):( defaultAlignment );
+#elif BLAZE_AVX512F_MODE || BLAZE_MIC_MODE
+      ( IsVectorizable_v<T> )?( sizeof(T) >= 4UL ? 64UL : 32UL ):( defaultAlignment );
+#elif BLAZE_AVX2_MODE
+      ( IsVectorizable_v<T> )?( 32UL ):( defaultAlignment );
+#elif BLAZE_SSE2_MODE
+      ( IsVectorizable_v<T> )?( 16UL ):( defaultAlignment );
+#else
+      defaultAlignment;
+#endif
+   //**********************************************************************************************
+};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of \c AlignmentOfHelper for 'float'.
+// \ingroup type_traits
+*/
+template<>
+struct AlignmentOfHelper<float>
+{
+ public:
+   //**********************************************************************************************
+   static constexpr size_t value =
+#if BLAZE_AVX512F_MODE || BLAZE_MIC_MODE
+      64UL;
+#elif BLAZE_AVX_MODE
+      32UL;
+#elif BLAZE_SSE_MODE
+      16UL;
+#else
+      std::alignment_of<float>::value;
+#endif
+   //**********************************************************************************************
+};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of \c AlignmentOfHelper for 'double'.
+// \ingroup type_traits
+*/
+template<>
+struct AlignmentOfHelper<double>
+{
+ public:
+   //**********************************************************************************************
+   static constexpr size_t value =
+#if BLAZE_AVX512F_MODE || BLAZE_MIC_MODE
+      64UL;
+#elif BLAZE_AVX_MODE
+      32UL;
+#elif BLAZE_SSE2_MODE
+      16UL;
+#else
+      std::alignment_of<double>::value;
+#endif
+   //**********************************************************************************************
+};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of \c AlignmentOfHelper for 'complex<T>'.
+// \ingroup type_traits
+*/
+template< typename T >
+struct AlignmentOfHelper< complex<T> >
+{
+ public:
+   //**********************************************************************************************
+   static constexpr size_t value = AlignmentOfHelper<T>::value;
+   //**********************************************************************************************
+};
+/*! \endcond */
+//*************************************************************************************************
+
 
 //*************************************************************************************************
 /*!\brief Evaluation of the required alignment of the given data type.
@@ -75,170 +178,65 @@ namespace blaze {
 */
 template< typename T >
 struct AlignmentOf
-{
- public:
-   //**Member enumerations*************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-#if BLAZE_MIC_MODE
-   enum { value = ( IsVectorizable<T>::value )?( 64UL ):( boost::alignment_of<T>::value ) };
-#elif BLAZE_AVX2_MODE
-   enum { value = ( IsVectorizable<T>::value )?( 32UL ):( boost::alignment_of<T>::value ) };
-#elif BLAZE_SSE2_MODE
-   enum { value = ( IsVectorizable<T>::value )?( 16UL ):( boost::alignment_of<T>::value ) };
-#else
-   enum { value = boost::alignment_of<T>::value };
-#endif
-   /*! \endcond */
-   //**********************************************************************************************
-};
+   : public IntegralConstant<size_t,AlignmentOfHelper<T>::value>
+{};
 //*************************************************************************************************
 
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Specialization of AlignmentOf for 'float'.
-// \ingroup type_traits
-*/
-template<>
-struct AlignmentOf<float>
-{
- public:
-   //**Member enumerations*************************************************************************
-#if BLAZE_MIC_MODE
-   enum { value = 64UL };
-#elif BLAZE_AVX_MODE
-   enum { value = 32UL };
-#elif BLAZE_SSE_MODE
-   enum { value = 16UL };
-#else
-   enum { value = boost::alignment_of<float>::value };
-#endif
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Specialization of AlignmentOf for 'double'.
-// \ingroup type_traits
-*/
-template<>
-struct AlignmentOf<double>
-{
- public:
-   //**Member enumerations*************************************************************************
-#if BLAZE_MIC_MODE
-   enum { value = 64UL };
-#elif BLAZE_AVX_MODE
-   enum { value = 32UL };
-#elif BLAZE_SSE_MODE
-   enum { value = 16UL };
-#else
-   enum { value = boost::alignment_of<double>::value };
-#endif
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Specialization of AlignmentOf for 'complex<float>'.
-// \ingroup type_traits
-*/
-template<>
-struct AlignmentOf< complex<float> >
-{
- public:
-   //**Member enumerations*************************************************************************
-#if BLAZE_MIC_MODE
-   enum { value = 64UL };
-#elif BLAZE_AVX_MODE
-   enum { value = 32UL };
-#elif BLAZE_SSE_MODE
-   enum { value = 16UL };
-#else
-   enum { value = boost::alignment_of< complex<float> >::value };
-#endif
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Specialization of AlignmentOf for 'complex<double>'.
-// \ingroup type_traits
-*/
-template<>
-struct AlignmentOf< complex<double> >
-{
- public:
-   //**Member enumerations*************************************************************************
-#if BLAZE_MIC_MODE
-   enum { value = 64UL };
-#elif BLAZE_AVX_MODE
-   enum { value = 32UL };
-#elif BLAZE_SSE_MODE
-   enum { value = 16UL };
-#else
-   enum { value = boost::alignment_of< complex<double> >::value };
-#endif
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Partial specialization of AlignmentOf for 'const' data types.
+/*!\brief Partial specialization of \c AlignmentOf for 'const' data types.
 // \ingroup type_traits
 */
 template< typename T >
 struct AlignmentOf< const T >
-{
-   //**Member enumerations*************************************************************************
-   enum { value = AlignmentOf<T>::value };
-   //**********************************************************************************************
-};
+   : public IntegralConstant<size_t,AlignmentOfHelper<T>::value>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Partial specialization of AlignmentOf for 'volatile' data types.
+/*!\brief Partial specialization of \c AlignmentOf for 'volatile' data types.
 // \ingroup type_traits
 */
 template< typename T >
 struct AlignmentOf< volatile T >
-{
-   //**Member enumerations*************************************************************************
-   enum { value = AlignmentOf<T>::value };
-   //**********************************************************************************************
-};
+   : public IntegralConstant<size_t,AlignmentOfHelper<T>::value>
+{};
 /*! \endcond */
 //*************************************************************************************************
 
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Partial specialization of AlignmentOf for 'const volatile' data types.
+/*!\brief Partial specialization of \c AlignmentOf for 'const volatile' data types.
 // \ingroup type_traits
 */
 template< typename T >
 struct AlignmentOf< const volatile T >
-{
-   //**Member enumerations*************************************************************************
-   enum { value = AlignmentOf<T>::value };
-   //**********************************************************************************************
-};
+   : public IntegralConstant<size_t,AlignmentOfHelper<T>::value>
+{};
 /*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the AlignmentOf type trait.
+// \ingroup type_traits
+//
+// The AlignmentOf_v variable template provides a convenient shortcut to access the nested
+// \a value of the AlignmentOf class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr size_t value1 = blaze::AlignmentOf<T>::value;
+   constexpr size_t value2 = blaze::AlignmentOf_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr size_t AlignmentOf_v = AlignmentOf<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

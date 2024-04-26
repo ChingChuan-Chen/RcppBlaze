@@ -4,14 +4,20 @@
 \alias{RcppBlaze.package.skeleton}
 \title{Create a skeleton for a new package that intends to use RcppBlaze}
 \usage{
-RcppBlaze.package.skeleton(name = "anRpackage", list = character(),
-  environment = .GlobalEnv, path = ".", force = FALSE,
-  code_files = character(), example_code = TRUE)
+RcppBlaze.package.skeleton(
+  name = "anRpackage",
+  list = character(),
+  environment = .GlobalEnv,
+  path = ".",
+  force = FALSE,
+  code_files = character(),
+  example_code = TRUE
+)
 }
 \arguments{
 \item{name, list, environment, path, force, code_files}{see \link[utils]{package.skeleton}.}
 
-\item{example_code}{If TRUE, example c++ code using RcppBlaze is added to the package.}
+\item{example_code}{If \code{TRUE}, example c++ code using \strong{RcppBlaze} is added to the package.}
 }
 \value{
 Nothing, used for its side effects.
@@ -26,8 +32,8 @@ which it executes first.
 In addition to \link[utils]{package.skeleton} :
 
 The \samp{DESCRIPTION} file gains a Depends line requesting that
-the package depends on Rcpp and RcppArmadillo and
-a LinkingTo line so that the package finds Rcpp and RcppArmadillo header files.
+the package depends on Rcpp and RcppBlaze and
+a LinkingTo line so that the package finds Rcpp and RcppBlaze header files.
 
 The \samp{NAMESPACE}, if any, gains a \code{useDynLib} directive.
 
@@ -46,7 +52,7 @@ eventually by removed from the generated package.
 }
 \examples{
 \dontrun{
-RcppBlaze.package.skeleton( "foobar" )
+RcppBlaze.package.skeleton("foobar")
 }
 }
 \references{

@@ -3,7 +3,7 @@
 //  \file blaze/math/Forward.h
 //  \brief Header file for all forward declarations of the math module
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -42,6 +42,7 @@
 
 #include <blaze/math/adaptors/Forward.h>
 #include <blaze/math/dense/Forward.h>
+#include <blaze/math/functors/Forward.h>
 #include <blaze/math/sparse/Forward.h>
 #include <blaze/math/views/Forward.h>
 

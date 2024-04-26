@@ -3,7 +3,7 @@
 //  \file blaze/system/Blocking.h
 //  \brief Header file for kernel specific block sizes
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -55,45 +55,30 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-const size_t DEFAULT_BLOCK_SIZE = 16UL;
+constexpr size_t DEFAULT_BLOCK_SIZE = 256UL;
 
-const size_t DMATDMATMULT_DEFAULT_IBLOCK_SIZE =  64UL;
-const size_t DMATDMATMULT_DEFAULT_JBLOCK_SIZE = 128UL;
-const size_t DMATDMATMULT_DEFAULT_KBLOCK_SIZE = 128UL;
-
-const size_t TDMATTDMATMULT_DEFAULT_IBLOCK_SIZE = 128UL;
-const size_t TDMATTDMATMULT_DEFAULT_JBLOCK_SIZE =  64UL;
-const size_t TDMATTDMATMULT_DEFAULT_KBLOCK_SIZE = 128UL;
+constexpr size_t MMM_DEFAULT_OUTER_BLOCK_SIZE = 112UL;
+constexpr size_t MMM_DEFAULT_INNER_BLOCK_SIZE =  96UL;
 /*! \endcond */
 //*************************************************************************************************
 
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-const size_t DEBUG_BLOCK_SIZE = 8UL;
+constexpr size_t DEBUG_BLOCK_SIZE = 8UL;
 
-const size_t DMATDMATMULT_DEBUG_IBLOCK_SIZE =  8UL;
-const size_t DMATDMATMULT_DEBUG_JBLOCK_SIZE = 64UL;
-const size_t DMATDMATMULT_DEBUG_KBLOCK_SIZE =  8UL;
-
-const size_t TDMATTDMATMULT_DEBUG_IBLOCK_SIZE = 64UL;
-const size_t TDMATTDMATMULT_DEBUG_JBLOCK_SIZE =  8UL;
-const size_t TDMATTDMATMULT_DEBUG_KBLOCK_SIZE =  8UL;
+constexpr size_t MMM_DEBUG_OUTER_BLOCK_SIZE = 16UL;
+constexpr size_t MMM_DEBUG_INNER_BLOCK_SIZE = 16UL;
 /*! \endcond */
 //*************************************************************************************************
 
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-const size_t BLOCK_SIZE = ( BLAZE_DEBUG_MODE ? DEBUG_BLOCK_SIZE : DEFAULT_BLOCK_SIZE );
+constexpr size_t BLOCK_SIZE = ( BLAZE_DEBUG_MODE ? DEBUG_BLOCK_SIZE : DEFAULT_BLOCK_SIZE );
 
-const size_t DMATDMATMULT_JBLOCK_SIZE = ( BLAZE_DEBUG_MODE ? DMATDMATMULT_DEBUG_JBLOCK_SIZE : DMATDMATMULT_DEFAULT_JBLOCK_SIZE );
-const size_t DMATDMATMULT_IBLOCK_SIZE = ( BLAZE_DEBUG_MODE ? DMATDMATMULT_DEBUG_IBLOCK_SIZE : DMATDMATMULT_DEFAULT_IBLOCK_SIZE );
-const size_t DMATDMATMULT_KBLOCK_SIZE = ( BLAZE_DEBUG_MODE ? DMATDMATMULT_DEBUG_KBLOCK_SIZE : DMATDMATMULT_DEFAULT_KBLOCK_SIZE );
-
-const size_t TDMATTDMATMULT_IBLOCK_SIZE = ( BLAZE_DEBUG_MODE ? TDMATTDMATMULT_DEBUG_IBLOCK_SIZE : TDMATTDMATMULT_DEFAULT_IBLOCK_SIZE );
-const size_t TDMATTDMATMULT_JBLOCK_SIZE = ( BLAZE_DEBUG_MODE ? TDMATTDMATMULT_DEBUG_JBLOCK_SIZE : TDMATTDMATMULT_DEFAULT_JBLOCK_SIZE );
-const size_t TDMATTDMATMULT_KBLOCK_SIZE = ( BLAZE_DEBUG_MODE ? TDMATTDMATMULT_DEBUG_KBLOCK_SIZE : TDMATTDMATMULT_DEFAULT_KBLOCK_SIZE );
+constexpr size_t MMM_OUTER_BLOCK_SIZE = ( BLAZE_DEBUG_MODE ? MMM_DEBUG_OUTER_BLOCK_SIZE : MMM_DEFAULT_OUTER_BLOCK_SIZE );
+constexpr size_t MMM_INNER_BLOCK_SIZE = ( BLAZE_DEBUG_MODE ? MMM_DEBUG_INNER_BLOCK_SIZE : MMM_DEFAULT_INNER_BLOCK_SIZE );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -114,13 +99,8 @@ namespace {
 
 BLAZE_STATIC_ASSERT( blaze::BLOCK_SIZE >= 4UL );
 
-BLAZE_STATIC_ASSERT( blaze::DMATDMATMULT_IBLOCK_SIZE >=  4UL );
-BLAZE_STATIC_ASSERT( blaze::DMATDMATMULT_JBLOCK_SIZE >= 64UL && blaze::DMATDMATMULT_JBLOCK_SIZE % 32UL == 0UL );
-BLAZE_STATIC_ASSERT( blaze::DMATDMATMULT_KBLOCK_SIZE >=  4UL );
-
-BLAZE_STATIC_ASSERT( blaze::TDMATTDMATMULT_IBLOCK_SIZE >= 64UL && blaze::TDMATTDMATMULT_IBLOCK_SIZE % 32UL == 0UL );
-BLAZE_STATIC_ASSERT( blaze::TDMATTDMATMULT_JBLOCK_SIZE >=  4UL );
-BLAZE_STATIC_ASSERT( blaze::TDMATTDMATMULT_KBLOCK_SIZE >=  4UL );
+BLAZE_STATIC_ASSERT( blaze::MMM_OUTER_BLOCK_SIZE >= 16UL && blaze::MMM_OUTER_BLOCK_SIZE % 16UL == 0UL );
+BLAZE_STATIC_ASSERT( blaze::MMM_INNER_BLOCK_SIZE >= 16UL && blaze::MMM_INNER_BLOCK_SIZE % 16UL == 0UL );
 
 }
 /*! \endcond */

@@ -3,7 +3,7 @@
 //  \file blaze/math/constraints/TransExpr.h
 //  \brief Constraint on the data type
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -41,8 +41,6 @@
 //*************************************************************************************************
 
 #include <blaze/math/typetraits/IsTransExpr.h>
-#include <blaze/util/constraints/ConstraintTest.h>
-#include <blaze/util/Suffix.h>
 
 
 namespace blaze {
@@ -54,22 +52,6 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup math_constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_BE_TRANSEXPR_TYPE_FAILED;
-template<> struct CONSTRAINT_MUST_BE_TRANSEXPR_TYPE_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup math_constraints
 //
@@ -77,10 +59,7 @@ template<> struct CONSTRAINT_MUST_BE_TRANSEXPR_TYPE_FAILED<true> { enum { value 
 // the TransExpr base class), a compilation error is created.
 */
 #define BLAZE_CONSTRAINT_MUST_BE_TRANSEXPR_TYPE(T) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_BE_TRANSEXPR_TYPE_FAILED< blaze::IsTransExpr<T>::value >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_BE_TRANSEXPR_TYPE_TYPEDEF, __LINE__ )
+   static_assert( ::blaze::IsTransExpr_v<T>, "Non-transposition expression type detected" )
 //*************************************************************************************************
 
 
@@ -93,22 +72,6 @@ template<> struct CONSTRAINT_MUST_BE_TRANSEXPR_TYPE_FAILED<true> { enum { value 
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Compile time constraint.
-// \ingroup math_constraints
-//
-// Helper template class for the compile time constraint enforcement. Based on the compile time
-// constant expression used for the template instantiation, either the undefined basic template
-// or the specialization is selected. If the undefined basic template is selected, a compilation
-// error is created.
-*/
-template< bool > struct CONSTRAINT_MUST_NOT_BE_TRANSEXPR_TYPE_FAILED;
-template<> struct CONSTRAINT_MUST_NOT_BE_TRANSEXPR_TYPE_FAILED<true> { enum { value = 1 }; };
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Constraint on the data type.
 // \ingroup math_constraints
 //
@@ -116,10 +79,7 @@ template<> struct CONSTRAINT_MUST_NOT_BE_TRANSEXPR_TYPE_FAILED<true> { enum { va
 // TransExpr base class), a compilation error is created.
 */
 #define BLAZE_CONSTRAINT_MUST_NOT_BE_TRANSEXPR_TYPE(T) \
-   typedef \
-      blaze::CONSTRAINT_TEST< \
-         blaze::CONSTRAINT_MUST_NOT_BE_TRANSEXPR_TYPE_FAILED< !blaze::IsTransExpr<T>::value >::value > \
-      BLAZE_JOIN( CONSTRAINT_MUST_NOT_BE_TRANSEXPR_TYPE_TYPEDEF, __LINE__ )
+   static_assert( !::blaze::IsTransExpr_v<T>, "Transposition expression type detected" )
 //*************************************************************************************************
 
 } // namespace blaze

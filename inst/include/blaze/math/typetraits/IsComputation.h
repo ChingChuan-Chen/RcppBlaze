@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsComputation.h
 //  \brief Header file for the IsComputation type trait class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
 #include <blaze/math/expressions/Computation.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
+#include <blaze/util/typetraits/IsBaseOf.h>
 
 
 namespace blaze {
@@ -56,23 +54,6 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsComputation type trait.
-// \ingroup math_type_traits
-*/
-template< typename T >
-struct IsComputationHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_base_of<Computation,T>::value && !boost::is_base_of<T,Computation>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time check whether the given type is a computational expression template.
 // \ingroup math_type_traits
 //
@@ -81,21 +62,32 @@ struct IsComputationHelper
 // a multiplication, a division, an absolute value calculation, ...). In order to qualify
 // as a valid computational expression template, the given type has to derive (publicly or
 // privately) from the Computation base class. In case the given type is a valid computational
-// expression template, the \a value member enumeration is set to 1, the nested type definition
-// \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to
-// 0, \a Type is \a FalseType, and the class derives from \a FalseType.
+// expression template, the \a value member constant is set to \a true, the nested type
+// definition \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise
+// \a value is set to \a false, \a Type is \a FalseType, and the class derives from \a FalseType.
 */
 template< typename T >
-struct IsComputation : public IsComputationHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsComputationHelper<T>::value };
-   typedef typename IsComputationHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsComputation
+   : public BoolConstant< IsBaseOf_v<Computation,T> && !IsBaseOf_v<T,Computation> >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsComputation type trait.
+// \ingroup math_type_traits
+//
+// The IsComputation_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsComputation class template. For instance, given the type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsComputation<T>::value;
+   constexpr bool value2 = blaze::IsComputation_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsComputation_v = IsComputation<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

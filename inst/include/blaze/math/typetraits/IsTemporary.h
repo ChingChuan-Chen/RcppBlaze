@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsTemporary.h
 //  \brief Header file for the IsTemporary type trait class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -41,11 +41,9 @@
 //*************************************************************************************************
 
 #include <blaze/math/typetraits/IsExpression.h>
-#include <blaze/util/typetraits/IsNumeric.h>
-#include <blaze/util/typetraits/IsReference.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/math/typetraits/IsMatrix.h>
+#include <blaze/math/typetraits/IsVector.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -57,43 +55,37 @@ namespace blaze {
 //=================================================================================================
 
 //*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsTemporary type trait.
-// \ingroup math_type_traits
-*/
-template< typename T >
-struct IsTemporaryHelper
-{
-   //**********************************************************************************************
-   enum { value = !IsReference<T>::value && !IsNumeric<T>::value && !IsExpression<T>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
 /*!\brief Compile time check whether the given type is a temporary vector or matrix type.
 // \ingroup math_type_traits
 //
 // This type trait class tests whether the given type is a temporary vector or matrix type,
 // i.e. can be used for a temporary vector or matrix. In case the given type can be used as
-// temporary, the \a value member enumeration is set to 1, the nested type definition \a Type
-// is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to 0,
-// \a Type is \a FalseType, and the class derives from \a FalseType.
+// temporary, the \a value member constant is set to \a true, the nested type definition
+// \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set
+// to \a false, \a Type is \a FalseType, and the class derives from \a FalseType.
 */
 template< typename T >
-struct IsTemporary : public IsTemporaryHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsTemporaryHelper<T>::value };
-   typedef typename IsTemporaryHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsTemporary
+   : public BoolConstant< ( IsVector_v<T> || IsMatrix_v<T> ) && !IsExpression_v<T> >
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsTemporary type trait.
+// \ingroup math_type_traits
+//
+// The IsTemporary_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsTemporary class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsTemporary<T>::value;
+   constexpr bool value2 = blaze::IsTemporary_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsTemporary_v = IsTemporary<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

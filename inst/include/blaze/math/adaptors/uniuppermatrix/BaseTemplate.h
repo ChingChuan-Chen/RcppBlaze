@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/uniuppermatrix/BaseTemplate.h
 //  \brief Header file for the implementation of the base template of the UniUpperMatrix
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,8 +40,8 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/typetraits/IsColumnMajorMatrix.h>
 #include <blaze/math/typetraits/IsDenseMatrix.h>
+#include <blaze/math/typetraits/StorageOrder.h>
 
 
 namespace blaze {
@@ -68,8 +68,12 @@ namespace blaze {
 // can be specified via the first template parameter:
 
    \code
+   namespace blaze {
+
    template< typename MT, bool SO, bool DF >
    class UniUpperMatrix;
+
+   } // namespace blaze
    \endcode
 
 //  - MT: specifies the type of the matrix to be adapted. UniUpperMatrix can be used with any
@@ -204,7 +208,7 @@ namespace blaze {
    using blaze::UniUpperMatrix;
    using blaze::rowMajor;
 
-   typedef UniUpperMatrix< CompressedMatrix<double,rowMajor> >  CompressedUniUpper;
+   using CompressedUniUpper = UniUpperMatrix< CompressedMatrix<double,rowMajor> >;
 
    // Default constructed, row-major 3x3 uniupper compressed matrix
    CompressedUniUpper A( 3 );
@@ -235,16 +239,16 @@ namespace blaze {
    A.erase( 0, 2 );  // Erasing the upper element (0,2)
 
    // Construction from an uniupper dense matrix
-   StaticMatrix<double,3UL,3UL> B( 1.0,  8.0, -2.0,
-                                   0.0,  1.0, -1.0,
-                                   0.0,  0.0,  1.0 );
+   StaticMatrix<double,3UL,3UL> B( { { 1.0,  8.0, -2.0 },
+                                     { 0.0,  1.0, -1.0 },
+                                     { 0.0,  0.0,  1.0 } } );
 
    UniUpperMatrix< DynamicMatrix<double,rowMajor> > C( B );  // OK
 
    // Assignment of a non-uniupper dense matrix
-   StaticMatrix<double,3UL,3UL> D(  3.0,  8.0, -2.0,
-                                    0.0,  0.0, -1.0,
-                                   -2.0,  0.0,  4.0 );
+   StaticMatrix<double,3UL,3UL> D( { {  3.0,  8.0, -2.0 },
+                                     {  0.0,  0.0, -1.0 },
+                                     { -2.0,  0.0,  4.0 } } );
 
    C = D;  // Throws an exception; upper unitriangular matrix invariant would be violated!
    \endcode
@@ -260,7 +264,7 @@ namespace blaze {
    using blaze::unpadded;
    using blaze::rowMajor;
 
-   typedef UniUpperMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >  CustomUniUpper;
+   using CustomUniUpper = UniUpperMatrix< CustomMatrix<double,unaligned,unpadded,rowMajor> >;
 
    // Creating a 3x3 uniupper custom matrix from a properly initialized array
    double array[9] = { 1.0, 2.0, 3.0,
@@ -463,15 +467,19 @@ namespace blaze {
    DynamicMatrix<double,rowMajor> G( 3, 3 );     // Initialized as strictly upper matrix
    CompressedMatrix<double,rowMajor> H( 3, 3 );  // Initialized as strictly upper matrix
 
-   E = A + B;     // Matrix addition and assignment to a row-major uniupper matrix
-   F = A - C;     // Matrix subtraction and assignment to a column-major uniupper matrix
-   F = A * D;     // Matrix multiplication between a dense and a sparse matrix
+   E = A + B;     // Matrix addition and assignment to a row-major uniupper matrix (includes runtime check)
+   F = A - C;     // Matrix subtraction and assignment to a column-major uniupper matrix (only compile time check)
+   F = A * D;     // Matrix multiplication between a dense and a sparse matrix (includes runtime check)
 
    E += G;      // Addition assignment (note that G is a strictly upper matrix)
    F -= H;      // Subtraction assignment (note that H is a strictly upper matrix)
-   F *= A * D;  // Multiplication assignment
+   F *= A * D;  // Multiplication assignment (includes runtime check)
    \endcode
 
+// Note that it is possible to assign any kind of matrix to an uniupper matrix. In case the matrix
+// to be assigned is not uniupper at compile time, a runtime check is performed.
+//
+//
 // \n \section uniuppermatrix_performance Performance Considerations
 //
 // The \b Blaze library tries to exploit the properties of upper (uni-)triangular matrices whenever
@@ -566,9 +574,9 @@ namespace blaze {
    C = A * B;  // Results in an uniupper matrix; no runtime overhead
    \endcode
 */
-template< typename MT                               // Type of the adapted matrix
-        , bool SO = IsColumnMajorMatrix<MT>::value  // Storage order of the adapted matrix
-        , bool DF = IsDenseMatrix<MT>::value >      // Density flag
+template< typename MT                      // Type of the adapted matrix
+        , bool SO = StorageOrder_v<MT>     // Storage order of the adapted matrix
+        , bool DF = IsDenseMatrix_v<MT> >  // Density flag
 class UniUpperMatrix
 {};
 //*************************************************************************************************

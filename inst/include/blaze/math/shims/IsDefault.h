@@ -3,7 +3,7 @@
 //  \file blaze/math/shims/IsDefault.h
 //  \brief Header file for the isDefault shim
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -42,7 +42,13 @@
 
 #include <cmath>
 #include <blaze/math/Accuracy.h>
+#include <blaze/math/RelaxationFlag.h>
+#include <blaze/math/typetraits/IsScalar.h>
+#include <blaze/math/typetraits/IsSIMDPack.h>
 #include <blaze/system/Inline.h>
+#include <blaze/util/Complex.h>
+#include <blaze/util/EnableIf.h>
+#include <blaze/util/typetraits/IsBuiltin.h>
 
 
 namespace blaze {
@@ -62,19 +68,38 @@ namespace blaze {
 //
 // The \a isDefault shim represents an abstract interface for testing a value/object whether
 // it is in its default state or not. In case the value/object is in its default state, the
-// function returns \a true, otherwise it returns \a false. For built-in data types, the
-// function returns \a true in case the current value is zero.
+// function returns \a true, otherwise it returns \a false. For integral built-in data types,
+// the function returns \a true in case the current value is zero:
 
    \code
-   const int i = 0;          // isDefault( i ) returns true
-   double    d = 2.0;        // isDefault( d ) returns false
-   Vec3      v1;             // isDefault( v1 ) returns true
-   Vec3      v2( 0, 0, 0 );  // isDefault( v2 ) returns true since (0,0,0) is the default state
-   Vec3      v3( 1, 2, 3 );  // isDefault( v3 ) returns false
+   int i1 = 0;  // isDefault( i1 ) returns true
+   int i2 = 1;  // isDefault( i2 ) returns false
+   \endcode
+
+// For floating point built-in data types, the function by default uses relaxed semantics and
+// returns \a true in case the current value is close to zero within a certain accuracy:
+
+   \code
+   double d1 = 0.0;   // isDefault( d1 ) returns true
+   double d2 = 1E-9;  // isDefault( d2 ) returns true since d2 is below 1E-8
+   double d3 = 1.0;   // isDefault( d3 ) returns false
+   \endcode
+
+// Optionally, it is possible to switch between relaxed semantics (blaze::relaxed) and strict
+// semantics (blaze::strict). In case of strict semantics, for floating point built-in data types
+// the function returns \a true in case the current value is exactly zero:
+
+   \code
+                      // isDefault<strict>( ... ) | isDefault<relaxed>( ... )
+   double d1 = 0.0;   //    true                  |    true
+   double d2 = 1E-9;  //    false (not 0.0)       |    true (below 1E-8)
+   double d3 = 1.0;   //    false                 |    false
    \endcode
 */
-template< typename Type >
-BLAZE_ALWAYS_INLINE bool isDefault( const Type& v )
+template< RelaxationFlag RF  // Relaxation flag
+        , typename Type      // Type of the given value/object
+        , EnableIf_t< IsScalar_v<Type> || IsSIMDPack_v<Type> >* = nullptr >
+BLAZE_ALWAYS_INLINE bool isDefault( const Type& v ) noexcept( IsBuiltin_v<Type> )
 {
    return v == Type();
 }
@@ -93,9 +118,13 @@ BLAZE_ALWAYS_INLINE bool isDefault( const Type& v )
 // value is exactly zero or within an epsilon range to zero. In case the value is zero or close
 // to zero the function returns \a true, otherwise it returns \a false.
 */
-BLAZE_ALWAYS_INLINE bool isDefault( float v )
+template< RelaxationFlag RF >  // Relaxation flag
+BLAZE_ALWAYS_INLINE bool isDefault( float v ) noexcept
 {
-   return std::fabs( v ) <= accuracy;
+   if( RF == relaxed )
+      return std::fabs( v ) <= accuracy;
+   else
+      return v == 0.0F;
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -113,9 +142,13 @@ BLAZE_ALWAYS_INLINE bool isDefault( float v )
 // value is exactly zero or within an epsilon range to zero. In case the value is zero or close
 // to zero the function returns \a true, otherwise it returns \a false.
 */
-BLAZE_ALWAYS_INLINE bool isDefault( double v )
+template< RelaxationFlag RF >  // Relaxation flag
+BLAZE_ALWAYS_INLINE bool isDefault( double v ) noexcept
 {
-   return std::fabs( v ) <= accuracy;
+   if( RF == relaxed )
+      return std::fabs( v ) <= accuracy;
+   else
+      return v == 0.0;
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -133,9 +166,13 @@ BLAZE_ALWAYS_INLINE bool isDefault( double v )
 // point value is exactly zero or within an epsilon range to zero. In case the value is zero or
 // close to zero the function returns \a true, otherwise it returns \a false.
 */
-BLAZE_ALWAYS_INLINE bool isDefault( long double v )
+template< RelaxationFlag RF >  // Relaxation flag
+BLAZE_ALWAYS_INLINE bool isDefault( long double v ) noexcept
 {
-   return std::fabs( v ) <= accuracy;
+   if( RF == relaxed )
+      return std::fabs( v ) <= accuracy;
+   else
+      return v == 0.0L;
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -153,12 +190,58 @@ BLAZE_ALWAYS_INLINE bool isDefault( long double v )
 // the given complex number are exactly zero or within an epsilon range to zero. In case the both
 // parts are zero or close to zero the function returns \a true, otherwise it returns \a false.
 */
-template< typename T >
-BLAZE_ALWAYS_INLINE bool isDefault( const complex<T>& v )
+template< RelaxationFlag RF  // Relaxation flag
+        , typename T >       // Value type of the complex number
+BLAZE_ALWAYS_INLINE bool isDefault( const complex<T>& v ) noexcept( IsBuiltin_v<T> )
 {
-   return isDefault( real( v ) ) && isDefault( imag( v ) );
+   return isDefault<RF>( real( v ) ) && isDefault<RF>( imag( v ) );
 }
 /*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Returns whether the given value/object is in default state.
+// \ingroup math_shims
+//
+// \param v The value/object to be tested for its default state.
+// \return \a true in case the given value/object is in its default state, \a false otherwise.
+//
+// The \a isDefault shim represents an abstract interface for testing a value/object whether
+// it is in its default state or not. In case the value/object is in its default state, the
+// function returns \a true, otherwise it returns \a false. For integral built-in data types,
+// the function returns \a true in case the current value is zero:
+
+   \code
+   int i1 = 0;  // isDefault( i1 ) returns true
+   int i2 = 1;  // isDefault( i2 ) returns false
+   \endcode
+
+// For floating point built-in data types, the function by default uses relaxed semantics and
+// returns \a true in case the current value is close to zero within a certain accuracy:
+
+   \code
+   double d1 = 0.0;   // isDefault( d1 ) returns true
+   double d2 = 1E-9;  // isDefault( d2 ) returns true since d2 is below 1E-8
+   double d3 = 1.0;   // isDefault( d3 ) returns false
+   \endcode
+
+// Optionally, it is possible to switch between relaxed semantics (blaze::relaxed) and strict
+// semantics (blaze::strict). In case of strict semantics, for floating point built-in data types
+// the function returns \a true in case the current value is exactly zero:
+
+   \code
+                      // isDefault<strict>( ... ) | isDefault<relaxed>( ... )
+   double d1 = 0.0;   //    true                  |    true
+   double d2 = 1E-9;  //    false (not 0.0)       |    true (below 1E-8)
+   double d3 = 1.0;   //    false                 |    false
+   \endcode
+*/
+template< typename Type >  // Type of the given value/object
+BLAZE_ALWAYS_INLINE bool isDefault( const Type& v ) noexcept( IsBuiltin_v<Type> )
+{
+   return isDefault<relaxed>( v );
+}
 //*************************************************************************************************
 
 } // namespace blaze

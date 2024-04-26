@@ -3,7 +3,7 @@
 //  \file blaze/math/adaptors/strictlyuppermatrix/Sparse.h
 //  \brief StrictlyUpperMatrix specialization for sparse matrices
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,42 +40,42 @@
 // Includes
 //*************************************************************************************************
 
-#include <algorithm>
+#include <utility>
 #include <vector>
 #include <blaze/math/adaptors/Forward.h>
 #include <blaze/math/adaptors/strictlyuppermatrix/BaseTemplate.h>
 #include <blaze/math/adaptors/strictlyuppermatrix/StrictlyUpperProxy.h>
-#include <blaze/math/constraints/Expression.h>
+#include <blaze/math/Aliases.h>
+#include <blaze/math/constraints/Computation.h>
 #include <blaze/math/constraints/Hermitian.h>
 #include <blaze/math/constraints/Lower.h>
 #include <blaze/math/constraints/Resizable.h>
 #include <blaze/math/constraints/SparseMatrix.h>
+#include <blaze/math/constraints/Static.h>
 #include <blaze/math/constraints/StorageOrder.h>
+#include <blaze/math/constraints/Transformation.h>
 #include <blaze/math/constraints/Symmetric.h>
 #include <blaze/math/constraints/Upper.h>
+#include <blaze/math/constraints/View.h>
+#include <blaze/math/dense/InitializerMatrix.h>
+#include <blaze/math/Exception.h>
 #include <blaze/math/expressions/SparseMatrix.h>
-#include <blaze/math/Functions.h>
-#include <blaze/math/shims/Clear.h>
+#include <blaze/math/InitializerList.h>
 #include <blaze/math/shims/IsDefault.h>
-#include <blaze/math/shims/Move.h>
 #include <blaze/math/sparse/SparseMatrix.h>
-#include <blaze/math/typetraits/Columns.h>
 #include <blaze/math/typetraits/IsComputation.h>
-#include <blaze/math/typetraits/IsResizable.h>
 #include <blaze/math/typetraits/IsSquare.h>
 #include <blaze/math/typetraits/IsStrictlyUpper.h>
 #include <blaze/math/typetraits/IsUniTriangular.h>
-#include <blaze/math/typetraits/Rows.h>
+#include <blaze/math/typetraits/Size.h>
+#include <blaze/util/algorithms/Max.h>
 #include <blaze/util/Assert.h>
 #include <blaze/util/constraints/Const.h>
 #include <blaze/util/constraints/Pointer.h>
 #include <blaze/util/constraints/Reference.h>
 #include <blaze/util/constraints/Volatile.h>
-#include <blaze/util/DisableIf.h>
 #include <blaze/util/EnableIf.h>
-#include <blaze/util/Exception.h>
 #include <blaze/util/StaticAssert.h>
-#include <blaze/util/typetraits/IsNumeric.h>
 #include <blaze/util/Types.h>
 
 
@@ -102,56 +102,76 @@ class StrictlyUpperMatrix<MT,SO,false>
 {
  private:
    //**Type definitions****************************************************************************
-   typedef typename MT::OppositeType   OT;  //!< Opposite type of the sparse matrix.
-   typedef typename MT::TransposeType  TT;  //!< Transpose type of the sparse matrix.
-   typedef typename MT::ElementType    ET;  //!< Element type of the sparse matrix.
+   using OT = OppositeType_t<MT>;   //!< Opposite type of the sparse matrix.
+   using TT = TransposeType_t<MT>;  //!< Transpose type of the sparse matrix.
+   using ET = ElementType_t<MT>;    //!< Element type of the sparse matrix.
    //**********************************************************************************************
 
  public:
    //**Type definitions****************************************************************************
-   typedef StrictlyUpperMatrix<MT,SO,false>  This;            //!< Type of this StrictlyUpperMatrix instance.
-   typedef This                              ResultType;      //!< Result type for expression template evaluations.
-   typedef StrictlyUpperMatrix<OT,!SO,false> OppositeType;    //!< Result type with opposite storage order for expression template evaluations.
-   typedef StrictlyLowerMatrix<TT,!SO,false> TransposeType;   //!< Transpose type for expression template evaluations.
-   typedef ET                                ElementType;     //!< Type of the matrix elements.
-   typedef typename MT::ReturnType           ReturnType;      //!< Return type for expression template evaluations.
-   typedef const This&                       CompositeType;   //!< Data type for composite expression templates.
-   typedef StrictlyUpperProxy<MT>            Reference;       //!< Reference to a non-constant matrix value.
-   typedef typename MT::ConstReference       ConstReference;  //!< Reference to a constant matrix value.
-   typedef typename MT::Iterator             Iterator;        //!< Iterator over non-constant elements.
-   typedef typename MT::ConstIterator        ConstIterator;   //!< Iterator over constant elements.
+   using This           = StrictlyUpperMatrix<MT,SO,false>;   //!< Type of this StrictlyUpperMatrix instance.
+   using BaseType       = SparseMatrix<This,SO>;              //!< Base type of this StrictlyUpperMatrix instance.
+   using ResultType     = This;                               //!< Result type for expression template evaluations.
+   using OppositeType   = StrictlyUpperMatrix<OT,!SO,false>;  //!< Result type with opposite storage order for expression template evaluations.
+   using TransposeType  = StrictlyLowerMatrix<TT,!SO,false>;  //!< Transpose type for expression template evaluations.
+   using ElementType    = ET;                                 //!< Type of the matrix elements.
+   using TagType        = TagType_t<MT>;                      //!< Tag type of this StrictlyUpperMatrix instance.
+   using ReturnType     = ReturnType_t<MT>;                   //!< Return type for expression template evaluations.
+   using CompositeType  = const This&;                        //!< Data type for composite expression templates.
+   using Reference      = StrictlyUpperProxy<MT>;             //!< Reference to a non-constant matrix value.
+   using ConstReference = ConstReference_t<MT>;               //!< Reference to a constant matrix value.
+   using Iterator       = Iterator_t<MT>;                     //!< Iterator over non-constant elements.
+   using ConstIterator  = ConstIterator_t<MT>;                //!< Iterator over constant elements.
    //**********************************************************************************************
 
    //**Rebind struct definition********************************************************************
    /*!\brief Rebind mechanism to obtain an StrictlyUpperMatrix with different data/element type.
    */
-   template< typename ET >  // Data type of the other matrix
+   template< typename NewType >  // Data type of the other matrix
    struct Rebind {
       //! The type of the other StrictlyUpperMatrix.
-      typedef StrictlyUpperMatrix< typename MT::template Rebind<ET>::Other >  Other;
+      using Other = StrictlyUpperMatrix< typename MT::template Rebind<NewType>::Other >;
+   };
+   //**********************************************************************************************
+
+   //**Resize struct definition********************************************************************
+   /*!\brief Resize mechanism to obtain a StrictlyUpperMatrix with different fixed dimensions.
+   */
+   template< size_t NewM    // Number of rows of the other matrix
+           , size_t NewN >  // Number of columns of the other matrix
+   struct Resize {
+      //! The type of the other StrictlyUpperMatrix.
+      using Other = StrictlyUpperMatrix< typename MT::template Resize<NewM,NewN>::Other >;
    };
    //**********************************************************************************************
 
    //**Compilation flags***************************************************************************
    //! Compilation switch for the expression template assignment strategy.
-   enum { smpAssignable = 0 };
+   static constexpr bool smpAssignable = false;
    //**********************************************************************************************
 
    //**Constructors********************************************************************************
    /*!\name Constructors */
    //@{
-   explicit inline StrictlyUpperMatrix();
+            inline StrictlyUpperMatrix();
    explicit inline StrictlyUpperMatrix( size_t n );
-   explicit inline StrictlyUpperMatrix( size_t n, size_t nonzeros );
-   explicit inline StrictlyUpperMatrix( size_t n, const std::vector<size_t>& nonzeros );
+            inline StrictlyUpperMatrix( size_t n, size_t nonzeros );
+            inline StrictlyUpperMatrix( size_t n, const std::vector<size_t>& nonzeros );
+            inline StrictlyUpperMatrix( initializer_list< initializer_list<ElementType> > list );
 
-                                      inline StrictlyUpperMatrix( const StrictlyUpperMatrix& m );
-   template< typename MT2, bool SO2 > inline StrictlyUpperMatrix( const Matrix<MT2,SO2>& m );
+   inline StrictlyUpperMatrix( const StrictlyUpperMatrix& m );
+   inline StrictlyUpperMatrix( StrictlyUpperMatrix&& m ) noexcept;
+
+   template< typename MT2, bool SO2 >
+   inline StrictlyUpperMatrix( const Matrix<MT2,SO2>& m );
    //@}
    //**********************************************************************************************
 
    //**Destructor**********************************************************************************
-   // No explicitly declared destructor.
+   /*!\name Destructor */
+   //@{
+   ~StrictlyUpperMatrix() = default;
+   //@}
    //**********************************************************************************************
 
    //**Data access functions***********************************************************************
@@ -173,75 +193,87 @@ class StrictlyUpperMatrix<MT,SO,false>
    //**Assignment operators************************************************************************
    /*!\name Assignment operators */
    //@{
+   inline StrictlyUpperMatrix& operator=( initializer_list< initializer_list<ElementType> > list );
+
    inline StrictlyUpperMatrix& operator=( const StrictlyUpperMatrix& rhs );
+   inline StrictlyUpperMatrix& operator=( StrictlyUpperMatrix&& rhs ) noexcept;
 
    template< typename MT2, bool SO2 >
-   inline typename DisableIf< IsComputation<MT2>, StrictlyUpperMatrix& >::Type
-      operator=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator=( const Matrix<MT2,SO2>& rhs )
+      -> DisableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename EnableIf< IsComputation<MT2>, StrictlyUpperMatrix& >::Type
-      operator=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator=( const Matrix<MT2,SO2>& rhs )
+      -> EnableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename DisableIf< IsComputation<MT2>, StrictlyUpperMatrix& >::Type
-      operator+=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator+=( const Matrix<MT2,SO2>& rhs )
+      -> DisableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename EnableIf< IsComputation<MT2>, StrictlyUpperMatrix& >::Type
-      operator+=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator+=( const Matrix<MT2,SO2>& rhs )
+      -> EnableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename DisableIf< IsComputation<MT2>, StrictlyUpperMatrix& >::Type
-      operator-=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator-=( const Matrix<MT2,SO2>& rhs )
+      -> DisableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline typename EnableIf< IsComputation<MT2>, StrictlyUpperMatrix& >::Type
-      operator-=( const Matrix<MT2,SO2>& rhs );
+   inline auto operator-=( const Matrix<MT2,SO2>& rhs )
+      -> EnableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >;
 
    template< typename MT2, bool SO2 >
-   inline StrictlyUpperMatrix& operator*=( const Matrix<MT2,SO2>& rhs );
-
-   template< typename Other >
-   inline typename EnableIf< IsNumeric<Other>, StrictlyUpperMatrix >::Type&
-      operator*=( Other rhs );
-
-   template< typename Other >
-   inline typename EnableIf< IsNumeric<Other>, StrictlyUpperMatrix >::Type&
-      operator/=( Other rhs );
+   inline auto operator%=( const Matrix<MT2,SO2>& rhs ) -> StrictlyUpperMatrix&;
    //@}
    //**********************************************************************************************
 
    //**Utility functions***************************************************************************
    /*!\name Utility functions */
    //@{
-   inline size_t   rows() const;
-   inline size_t   columns() const;
-   inline size_t   capacity() const;
-   inline size_t   capacity( size_t i ) const;
-   inline size_t   nonZeros() const;
-   inline size_t   nonZeros( size_t i ) const;
-   inline void     reset();
-   inline void     reset( size_t i );
-   inline void     clear();
-   inline Iterator set( size_t i, size_t j, const ElementType& value );
-   inline Iterator insert( size_t i, size_t j, const ElementType& value );
+   inline size_t rows() const noexcept;
+   inline size_t columns() const noexcept;
+   inline size_t capacity() const noexcept;
+   inline size_t capacity( size_t i ) const noexcept;
+   inline size_t nonZeros() const;
+   inline size_t nonZeros( size_t i ) const;
+   inline void   reset();
+   inline void   reset( size_t i );
+   inline void   clear();
+   inline void   resize ( size_t n, bool preserve=true );
+   inline void   reserve( size_t nonzeros );
+   inline void   reserve( size_t i, size_t nonzeros );
+   inline void   trim();
+   inline void   trim( size_t i );
+   inline void   shrinkToFit();
+   inline void   swap( StrictlyUpperMatrix& m ) noexcept;
+
+   static constexpr size_t maxNonZeros() noexcept;
+   static constexpr size_t maxNonZeros( size_t n ) noexcept;
+   //@}
+   //**********************************************************************************************
+
+   //**Insertion functions*************************************************************************
+   /*!\name Insertion functions */
+   //@{
+   inline Iterator set     ( size_t i, size_t j, const ElementType& value );
+   inline Iterator insert  ( size_t i, size_t j, const ElementType& value );
+   inline void     append  ( size_t i, size_t j, const ElementType& value, bool check=false );
+   inline void     finalize( size_t i );
+   //@}
+   //**********************************************************************************************
+
+   //**Erase functions*****************************************************************************
+   /*!\name Erase functions */
+   //@{
    inline void     erase( size_t i, size_t j );
    inline Iterator erase( size_t i, Iterator pos );
    inline Iterator erase( size_t i, Iterator first, Iterator last );
-   inline void     resize ( size_t n, bool preserve=true );
-   inline void     reserve( size_t nonzeros );
-   inline void     reserve( size_t i, size_t nonzeros );
-   inline void     trim();
-   inline void     trim( size_t i );
 
-   template< typename Other > inline StrictlyUpperMatrix& scale( const Other& scalar );
-   template< typename Other > inline StrictlyUpperMatrix& scaleDiagonal( Other scale );
+   template< typename Pred >
+   inline void erase( Pred predicate );
 
-   inline void swap( StrictlyUpperMatrix& m ) /* throw() */;
-
-   static inline size_t maxNonZeros();
-   static inline size_t maxNonZeros( size_t n );
+   template< typename Pred >
+   inline void erase( size_t i, Iterator first, Iterator last, Pred predicate );
    //@}
    //**********************************************************************************************
 
@@ -257,28 +289,27 @@ class StrictlyUpperMatrix<MT,SO,false>
    //@}
    //**********************************************************************************************
 
-   //**Low-level utility functions*****************************************************************
-   /*!\name Low-level utility functions */
+   //**Numeric functions***************************************************************************
+   /*!\name Numeric functions */
    //@{
-   inline void append  ( size_t i, size_t j, const ElementType& value, bool check=false );
-   inline void finalize( size_t i );
+   template< typename Other > inline StrictlyUpperMatrix& scale( const Other& scalar );
    //@}
    //**********************************************************************************************
 
    //**Debugging functions*************************************************************************
    /*!\name Debugging functions */
    //@{
-   inline bool isIntact() const;
+   inline bool isIntact() const noexcept;
    //@}
    //**********************************************************************************************
 
    //**Expression template evaluation functions****************************************************
    /*!\name Expression template evaluation functions */
    //@{
-   template< typename Other > inline bool canAlias ( const Other* alias ) const;
-   template< typename Other > inline bool isAliased( const Other* alias ) const;
+   template< typename Other > inline bool canAlias ( const Other* alias ) const noexcept;
+   template< typename Other > inline bool isAliased( const Other* alias ) const noexcept;
 
-   inline bool canSMPAssign() const;
+   inline bool canSMPAssign() const noexcept;
    //@}
    //**********************************************************************************************
 
@@ -308,14 +339,16 @@ class StrictlyUpperMatrix<MT,SO,false>
    BLAZE_CONSTRAINT_MUST_NOT_BE_POINTER_TYPE         ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_CONST                ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_VOLATILE             ( MT );
-   BLAZE_CONSTRAINT_MUST_NOT_BE_EXPRESSION_TYPE      ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_VIEW_TYPE            ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_COMPUTATION_TYPE     ( MT );
+   BLAZE_CONSTRAINT_MUST_NOT_BE_TRANSFORMATION_TYPE  ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_SYMMETRIC_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_HERMITIAN_MATRIX_TYPE( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_LOWER_MATRIX_TYPE    ( MT );
    BLAZE_CONSTRAINT_MUST_NOT_BE_UPPER_MATRIX_TYPE    ( MT );
    BLAZE_CONSTRAINT_MUST_BE_MATRIX_WITH_STORAGE_ORDER( OT, !SO );
    BLAZE_CONSTRAINT_MUST_BE_MATRIX_WITH_STORAGE_ORDER( TT, !SO );
-   BLAZE_STATIC_ASSERT( Rows<MT>::value == Columns<MT>::value );
+   BLAZE_STATIC_ASSERT( ( Size_v<MT,0UL> == Size_v<MT,1UL> ) );
    //**********************************************************************************************
 };
 /*! \endcond */
@@ -351,14 +384,14 @@ inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix()
 //
 // \param n The number of rows and columns of the matrix.
 //
-// The matrix is initialized as identity matrix and has no additional free capacity.
+// The matrix is initialized as empty \f$ n \times n \f$ matrix without free capacity.
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix( size_t n )
-   : matrix_( n, n, n )  // The adapted sparse matrix
+   : matrix_( n, n )  // The adapted sparse matrix
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
 }
@@ -381,7 +414,7 @@ template< typename MT  // Type of the adapted sparse matrix
 inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix( size_t n, size_t nonzeros )
    : matrix_( n, n, max( nonzeros, n ) )  // The adapted sparse matrix
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
 }
@@ -408,9 +441,48 @@ template< typename MT  // Type of the adapted sparse matrix
 inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix( size_t n, const std::vector<size_t>& nonzeros )
    : matrix_( n, n, nonzeros )  // The adapted sparse matrix
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief List initialization of all matrix elements.
+//
+// \param list The initializer list.
+// \exception std::invalid_argument Invalid setup of strictly upper matrix.
+//
+// This constructor provides the option to explicitly initialize the elements of the strictly
+// upper matrix by means of an initializer list:
+
+   \code
+   using blaze::rowMajor;
+
+   blaze::StrictlyUpperMatrix< blaze::CompressedMatrix<int,rowMajor> > A{ { 0, 2, 3 },
+                                                                          { 0, 0 },
+                                                                          { 0, 0, 0 } };
+   \endcode
+
+// The matrix is sized according to the size of the initializer list and all matrix elements are
+// initialized with the values from the given list. Missing values are initialized with default
+// values. In case the matrix cannot be resized and the dimensions of the initializer list don't
+// match or if the given list does not represent a strictly upper matrix, a \a std::invalid_argument
+// exception is thrown.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix( initializer_list< initializer_list<ElementType> > list )
+   : matrix_( list )  // The adapted sparse matrix
+{
+   if( !isStrictlyUpper( matrix_ ) ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid setup of strictly upper matrix" );
+   }
+
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -436,6 +508,24 @@ inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix( const StrictlyUppe
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
+/*!\brief The move constructor for StrictlyUpperMatrix.
+//
+// \param m The strictly upper matrix to be moved into this instance.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix( StrictlyUpperMatrix&& m ) noexcept
+   : matrix_( std::move( m.matrix_ ) )  // The adapted sparse matrix
+{
+   BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
 /*!\brief Conversion constructor from different matrices.
 //
 // \param m Matrix to be copied.
@@ -450,14 +540,14 @@ template< typename MT   // Type of the adapted sparse matrix
 template< typename MT2  // Type of the foreign matrix
         , bool SO2 >    // Storage order of the foreign matrix
 inline StrictlyUpperMatrix<MT,SO,false>::StrictlyUpperMatrix( const Matrix<MT2,SO2>& m )
-   : matrix_( ~m )  // The adapted sparse matrix
+   : matrix_( *m )  // The adapted sparse matrix
 {
-   if( IsUniTriangular<MT2>::value ||
-       ( !IsStrictlyUpper<MT2>::value && !isStrictlyUpper( matrix_ ) ) ) {
+   if( IsUniTriangular_v<MT2> ||
+       ( !IsStrictlyUpper_v<MT2> && !isStrictlyUpper( matrix_ ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid setup of strictly upper matrix" );
    }
 
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
@@ -751,6 +841,53 @@ inline typename StrictlyUpperMatrix<MT,SO,false>::ConstIterator
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
+/*!\brief List assignment to all matrix elements.
+//
+// \param list The initializer list.
+// \exception std::invalid_argument Invalid assignment to strictly upper matrix.
+//
+// This assignment operator offers the option to directly assign to all elements of the strictly
+// upper matrix by means of an initializer list:
+
+   \code
+   using blaze::rowMajor;
+
+   blaze::StrictlyUpperMatrix< blaze::CompressedMatrix<int,rowMajor> > A;
+   A = { { 0, 2, 3 },
+         { 0, 0 },
+         { 0, 0, 0 } };
+   \endcode
+
+// The matrix is resized according to the size of the initializer list and all matrix elements
+// are assigned the values from the given list. Missing values are assigned default values. In
+// case the matrix cannot be resized and the dimensions of the initializer list don't match or
+// if the given list does not represent a strictly upper matrix, a \a std::invalid_argument
+// exception is thrown.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline StrictlyUpperMatrix<MT,SO,false>&
+   StrictlyUpperMatrix<MT,SO,false>::operator=( initializer_list< initializer_list<ElementType> > list )
+{
+   const InitializerMatrix<ElementType> tmp( list, list.size() );
+
+   if( !isStrictlyUpper( tmp ) ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
+   }
+
+   matrix_ = list;
+
+   BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+
+   return *this;
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
 /*!\brief Copy assignment operator for StrictlyUpperMatrix.
 //
 // \param rhs Matrix to be copied.
@@ -765,6 +902,29 @@ inline StrictlyUpperMatrix<MT,SO,false>&
    StrictlyUpperMatrix<MT,SO,false>::operator=( const StrictlyUpperMatrix& rhs )
 {
    matrix_ = rhs.matrix_;
+
+   BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+
+   return *this;
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Move assignment operator for StrictlyUpperMatrix.
+//
+// \param rhs The matrix to be moved into this instance.
+// \return Reference to the assigned matrix.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline StrictlyUpperMatrix<MT,SO,false>&
+   StrictlyUpperMatrix<MT,SO,false>::operator=( StrictlyUpperMatrix&& rhs ) noexcept
+{
+   matrix_ = std::move( rhs.matrix_ );
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
    BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
@@ -792,17 +952,17 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename DisableIf< IsComputation<MT2>, StrictlyUpperMatrix<MT,SO,false>& >::Type
-   StrictlyUpperMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+inline auto StrictlyUpperMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+   -> DisableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >
 {
-   if( IsUniTriangular<MT2>::value ||
-       ( !IsStrictlyUpper<MT2>::value && !isStrictlyUpper( ~rhs ) ) ) {
+   if( IsUniTriangular_v<MT2> ||
+       ( !IsStrictlyUpper_v<MT2> && !isStrictlyUpper( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
    }
 
-   matrix_ = ~rhs;
+   matrix_ = declupp( *rhs );
 
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
@@ -831,27 +991,27 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename EnableIf< IsComputation<MT2>, StrictlyUpperMatrix<MT,SO,false>& >::Type
-   StrictlyUpperMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+inline auto StrictlyUpperMatrix<MT,SO,false>::operator=( const Matrix<MT2,SO2>& rhs )
+   -> EnableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >
 {
-   if( IsUniTriangular<MT2>::value || ( !IsSquare<MT2>::value && !isSquare( ~rhs ) ) ) {
+   if( IsUniTriangular_v<MT2> || ( !IsSquare_v<MT2> && !isSquare( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
    }
 
-   if( IsStrictlyUpper<MT2>::value ) {
-      matrix_ = ~rhs;
+   if( IsStrictlyUpper_v<MT2> ) {
+      matrix_ = *rhs;
    }
    else {
-      MT tmp( ~rhs );
+      MT tmp( *rhs );
 
       if( !isStrictlyUpper( tmp ) ) {
          BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
       }
 
-      move( matrix_, tmp );
+      matrix_ = std::move( tmp );
    }
 
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
@@ -880,17 +1040,17 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename DisableIf< IsComputation<MT2>, StrictlyUpperMatrix<MT,SO,false>& >::Type
-   StrictlyUpperMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+inline auto StrictlyUpperMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+   -> DisableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >
 {
-   if( IsUniTriangular<MT2>::value ||
-       ( !IsStrictlyUpper<MT2>::value && !isStrictlyUpper( ~rhs ) ) ) {
+   if( IsUniTriangular_v<MT2> ||
+       ( !IsStrictlyUpper_v<MT2> && !isStrictlyUpper( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
    }
 
-   matrix_ += ~rhs;
+   matrix_ += declupp( *rhs );
 
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
@@ -919,27 +1079,27 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename EnableIf< IsComputation<MT2>, StrictlyUpperMatrix<MT,SO,false>& >::Type
-   StrictlyUpperMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+inline auto StrictlyUpperMatrix<MT,SO,false>::operator+=( const Matrix<MT2,SO2>& rhs )
+   -> EnableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >
 {
-   if( IsUniTriangular<MT2>::value || ( IsSquare<MT2>::value && !isSquare( ~rhs ) ) ) {
+   if( IsUniTriangular_v<MT2> || ( IsSquare_v<MT2> && !isSquare( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
    }
 
-   if( IsStrictlyUpper<MT2>::value ) {
-      matrix_ += ~rhs;
+   if( IsStrictlyUpper_v<MT2> ) {
+      matrix_ += *rhs;
    }
    else {
-      typename MT2::ResultType tmp( ~rhs );
+      const ResultType_t<MT2> tmp( *rhs );
 
       if( !isStrictlyUpper( tmp ) ) {
          BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
       }
 
-      matrix_ += tmp;
+      matrix_ += declupp( tmp );
    }
 
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
@@ -968,17 +1128,17 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename DisableIf< IsComputation<MT2>, StrictlyUpperMatrix<MT,SO,false>& >::Type
-   StrictlyUpperMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+inline auto StrictlyUpperMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+   -> DisableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >
 {
-   if( IsUniTriangular<MT2>::value ||
-       ( !IsStrictlyUpper<MT2>::value && !isStrictlyUpper( ~rhs ) ) ) {
+   if( IsUniTriangular_v<MT2> ||
+       ( !IsStrictlyUpper_v<MT2> && !isStrictlyUpper( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
    }
 
-   matrix_ -= ~rhs;
+   matrix_ -= declupp( *rhs );
 
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
@@ -1007,27 +1167,27 @@ template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline typename EnableIf< IsComputation<MT2>, StrictlyUpperMatrix<MT,SO,false>& >::Type
-   StrictlyUpperMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+inline auto StrictlyUpperMatrix<MT,SO,false>::operator-=( const Matrix<MT2,SO2>& rhs )
+   -> EnableIf_t< IsComputation_v<MT2>, StrictlyUpperMatrix& >
 {
-   if( IsUniTriangular<MT2>::value || ( !IsSquare<MT2>::value && !isSquare( ~rhs ) ) ) {
+   if( IsUniTriangular_v<MT2> || ( !IsSquare_v<MT2> && !isSquare( *rhs ) ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
    }
 
-   if( IsStrictlyUpper<MT2>::value ) {
-      matrix_ -= ~rhs;
+   if( IsStrictlyUpper_v<MT2> ) {
+      matrix_ -= *rhs;
    }
    else {
-      typename MT2::ResultType tmp( ~rhs );
+      const ResultType_t<MT2> tmp( *rhs );
 
       if( !isStrictlyUpper( tmp ) ) {
          BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
       }
 
-      matrix_ -= tmp;
+      matrix_ -= declupp( tmp );
    }
 
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
@@ -1041,84 +1201,34 @@ inline typename EnableIf< IsComputation<MT2>, StrictlyUpperMatrix<MT,SO,false>& 
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Multiplication assignment operator for the multiplication of a matrix (\f$ A*=B \f$).
+/*!\brief Schur product assignment operator for the multiplication of a matrix (\f$ A\circ=B \f$).
 //
-// \param rhs The right-hand side matrix for the multiplication.
+// \param rhs The right-hand side matrix for the Schur product.
 // \return Reference to the matrix.
-// \exception std::invalid_argument Matrix sizes do not match.
+// \exception std::invalid_argument Invalid assignment to strictly upper matrix.
 //
 // In case the current sizes of the two matrices don't match, a \a std::invalid_argument exception
-// is thrown. Also note that the result of the multiplication operation must be a strictly upper
-// matrix. In case it is not, a \a std::invalid_argument exception is thrown.
+// is thrown.
 */
 template< typename MT   // Type of the adapted sparse matrix
         , bool SO >     // Storage order of the adapted sparse matrix
 template< typename MT2  // Type of the right-hand side matrix
         , bool SO2 >    // Storage order of the right-hand side matrix
-inline StrictlyUpperMatrix<MT,SO,false>&
-   StrictlyUpperMatrix<MT,SO,false>::operator*=( const Matrix<MT2,SO2>& rhs )
+inline auto StrictlyUpperMatrix<MT,SO,false>::operator%=( const Matrix<MT2,SO2>& rhs )
+   -> StrictlyUpperMatrix&
 {
-   if( matrix_.rows() != (~rhs).columns() ) {
+   if( !IsSquare_v<MT2> && !isSquare( *rhs ) ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
    }
 
-   MT tmp( matrix_ * ~rhs );
+   matrix_ %= *rhs;
 
-   if( !isStrictlyUpper( tmp ) ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid assignment to strictly upper matrix" );
-   }
-
-   move( matrix_, tmp );
-
-   if( !IsStrictlyUpper<MT2>::value )
+   if( !IsStrictlyUpper_v<MT2> )
       resetLower();
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
    BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
 
-   return *this;
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Multiplication assignment operator for the multiplication between a matrix and
-//        a scalar value (\f$ A*=s \f$).
-//
-// \param rhs The right-hand side scalar value for the multiplication.
-// \return Reference to the matrix.
-*/
-template< typename MT       // Type of the adapted sparse matrix
-        , bool SO >         // Storage order of the adapted sparse matrix
-template< typename Other >  // Data type of the right-hand side scalar
-inline typename EnableIf< IsNumeric<Other>, StrictlyUpperMatrix<MT,SO,false> >::Type&
-   StrictlyUpperMatrix<MT,SO,false>::operator*=( Other rhs )
-{
-   matrix_ *= rhs;
-   return *this;
-}
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Division assignment operator for the division of a matrix by a scalar value
-//        (\f$ A/=s \f$).
-//
-// \param rhs The right-hand side scalar value for the division.
-// \return Reference to the matrix.
-*/
-template< typename MT       // Type of the adapted sparse matrix
-        , bool SO >         // Storage order of the adapted sparse matrix
-template< typename Other >  // Data type of the right-hand side scalar
-inline typename EnableIf< IsNumeric<Other>, StrictlyUpperMatrix<MT,SO,false> >::Type&
-   StrictlyUpperMatrix<MT,SO,false>::operator/=( Other rhs )
-{
-   BLAZE_USER_ASSERT( rhs != Other(0), "Division by zero detected" );
-
-   matrix_ /= rhs;
    return *this;
 }
 /*! \endcond */
@@ -1141,7 +1251,7 @@ inline typename EnableIf< IsNumeric<Other>, StrictlyUpperMatrix<MT,SO,false> >::
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t StrictlyUpperMatrix<MT,SO,false>::rows() const
+inline size_t StrictlyUpperMatrix<MT,SO,false>::rows() const noexcept
 {
    return matrix_.rows();
 }
@@ -1157,7 +1267,7 @@ inline size_t StrictlyUpperMatrix<MT,SO,false>::rows() const
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t StrictlyUpperMatrix<MT,SO,false>::columns() const
+inline size_t StrictlyUpperMatrix<MT,SO,false>::columns() const noexcept
 {
    return matrix_.columns();
 }
@@ -1173,7 +1283,7 @@ inline size_t StrictlyUpperMatrix<MT,SO,false>::columns() const
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t StrictlyUpperMatrix<MT,SO,false>::capacity() const
+inline size_t StrictlyUpperMatrix<MT,SO,false>::capacity() const noexcept
 {
    return matrix_.capacity();
 }
@@ -1195,7 +1305,7 @@ inline size_t StrictlyUpperMatrix<MT,SO,false>::capacity() const
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline size_t StrictlyUpperMatrix<MT,SO,false>::capacity( size_t i ) const
+inline size_t StrictlyUpperMatrix<MT,SO,false>::capacity( size_t i ) const noexcept
 {
    return matrix_.capacity(i);
 }
@@ -1251,14 +1361,16 @@ template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline void StrictlyUpperMatrix<MT,SO,false>::reset()
 {
+   using blaze::erase;
+
    if( SO ) {
       for( size_t j=1UL; j<columns(); ++j ) {
-         matrix_.erase( j, matrix_.begin(j), matrix_.lowerBound(j,j) );
+         erase( matrix_, j, matrix_.begin(j), matrix_.lowerBound(j,j) );
       }
    }
    else {
       for( size_t i=0UL; i<rows(); ++i ) {
-         matrix_.erase( i, matrix_.lowerBound(i,i+1UL), matrix_.end(i) );
+         erase( matrix_, i, matrix_.lowerBound(i,i+1UL), matrix_.end(i) );
       }
    }
 }
@@ -1283,11 +1395,13 @@ template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline void StrictlyUpperMatrix<MT,SO,false>::reset( size_t i )
 {
+   using blaze::erase;
+
    if( SO ) {
-      matrix_.erase( i, matrix_.begin(i), matrix_.lowerBound(i,i) );
+      erase( matrix_, i, matrix_.begin(i), matrix_.lowerBound(i,i) );
    }
    else {
-      matrix_.erase( i, matrix_.lowerBound(i,i+1UL), matrix_.end(i) );
+      erase( matrix_, i, matrix_.lowerBound(i,i+1UL), matrix_.end(i) );
    }
 }
 /*! \endcond */
@@ -1306,145 +1420,10 @@ template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline void StrictlyUpperMatrix<MT,SO,false>::clear()
 {
-   using blaze::clear;
+   matrix_.clear();
 
-   if( IsResizable<MT>::value ) {
-      clear( matrix_ );
-   }
-   else {
-      reset();
-   }
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Setting elements of the strictly upper matrix.
-//
-// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param value The value of the element to be set.
-// \return Iterator to the set element.
-// \exception std::invalid_argument Invalid access to diagonal or lower matrix element.
-//
-// This function sets the value of an element of the strictly upper matrix. In case the strictly
-// upper matrix already contains an element with row index \a i and column index \a j its value
-// is modified, else a new element with the given \a value is inserted. The attempt to set an
-// element on the diagonal or in the lower part of the matrix (i.e. below the diagonal) will
-// result in a \a std::invalid_argument exception.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
-   StrictlyUpperMatrix<MT,SO,false>::set( size_t i, size_t j, const ElementType& value )
-{
-   if( i >= j ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or lower matrix element" );
-   }
-
-   return matrix_.set( i, j, value );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Inserting elements into the strictly upper matrix.
-//
-// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
-// \param value The value of the element to be inserted.
-// \return Iterator to the newly inserted element.
-// \exception std::invalid_argument Invalid sparse matrix access index.
-// \exception std::invalid_argument Invalid access to diagonal or lower matrix element.
-//
-// This function inserts a new element into the strictly upper matrix. However, duplicate elements
-// are not allowed. In case the matrix already contains an element with row index \a i and column
-// index \a j, a \a std::invalid_argument exception is thrown. Also, the attempt to insert an
-// element on the diagonal or in the lower part of the matrix (i.e. below the diagonal) will
-// result in a \a std::invalid_argument exception.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
-   StrictlyUpperMatrix<MT,SO,false>::insert( size_t i, size_t j, const ElementType& value )
-{
-   if( i >= j ) {
-      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or lower matrix element" );
-   }
-
-   return matrix_.insert( i, j, value );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Erasing elements from the strictly upper matrix.
-//
-// \param i The row index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \return void
-//
-// This function erases an element from the strictly upper matrix.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline void StrictlyUpperMatrix<MT,SO,false>::erase( size_t i, size_t j )
-{
-   matrix_.erase( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Erasing elements from the strictly upper matrix.
-//
-// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \param pos Iterator to the element to be erased.
-// \return Iterator to the element after the erased element.
-//
-// This function erases an element from the strictly upper matrix. In case the strictly upper
-// matrix adapts a \a rowMajor sparse matrix the function erases an element from row \a i, in
-// case it adapts a \a columnMajor sparse matrix the function erases an element from column \a i.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
-   StrictlyUpperMatrix<MT,SO,false>::erase( size_t i, Iterator pos )
-{
-   return matrix_.erase( i, pos );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Erasing a range of elements from the strictly upper matrix.
-//
-// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
-// \param first Iterator to first element to be erased.
-// \param last Iterator just past the last element to be erased.
-// \return Iterator to the element after the erased element.
-//
-// This function erases a range of elements from the strictly upper matrix. In case the matrix
-// adapts a \a rowMajor sparse matrix the function erases a range of elements from row \a i, in
-// case it adapts a \a columnMajor matrix the function erases a range of elements from column
-// \a i.
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
-   StrictlyUpperMatrix<MT,SO,false>::erase( size_t i, Iterator first, Iterator last )
-{
-   return matrix_.erase( i, first, last );
+   BLAZE_INTERNAL_ASSERT( matrix_.rows()    == 0UL, "Invalid number of rows"    );
+   BLAZE_INTERNAL_ASSERT( matrix_.columns() == 0UL, "Invalid number of columns" );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1469,7 +1448,7 @@ template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 void StrictlyUpperMatrix<MT,SO,false>::resize( size_t n, bool preserve )
 {
-   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_RESIZABLE_TYPE( MT );
 
    BLAZE_INTERNAL_ASSERT( isSquare( matrix_ ), "Non-square strictly upper matrix detected" );
 
@@ -1570,39 +1549,19 @@ inline void StrictlyUpperMatrix<MT,SO,false>::trim( size_t i )
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Scaling of the matrix by the scalar value \a scalar (\f$ A=B*s \f$).
+/*!\brief Requesting the removal of unused capacity.
 //
-// \param scalar The scalar value for the matrix scaling.
-// \return Reference to the matrix.
-*/
-template< typename MT       // Type of the adapted sparse matrix
-        , bool SO >         // Storage order of the adapted sparse matrix
-template< typename Other >  // Data type of the scalar value
-inline StrictlyUpperMatrix<MT,SO,false>&
-   StrictlyUpperMatrix<MT,SO,false>::scale( const Other& scalar )
-{
-   matrix_.scale( scalar );
-   return *this;
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Scaling the diagonal of the upper matrix by the scalar value \a scalar.
+// \return void
 //
-// \param scalar The scalar value for the diagonal scaling.
-// \return Reference to the upper matrix.
+// This function minimizes the capacity of the matrix by removing unused capacity. Please note
+// that in case a reallocation occurs, all iterators (including end() iterators), all pointers
+// and references to elements of this matrix are invalidated.
 */
-template< typename MT       // Type of the adapted sparse matrix
-        , bool SO >         // Storage order of the adapted sparse matrix
-template< typename Other >  // Data type of the scalar value
-inline StrictlyUpperMatrix<MT,SO,false>&
-   StrictlyUpperMatrix<MT,SO,false>::scaleDiagonal( Other scalar )
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline void StrictlyUpperMatrix<MT,SO,false>::shrinkToFit()
 {
-   matrix_.scaleDiagonal( scalar );
-   return *this;
+   matrix_.shrinkToFit();
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1614,11 +1573,10 @@ inline StrictlyUpperMatrix<MT,SO,false>&
 //
 // \param m The matrix to be swapped.
 // \return void
-// \exception no-throw guarantee.
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline void StrictlyUpperMatrix<MT,SO,false>::swap( StrictlyUpperMatrix& m ) /* throw() */
+inline void StrictlyUpperMatrix<MT,SO,false>::swap( StrictlyUpperMatrix& m ) noexcept
 {
    using std::swap;
 
@@ -1642,11 +1600,11 @@ inline void StrictlyUpperMatrix<MT,SO,false>::swap( StrictlyUpperMatrix& m ) /* 
 */
 template< typename MT  // Type of the adapted dense matrix
         , bool SO >    // Storage order of the adapted dense matrix
-inline size_t StrictlyUpperMatrix<MT,SO,false>::maxNonZeros()
+constexpr size_t StrictlyUpperMatrix<MT,SO,false>::maxNonZeros() noexcept
 {
-   BLAZE_CONSTRAINT_MUST_NOT_BE_RESIZABLE( MT );
+   BLAZE_CONSTRAINT_MUST_BE_STATIC_TYPE( MT );
 
-   return maxNonZeros( Rows<MT>::value );
+   return maxNonZeros( Size_v<MT,0UL> );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1664,7 +1622,7 @@ inline size_t StrictlyUpperMatrix<MT,SO,false>::maxNonZeros()
 */
 template< typename MT  // Type of the adapted dense matrix
         , bool SO >    // Storage order of the adapted dense matrix
-inline size_t StrictlyUpperMatrix<MT,SO,false>::maxNonZeros( size_t n )
+constexpr size_t StrictlyUpperMatrix<MT,SO,false>::maxNonZeros( size_t n ) noexcept
 {
    return ( ( n - 1UL ) * n ) / 2UL;
 }
@@ -1682,13 +1640,15 @@ template< typename MT  // Type of the adapted dense matrix
         , bool SO >    // Storage order of the adapted dense matrix
 inline void StrictlyUpperMatrix<MT,SO,false>::resetLower()
 {
+   using blaze::erase;
+
    if( SO ) {
       for( size_t j=0UL; j<columns(); ++j )
-         matrix_.erase( j, matrix_.upperBound( j, j ), matrix_.end( j ) );
+         erase( matrix_, j, matrix_.upperBound( j, j ), matrix_.end( j ) );
    }
    else {
       for( size_t i=1UL; i<rows(); ++i )
-         matrix_.erase( i, matrix_.begin( i ), matrix_.lowerBound( i, i ) );
+         erase( matrix_, i, matrix_.begin( i ), matrix_.lowerBound( i, i ) );
    }
 }
 /*! \endcond */
@@ -1699,32 +1659,36 @@ inline void StrictlyUpperMatrix<MT,SO,false>::resetLower()
 
 //=================================================================================================
 //
-//  LOOKUP FUNCTIONS
+//  INSERTION FUNCTIONS
 //
 //=================================================================================================
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Searches for a specific matrix element.
+/*!\brief Setting elements of the strictly upper matrix.
 //
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the element in case the index is found, end() iterator otherwise.
+// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param value The value of the element to be set.
+// \return Iterator to the set element.
+// \exception std::invalid_argument Invalid access to diagonal or lower matrix element.
 //
-// This function can be used to check whether a specific element is contained in the strictly
-// upper matrix. It specifically searches for the element with row index \a i and column index
-// \a j. In case the element is found, the function returns an row/column iterator to the
-// element. Otherwise an iterator just past the last non-zero element of row \a i or column
-// \a j (the end() iterator) is returned. Note that the returned uniupper matrix iterator is
-// subject to invalidation due to inserting operations via the function call operator or the
-// insert() function!
+// This function sets the value of an element of the strictly upper matrix. In case the strictly
+// upper matrix already contains an element with row index \a i and column index \a j its value
+// is modified, else a new element with the given \a value is inserted. The attempt to set an
+// element on the diagonal or in the lower part of the matrix (i.e. below the diagonal) will
+// result in a \a std::invalid_argument exception.
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
-   StrictlyUpperMatrix<MT,SO,false>::find( size_t i, size_t j )
+   StrictlyUpperMatrix<MT,SO,false>::set( size_t i, size_t j, const ElementType& value )
 {
-   return matrix_.find( i, j );
+   if( i >= j ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or lower matrix element" );
+   }
+
+   return matrix_.set( i, j, value );
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1732,146 +1696,35 @@ inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Searches for a specific matrix element.
+/*!\brief Inserting elements into the strictly upper matrix.
 //
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the element in case the index is found, end() iterator otherwise.
+// \param i The row index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the new element. The index has to be in the range \f$[0..N-1]\f$.
+// \param value The value of the element to be inserted.
+// \return Iterator to the newly inserted element.
+// \exception std::invalid_argument Invalid sparse matrix access index.
+// \exception std::invalid_argument Invalid access to diagonal or lower matrix element.
 //
-// This function can be used to check whether a specific element is contained in the strictly
-// upper matrix. It specifically searches for the element with row index \a i and column index
-// \a j. In case the element is found, the function returns an row/column iterator to the
-// element. Otherwise an iterator just past the last non-zero element of row \a i or column
-// \a j (the end() iterator) is returned. Note that the returned uniupper matrix iterator is
-// subject to invalidation due to inserting operations via the function call operator or the
-// insert() function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::ConstIterator
-   StrictlyUpperMatrix<MT,SO,false>::find( size_t i, size_t j ) const
-{
-   return matrix_.find( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index not less then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index not less then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index not less then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index not less then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned strictly upper
-// matrix iterator is subject to invalidation due to inserting operations via the function
-// call operator or the insert() function!
+// This function inserts a new element into the strictly upper matrix. However, duplicate elements
+// are not allowed. In case the matrix already contains an element with row index \a i and column
+// index \a j, a \a std::invalid_argument exception is thrown. Also, the attempt to insert an
+// element on the diagonal or in the lower part of the matrix (i.e. below the diagonal) will
+// result in a \a std::invalid_argument exception.
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
 inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
-   StrictlyUpperMatrix<MT,SO,false>::lowerBound( size_t i, size_t j )
+   StrictlyUpperMatrix<MT,SO,false>::insert( size_t i, size_t j, const ElementType& value )
 {
-   return matrix_.lowerBound( i, j );
+   if( i >= j ) {
+      BLAZE_THROW_INVALID_ARGUMENT( "Invalid access to diagonal or lower matrix element" );
+   }
+
+   return matrix_.insert( i, j, value );
 }
 /*! \endcond */
 //*************************************************************************************************
 
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index not less then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index not less then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index not less then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index not less then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned strictly upper
-// matrix iterator is subject to invalidation due to inserting operations via the function
-// call operator or the insert() function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::ConstIterator
-   StrictlyUpperMatrix<MT,SO,false>::lowerBound( size_t i, size_t j ) const
-{
-   return matrix_.lowerBound( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index greater then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index greater then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index greater then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index greater then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned strictly upper
-// matrix iterator is subject to invalidation due to inserting operations via the function
-// call operator or the insert() function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
-   StrictlyUpperMatrix<MT,SO,false>::upperBound( size_t i, size_t j )
-{
-   return matrix_.upperBound( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-//*************************************************************************************************
-/*! \cond BLAZE_INTERNAL */
-/*!\brief Returns an iterator to the first index greater then the given index.
-//
-// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
-// \return Iterator to the first index greater then the given index, end() iterator otherwise.
-//
-// In case of a row-major matrix, this function returns a row iterator to the first element with
-// an index greater then the given column index. In case of a column-major matrix, the function
-// returns a column iterator to the first element with an index greater then the given row
-// index. In combination with the upperBound() function this function can be used to create
-// a pair of iterators specifying a range of indices. Note that the returned strictly upper
-// matrix iterator is subject to invalidation due to inserting operations via the function
-// call operator or the insert() function!
-*/
-template< typename MT  // Type of the adapted sparse matrix
-        , bool SO >    // Storage order of the adapted sparse matrix
-inline typename StrictlyUpperMatrix<MT,SO,false>::ConstIterator
-   StrictlyUpperMatrix<MT,SO,false>::upperBound( size_t i, size_t j ) const
-{
-   return matrix_.upperBound( i, j );
-}
-/*! \endcond */
-//*************************************************************************************************
-
-
-
-
-//=================================================================================================
-//
-//  LOW-LEVEL UTILITY FUNCTIONS
-//
-//=================================================================================================
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
@@ -1948,7 +1801,7 @@ inline void StrictlyUpperMatrix<MT,SO,false>::append( size_t i, size_t j, const 
 // After completion of row/column \a i via the append() function, this function can be called to
 // finalize row/column \a i and prepare the next row/column for insertion process via append().
 //
-// \note: Although finalize() does not allocate new memory, it still invalidates all iterators
+// \note Although finalize() does not allocate new memory, it still invalidates all iterators
 // returned by the end() functions!
 */
 template< typename MT  // Type of the adapted sparse matrix
@@ -1956,6 +1809,377 @@ template< typename MT  // Type of the adapted sparse matrix
 inline void StrictlyUpperMatrix<MT,SO,false>::finalize( size_t i )
 {
    matrix_.finalize( i );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  ERASE FUNCTIONS
+//
+//=================================================================================================
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing elements from the strictly upper matrix.
+//
+// \param i The row index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \return void
+//
+// This function erases an element from the strictly upper matrix.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline void StrictlyUpperMatrix<MT,SO,false>::erase( size_t i, size_t j )
+{
+   using blaze::erase;
+
+   erase( matrix_, i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing elements from the strictly upper matrix.
+//
+// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \param pos Iterator to the element to be erased.
+// \return Iterator to the element after the erased element.
+//
+// This function erases an element from the strictly upper matrix. In case the strictly upper
+// matrix adapts a \a rowMajor sparse matrix the function erases an element from row \a i, in
+// case it adapts a \a columnMajor sparse matrix the function erases an element from column \a i.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
+   StrictlyUpperMatrix<MT,SO,false>::erase( size_t i, Iterator pos )
+{
+   using blaze::erase;
+
+   return erase( matrix_, i, pos );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing a range of elements from the strictly upper matrix.
+//
+// \param i The row/column index of the element to be erased. The index has to be in the range \f$[0..N-1]\f$.
+// \param first Iterator to first element to be erased.
+// \param last Iterator just past the last element to be erased.
+// \return Iterator to the element after the erased element.
+//
+// This function erases a range of elements from the strictly upper matrix. In case the matrix
+// adapts a \a rowMajor sparse matrix the function erases a range of elements from row \a i, in
+// case it adapts a \a columnMajor matrix the function erases a range of elements from column
+// \a i.
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
+   StrictlyUpperMatrix<MT,SO,false>::erase( size_t i, Iterator first, Iterator last )
+{
+   using blaze::erase;
+
+   return erase( matrix_, i, first, last );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing specific elements from the strictly upper matrix.
+//
+// \param predicate The unary predicate for the element selection.
+// \return void.
+//
+// This function erases specific elements from the strictly upper matrix. The elements are
+// selected by the given unary predicate \a predicate, which is expected to accept a single
+// argument of the type of the elements and to be pure. The following example demonstrates
+// how to remove all elements that are smaller than a certain threshold value:
+
+   \code
+   blaze::StrictlyUpperMatrix< CompressedMatrix<double,blaze::rowMajor> > A;
+   // ... Resizing and initialization
+
+   A.erase( []( double value ){ return value < 1E-8; } );
+   \endcode
+
+// \note The predicate is required to be pure, i.e. to produce deterministic results for elements
+// with the same value. The attempt to use an impure predicate leads to undefined behavior!
+*/
+template< typename MT      // Type of the adapted sparse matrix
+        , bool SO >        // Storage order of the adapted sparse matrix
+template< typename Pred >  // Type of the unary predicate
+inline void StrictlyUpperMatrix<MT,SO,false>::erase( Pred predicate )
+{
+   using blaze::erase;
+
+   erase( matrix_, predicate );
+
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Erasing specific elements from a range of the strictly upper matrix.
+//
+// \param i The row/column index of the elements to be erased. The index has to be in the range \f$[0..M-1]\f$.
+// \param first Iterator to first element of the range.
+// \param last Iterator just past the last element of the range.
+// \param predicate The unary predicate for the element selection.
+// \return void
+//
+// This function erases specific elements from a range of elements of the strictly upper matrix.
+// The elements are selected by the given unary predicate \a predicate, which is expected to
+// accept a single argument of the type of the elements and to be pure. In case the storage
+// order is set to \a rowMajor the function erases a range of elements from row \a i, in case
+// the storage flag is set to \a columnMajor the function erases a range of elements from column
+// \a i. The following example demonstrates how to remove all elements that are smaller than a
+// certain threshold value:
+
+   \code
+   blaze::StrictlyUpperMatrix< CompressedMatrix<double,blaze::rowMajor> > A;
+   // ... Resizing and initialization
+
+   A.erase( 2UL, A.begin(2UL), A.end(2UL), []( double value ){ return value < 1E-8; } );
+   \endcode
+
+// \note The predicate is required to be pure, i.e. to produce deterministic results for elements
+// with the same value. The attempt to use an impure predicate leads to undefined behavior!
+*/
+template< typename MT      // Type of the adapted sparse matrix
+        , bool SO >        // Storage order of the adapted sparse matrix
+template< typename Pred >  // Type of the unary predicate
+inline void StrictlyUpperMatrix<MT,SO,false>::erase( size_t i, Iterator first, Iterator last, Pred predicate )
+{
+   using blaze::erase;
+
+   erase( matrix_, i, first, last, predicate );
+
+   BLAZE_INTERNAL_ASSERT( isIntact(), "Broken invariant detected" );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  LOOKUP FUNCTIONS
+//
+//=================================================================================================
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Searches for a specific matrix element.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the element in case the index is found, end() iterator otherwise.
+//
+// This function can be used to check whether a specific element is contained in the strictly
+// upper matrix. It specifically searches for the element with row index \a i and column index
+// \a j. In case the element is found, the function returns an row/column iterator to the
+// element. Otherwise an iterator just past the last non-zero element of row \a i or column
+// \a j (the end() iterator) is returned. Note that the returned uniupper matrix iterator is
+// subject to invalidation due to inserting operations via the function call operator, the
+// set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
+   StrictlyUpperMatrix<MT,SO,false>::find( size_t i, size_t j )
+{
+   return matrix_.find( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Searches for a specific matrix element.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the element in case the index is found, end() iterator otherwise.
+//
+// This function can be used to check whether a specific element is contained in the strictly
+// upper matrix. It specifically searches for the element with row index \a i and column index
+// \a j. In case the element is found, the function returns an row/column iterator to the
+// element. Otherwise an iterator just past the last non-zero element of row \a i or column
+// \a j (the end() iterator) is returned. Note that the returned uniupper matrix iterator is
+// subject to invalidation due to inserting operations via the function call operator, the
+// set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::ConstIterator
+   StrictlyUpperMatrix<MT,SO,false>::find( size_t i, size_t j ) const
+{
+   return matrix_.find( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index not less then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index not less then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index not less then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index not less then the given row
+// index. In combination with the upperBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned strictly upper
+// matrix iterator is subject to invalidation due to inserting operations via the function
+// call operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
+   StrictlyUpperMatrix<MT,SO,false>::lowerBound( size_t i, size_t j )
+{
+   return matrix_.lowerBound( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index not less then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index not less then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index not less then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index not less then the given row
+// index. In combination with the upperBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned strictly upper
+// matrix iterator is subject to invalidation due to inserting operations via the function
+// call operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::ConstIterator
+   StrictlyUpperMatrix<MT,SO,false>::lowerBound( size_t i, size_t j ) const
+{
+   return matrix_.lowerBound( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index greater then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index greater then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index greater then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index greater then the given row
+// index. In combination with the lowerBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned strictly upper
+// matrix iterator is subject to invalidation due to inserting operations via the function
+// call operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::Iterator
+   StrictlyUpperMatrix<MT,SO,false>::upperBound( size_t i, size_t j )
+{
+   return matrix_.upperBound( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Returns an iterator to the first index greater then the given index.
+//
+// \param i The row index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \param j The column index of the search element. The index has to be in the range \f$[0..N-1]\f$.
+// \return Iterator to the first index greater then the given index, end() iterator otherwise.
+//
+// In case of a row-major matrix, this function returns a row iterator to the first element with
+// an index greater then the given column index. In case of a column-major matrix, the function
+// returns a column iterator to the first element with an index greater then the given row
+// index. In combination with the lowerBound() function this function can be used to create
+// a pair of iterators specifying a range of indices. Note that the returned strictly upper
+// matrix iterator is subject to invalidation due to inserting operations via the function
+// call operator, the set() function or the insert() function!
+*/
+template< typename MT  // Type of the adapted sparse matrix
+        , bool SO >    // Storage order of the adapted sparse matrix
+inline typename StrictlyUpperMatrix<MT,SO,false>::ConstIterator
+   StrictlyUpperMatrix<MT,SO,false>::upperBound( size_t i, size_t j ) const
+{
+   return matrix_.upperBound( i, j );
+}
+/*! \endcond */
+//*************************************************************************************************
+
+
+
+
+//=================================================================================================
+//
+//  NUMERIC FUNCTIONS
+//
+//=================================================================================================
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Scaling of the matrix by the scalar value \a scalar (\f$ A=B*s \f$).
+//
+// \param scalar The scalar value for the matrix scaling.
+// \return Reference to the matrix.
+//
+// This function scales the matrix by applying the given scalar value \a scalar to each element
+// of the matrix. For built-in and \c complex data types it has the same effect as using the
+// multiplication assignment operator:
+
+   \code
+   blaze::StrictlyUpperMatrix< blaze::CompressedMatrix<int> > A;
+   // ... Resizing and initialization
+   A *= 4;        // Scaling of the matrix
+   A.scale( 4 );  // Same effect as above
+   \endcode
+*/
+template< typename MT       // Type of the adapted sparse matrix
+        , bool SO >         // Storage order of the adapted sparse matrix
+template< typename Other >  // Data type of the scalar value
+inline StrictlyUpperMatrix<MT,SO,false>&
+   StrictlyUpperMatrix<MT,SO,false>::scale( const Other& scalar )
+{
+   matrix_.scale( scalar );
+   return *this;
 }
 /*! \endcond */
 //*************************************************************************************************
@@ -1981,7 +2205,7 @@ inline void StrictlyUpperMatrix<MT,SO,false>::finalize( size_t i )
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline bool StrictlyUpperMatrix<MT,SO,false>::isIntact() const
+inline bool StrictlyUpperMatrix<MT,SO,false>::isIntact() const noexcept
 {
    using blaze::isIntact;
 
@@ -2013,7 +2237,7 @@ inline bool StrictlyUpperMatrix<MT,SO,false>::isIntact() const
 template< typename MT       // Type of the adapted sparse matrix
         , bool SO >         // Storage order of the adapted sparse matrix
 template< typename Other >  // Data type of the foreign expression
-inline bool StrictlyUpperMatrix<MT,SO,false>::canAlias( const Other* alias ) const
+inline bool StrictlyUpperMatrix<MT,SO,false>::canAlias( const Other* alias ) const noexcept
 {
    return matrix_.canAlias( alias );
 }
@@ -2035,7 +2259,7 @@ inline bool StrictlyUpperMatrix<MT,SO,false>::canAlias( const Other* alias ) con
 template< typename MT       // Type of the adapted sparse matrix
         , bool SO >         // Storage order of the adapted sparse matrix
 template< typename Other >  // Data type of the foreign expression
-inline bool StrictlyUpperMatrix<MT,SO,false>::isAliased( const Other* alias ) const
+inline bool StrictlyUpperMatrix<MT,SO,false>::isAliased( const Other* alias ) const noexcept
 {
    return matrix_.isAliased( alias );
 }
@@ -2056,7 +2280,7 @@ inline bool StrictlyUpperMatrix<MT,SO,false>::isAliased( const Other* alias ) co
 */
 template< typename MT  // Type of the adapted sparse matrix
         , bool SO >    // Storage order of the adapted sparse matrix
-inline bool StrictlyUpperMatrix<MT,SO,false>::canSMPAssign() const
+inline bool StrictlyUpperMatrix<MT,SO,false>::canSMPAssign() const noexcept
 {
    return matrix_.canSMPAssign();
 }

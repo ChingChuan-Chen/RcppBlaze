@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsVecTransExpr.h
 //  \brief Header file for the IsVecTransExpr type trait class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
+#include <utility>
 #include <blaze/math/expressions/VecTransExpr.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -57,17 +55,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsVecTransExpr type trait.
+/*!\brief Auxiliary helper functions for the IsVecTransExpr type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsVecTransExprHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_base_of<VecTransExpr,T>::value && !boost::is_base_of<T,VecTransExpr>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+template< typename VT >
+TrueType isVecTransExpr_backend( const volatile VecTransExpr<VT>* );
+
+FalseType isVecTransExpr_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -78,23 +72,47 @@ struct IsVecTransExprHelper
 //
 // This type trait class tests whether or not the given type \a Type is a vector transposition
 // expression template. In order to qualify as a valid vector transposition expression template,
-// the given type has to derive (publicly or privately) from the VecTransExpr base class. In
-// case the given type is a valid vector transposition expression template, the \a value member
-// enumeration is set to 1, the nested type definition \a Type is \a TrueType, and the class
-// derives from \a TrueType. Otherwise \a value is set to 0, \a Type is \a FalseType, and the
+// the given type has to derive publicly from the VecTransExpr base class. In case the given
+// type is a valid vector transposition expression template, the \a value member constant is
+// set to \a true, the nested type definition \a Type is \a TrueType, and the class derives
+// from \a TrueType. Otherwise \a value is set to \a false, \a Type is \a FalseType, and the
 // class derives from \a FalseType.
 */
 template< typename T >
-struct IsVecTransExpr : public IsVecTransExprHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsVecTransExprHelper<T>::value };
-   typedef typename IsVecTransExprHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsVecTransExpr
+   : public decltype( isVecTransExpr_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsVecTransExpr type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsVecTransExpr<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsVecTransExpr type trait.
+// \ingroup math_type_traits
+//
+// The IsVecTransExpr_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsVecTransExpr class template. For instance, given the type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsVecTransExpr<T>::value;
+   constexpr bool value2 = blaze::IsVecTransExpr_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsVecTransExpr_v = IsVecTransExpr<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

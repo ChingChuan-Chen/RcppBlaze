@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/TransposeFlag.h
 //  \brief Header file for the TransposeFlag type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/math/TransposeFlag.h>
-#include <blaze/math/typetraits/IsRowVector.h>
-#include <blaze/math/typetraits/IsVector.h>
-#include <blaze/util/InvalidType.h>
-#include <blaze/util/mpl/If.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -65,8 +61,8 @@ namespace blaze {
 // vector type a compilation error is created.
 
    \code
-   typedef blaze::DynamicVector<int,blaze::rowVector>     RowVector;
-   typedef blaze::DynamicVector<int,blaze::columnVector>  ColumnVector;
+   using RowVector    = blaze::DynamicVector<int,blaze::rowVector>;
+   using ColumnVector = blaze::DynamicVector<int,blaze::columnVector>;
 
    blaze::TransposeFlag<RowVector>::value     // Evaluates to blaze::rowVector
    blaze::TransposeFlag<ColumnVector>::value  // Evaluates to blaze::columnVector
@@ -75,23 +71,26 @@ namespace blaze {
 */
 template< typename T >
 struct TransposeFlag
-{
- private:
-   //**struct ValidType****************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   struct ValidType {
-      static const bool value = ( IsRowVector<T>::value ? rowVector : columnVector );
-   };
-   /*! \endcond */
-   //**********************************************************************************************
+   : public BoolConstant< T::transposeFlag >
+{};
+//*************************************************************************************************
 
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   static const bool value = If< IsVector<T>, ValidType, INVALID_TYPE >::Type::value;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the TransposeFlag type trait.
+// \ingroup math_type_traits
+//
+// The TransposeFlag_v variable template provides a convenient shortcut to access the nested
+// \a value of the TransposeFlag class template. For instance, given the vector type \a T the
+// following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::TransposeFlag<T>::value;
+   constexpr bool value2 = blaze::TransposeFlag_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool TransposeFlag_v = T::transposeFlag;
 //*************************************************************************************************
 
 } // namespace blaze

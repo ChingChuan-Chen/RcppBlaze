@@ -3,7 +3,7 @@
 //  \file blaze/math/typetraits/IsAddExpr.h
 //  \brief Header file for the IsAddExpr type trait class
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,11 +40,9 @@
 // Includes
 //*************************************************************************************************
 
-#include <boost/type_traits/is_base_of.hpp>
+#include <utility>
 #include <blaze/math/expressions/AddExpr.h>
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -57,17 +55,13 @@ namespace blaze {
 
 //*************************************************************************************************
 /*! \cond BLAZE_INTERNAL */
-/*!\brief Auxiliary helper struct for the IsAddExpr type trait.
+/*!\brief Auxiliary helper functions for the IsAddExpr type trait.
 // \ingroup math_type_traits
 */
-template< typename T >
-struct IsAddExprHelper
-{
-   //**********************************************************************************************
-   enum { value = boost::is_base_of<AddExpr,T>::value && !boost::is_base_of<T,AddExpr>::value };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   //**********************************************************************************************
-};
+template< typename U >
+TrueType isAddExpr_backend( const volatile AddExpr<U>* );
+
+FalseType isAddExpr_backend( ... );
 /*! \endcond */
 //*************************************************************************************************
 
@@ -78,23 +72,47 @@ struct IsAddExprHelper
 //
 // This type trait class tests whether or not the given type \a Type is an addition expression
 // template (i.e. an expression representing a vector addition or a matrix addition). In order
-// to qualify as a valid addition expression template, the given type has to derive (publicly
-// or privately) from the AddExpr base class. In case the given type is a valid addition
-// expression template, the \a value member enumeration is set to 1, the nested type definition
-// \a Type is \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to
-// 0, \a Type is \a FalseType, and the class derives from \a FalseType.
+// to qualify as a valid addition expression template, the given type has to derive publicly
+// from the AddExpr base class. In case the given type is a valid addition expression template,
+// the \a value member constant is set to \a true, the nested type definition \a Type is
+// \a TrueType, and the class derives from \a TrueType. Otherwise \a value is set to \a false,
+// \a Type is \a FalseType, and the class derives from \a FalseType.
 */
 template< typename T >
-struct IsAddExpr : public IsAddExprHelper<T>::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = IsAddExprHelper<T>::value };
-   typedef typename IsAddExprHelper<T>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+struct IsAddExpr
+   : public decltype( isAddExpr_backend( std::declval<T*>() ) )
+{};
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*! \cond BLAZE_INTERNAL */
+/*!\brief Specialization of the IsAddExpr type trait for references.
+// \ingroup math_type_traits
+*/
+template< typename T >
+struct IsAddExpr<T&>
+   : public FalseType
+{};
+/*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the IsAddExpr type trait.
+// \ingroup math_type_traits
+//
+// The IsAddExpr_v variable template provides a convenient shortcut to access the nested
+// \a value of the IsAddExpr class template. For instance, given the type \a T the following
+// two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::IsAddExpr<T>::value;
+   constexpr bool value2 = blaze::IsAddExpr_v<T>;
+   \endcode
+*/
+template< typename T >
+constexpr bool IsAddExpr_v = IsAddExpr<T>::value;
 //*************************************************************************************************
 
 } // namespace blaze

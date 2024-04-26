@@ -3,7 +3,7 @@
 //  \file blaze/util/typetraits/HaveSameSize.h
 //  \brief Header file for the HaveSameSize type trait
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,9 +40,7 @@
 // Includes
 //*************************************************************************************************
 
-#include <blaze/util/FalseType.h>
-#include <blaze/util/SelectType.h>
-#include <blaze/util/TrueType.h>
+#include <blaze/util/IntegralConstant.h>
 
 
 namespace blaze {
@@ -58,16 +56,16 @@ namespace blaze {
 // \ingroup type_traits
 //
 // This class offers the possibility to test the size of two types at compile time. If an object
-// of type \a T1 has the same size as an object of type \a T2, the \a value member enumeration is
-// set to 1, the nested type definition \a Type is \a TrueType, and the class derives from
-// \a TrueType. Otherwise \a value  is set to 0, \a Type is \a FalseType, and the class derives
-// from \a FalseType.
+// of type \a T1 has the same size as an object of type \a T2, the \a value member constant is
+// set to \a true, the nested type definition \a Type is \a TrueType, and the class derives from
+// \a TrueType. Otherwise \a value  is set to \a false, \a Type is \a FalseType, and the class
+// derives from \a FalseType.
 
    \code
-   blaze::HaveSameSize<int,unsigned int>::value  // Evaluates to 1
+   blaze::HaveSameSize<int,unsigned int>::value  // Evaluates to 'true'
    blaze::HaveSameSize<int,unsigned int>::Type   // Results in TrueType
    blaze::HaveSameSize<int,unsigned int>         // Is derived from TrueType
-   blaze::HaveSameSize<char,wchar_t>::value      // Evalutes to 0
+   blaze::HaveSameSize<char,wchar_t>::value      // Evalutes to 'false'
    blaze::HaveSameSize<char,wchar_t>::Type       // Results in FalseType
    blaze::HaveSameSize<char,wchar_t>             // Is derived from FalseType
    \endcode
@@ -90,16 +88,9 @@ namespace blaze {
    \endcode
 */
 template< typename T1, typename T2 >
-class HaveSameSize : public SelectType< sizeof(T1) == sizeof(T2), TrueType, FalseType >::Type
-{
- public:
-   //**********************************************************************************************
-   /*! \cond BLAZE_INTERNAL */
-   enum { value = sizeof( T1 ) == sizeof( T2 ) };
-   typedef typename SelectType<value,TrueType,FalseType>::Type  Type;
-   /*! \endcond */
-   //**********************************************************************************************
-};
+class HaveSameSize
+   : public BoolConstant< sizeof(T1) == sizeof(T2) >
+{};
 //*************************************************************************************************
 
 
@@ -108,20 +99,15 @@ class HaveSameSize : public SelectType< sizeof(T1) == sizeof(T2), TrueType, Fals
 /*!\brief Partial specialization of the compile time size constraint.
 // \ingroup type_traits
 //
-// // This class is a partial specialization of the HaveSameSize template for the type \a void
-// as first template argument. The \a value member enumeration is automatically set to 0, the
-// nested type definition \a Type is \a FalseType, and the class derives from \a FalseType for
-// any given type \a T since the \a void type has no size.
+// This class is a partial specialization of the HaveSameSize template for the type \a void
+// as first template argument. The \a value member constant is automatically set to \a false,
+// the nested type definition \a Type is \a FalseType, and the class derives from \a FalseType
+// for any given type \a T since the \a void type has no size.
 */
 template< typename T >
-class HaveSameSize<void,T> : public FalseType
-{
- public:
-   //**********************************************************************************************
-   enum { value = 0 };
-   typedef FalseType  Type;
-   //**********************************************************************************************
-};
+class HaveSameSize<void,T>
+   : public FalseType
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -132,19 +118,14 @@ class HaveSameSize<void,T> : public FalseType
 // \ingroup type_traits
 //
 // This class is a partial specialization of the HaveSameSize template for the type \a void
-// as second template argument. The \a value member enumeration is automatically set to 0, the
-// nested type definition \a Type is \a FalseType, and the class derives from \a FalseType for
-// any given type \a T since the \a void type has no size.
+// as second template argument. The \a value member constant is automatically set to \a false,
+// the nested type definition \a Type is \a FalseType, and the class derives from \a FalseType
+// for any given type \a T since the \a void type has no size.
 */
 template< typename T >
-class HaveSameSize<T,void> : public FalseType
-{
- public:
-   //**********************************************************************************************
-   enum { value = 0 };
-   typedef FalseType  Type;
-   //**********************************************************************************************
-};
+class HaveSameSize<T,void>
+   : public FalseType
+{};
 /*! \endcond */
 //*************************************************************************************************
 
@@ -155,20 +136,33 @@ class HaveSameSize<T,void> : public FalseType
 // \ingroup type_traits
 //
 // This class is a full specialization of the HaveSameSize template for the type \a void
-// as first and second template argument. The \a value member enumeration is automatically
-// set to 1, the nested type definition \a Type is \a TrueType, and the class derives from
+// as first and second template argument. The \a value member constant is automatically set
+// to \a true, the nested type definition \a Type is \a TrueType, and the class derives from
 // \a TrueType since both arguments are \a void.
 */
 template<>
-class HaveSameSize<void,void> : public TrueType
-{
- public:
-   //**********************************************************************************************
-   enum { value = 1 };
-   typedef TrueType  Type;
-   //**********************************************************************************************
-};
+class HaveSameSize<void,void>
+   : public TrueType
+{};
 /*! \endcond */
+//*************************************************************************************************
+
+
+//*************************************************************************************************
+/*!\brief Auxiliary variable template for the HaveSameSize type trait.
+// \ingroup type_traits
+//
+// The HaveSameSize_v variable template provides a convenient shortcut to access the nested
+// \a value of the HaveSameSize class template. For instance, given the typew \a T1 and \a T2
+// the following two statements are identical:
+
+   \code
+   constexpr bool value1 = blaze::HaveSameSize<T1,T2>::value;
+   constexpr bool value2 = blaze::HaveSameSize_v<T1,T2>;
+   \endcode
+*/
+template< typename T1, typename T2 >
+constexpr bool HaveSameSize_v = HaveSameSize<T1,T2>::value;
 //*************************************************************************************************
 
 } // namespace blaze

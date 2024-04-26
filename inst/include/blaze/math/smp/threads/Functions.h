@@ -3,7 +3,7 @@
 //  \file blaze/math/smp/threads/Functions.h
 //  \brief Header file for the C++11 and Boost thread-based SMP utility functions
 //
-//  Copyright (C) 2013 Klaus Iglberger - All Rights Reserved
+//  Copyright (C) 2012-2020 Klaus Iglberger - All Rights Reserved
 //
 //  This file is part of the Blaze library. You can redistribute it and/or modify it under
 //  the terms of the New (Revised) BSD License. Redistribution and use in source and binary
@@ -40,10 +40,10 @@
 // Includes
 //*************************************************************************************************
 
+#include <blaze/math/Exception.h>
 #include <blaze/math/smp/threads/ThreadBackend.h>
 #include <blaze/system/Inline.h>
 #include <blaze/system/SMP.h>
-#include <blaze/util/Exception.h>
 #include <blaze/util/StaticAssert.h>
 #include <blaze/util/Types.h>
 
@@ -86,7 +86,7 @@ BLAZE_ALWAYS_INLINE size_t getNumThreads()
 // Note that the given \a number must be in the range \f$[1..\infty)\f$. In case an invalid
 // number of threads is specified, a \a std::invalid_argument exception is thrown.
 */
-BLAZE_ALWAYS_INLINE size_t setNumThreads( size_t number )
+BLAZE_ALWAYS_INLINE void setNumThreads( size_t number )
 {
    if( number == 0UL ) {
       BLAZE_THROW_INVALID_ARGUMENT( "Invalid number of threads" );
