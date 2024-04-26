@@ -45,11 +45,11 @@ Note that \code{CompressedVector} and \code{CompressedMatrix} only support \code
 \enumerate{
 \item Blaze project: \url{https://bitbucket.org/blaze-lib/blaze}
 \item K. Iglberger, G. Hager, J. Treibig, and U. Ruede:
-      \href{http://epubs.siam.org/sisc/resource/1/sjoce3/v34/i2/pC42_s1}{
+      \href{https://doi.org/10.1137/110830125}{
         Expression Templates Revisited: A Performance Analysis of Current Methodologies.}
       SIAM Journal on Scientific Computing, 34(2): C42--C69, 2012
 \item K. Iglberger, G. Hager, J. Treibig, and U. Ruede:
-      \href{http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=06266939}{
+      \href{https://doi.org/10.1109/HPCSim.2012.6266939}{
       High Performance Smart Expression Template Math Libraries.}
       Proceedings of the 2nd International Workshop on New Algorithms and Programming Models
       for the Manycore Era (APMM 2012) at HPCS 2012
