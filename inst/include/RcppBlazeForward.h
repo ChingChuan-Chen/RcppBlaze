@@ -182,10 +182,6 @@ namespace Rcpp {
     class Exporter< blaze::HybridVector<Type, N, TF, AF, PF> >;
     template <typename Type, size_t N, bool TF, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
     class Exporter< blaze::StaticVector<Type, N, TF, AF, PF> >;
-    template <typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::unpadded, TF> >;
-    template <typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::unpadded, TF> >;
-    template <typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::unaligned, blaze::padded, TF> >;
-    template <typename Type, bool TF> class Exporter< blaze::CustomVector<Type, blaze::aligned, blaze::padded, TF> >;
 
     /* support for as for blaze dense matrices */
     template <typename Type, bool SO> class Exporter< blaze::DynamicMatrix<Type, SO> >;
@@ -193,10 +189,6 @@ namespace Rcpp {
     class Exporter< blaze::HybridMatrix<Type, M, N, SO, AF, PF> >;
     template <typename Type, size_t M, size_t N, bool SO, blaze::AlignmentFlag AF, blaze::PaddingFlag PF>
     class Exporter< blaze::StaticMatrix<Type, M, N, SO, AF, PF> >;
-    template <typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::unaligned, blaze::unpadded, SO> >;
-    template <typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::unpadded, SO> >;
-    template <typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::unaligned, blaze::padded, SO> >;
-    template <typename Type, bool SO> class Exporter< blaze::CustomMatrix<Type, blaze::aligned, blaze::padded, SO> >;
 
     /* support for as for blaze sparse vectors */
     template <typename Type, bool TF> class Exporter< blaze::CompressedVector<Type, TF> >;
@@ -207,5 +199,15 @@ namespace Rcpp {
     template <typename Type, bool SO> class Exporter< blaze::ZeroMatrix<Type, SO> >;
   } // namespace traits
 }
+
+
+
+namespace RcppBlaze {
+  // exporters for CustomVector & CustomMatrix
+  template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool TF>
+  void copyToCustomVector(SEXP, blaze::CustomVector<Type, AF, PF, TF>&);
+  template <typename Type, blaze::AlignmentFlag AF, blaze::PaddingFlag PF, bool SO>
+  void copyToCustomMatrix(SEXP, blaze::CustomMatrix<Type, AF, PF, SO>&);
+} // namespace RcppBlaze
 
 #endif
