@@ -101,10 +101,9 @@ constexpr decltype(auto) min( T1&& a, T2&& b )
 template< typename T1, typename T2, typename T3 >
 constexpr decltype(auto) min( T1&& a, T2&& b, T3&& c )
 {
-   using std::forward;
    using blaze::min;
 
-   return min( min( forward<T1>( a ), forward<T2>( b ) ), forward<T3>( c ) );
+   return min( min( std::forward<T1>( a ), std::forward<T2>( b ) ), std::forward<T3>( c ) );
 }
 //*************************************************************************************************
 
