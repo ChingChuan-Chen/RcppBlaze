@@ -31,15 +31,105 @@ If you encounter a bug, please file a reproducible example on [github](https://g
 
 ### Note
 
+#### Sparse Matrix only supports three data types
 `CompressedVector` and `CompressedMatrix` only support `int`, `float` and `double` types.
 Logical part is not supported because there is no enough resource for it (helps are welcome).
 Since `Matrix` only provides `l*[CTR]Matrix` and `d*[CTR]Matrix` and does not support `z*[CTR]Matrix`.
 
-### Known Issues
+#### CustomVector and CustomMatrix cannot directly be converted from R object
 
-Converting R object to `CustomVector` or `CustomMatrix` (`Rcpp::as`) is unstable. You should take your own risk to do so.
-Returning `CustomVector` or `CustomMatrix` from `C++` (`Rcpp::wrap`) is totally okay.
-You can `#define RCPPBLAZE_ENABLE_WARN false` to disable the related warnings.
+Since `CustomVector` and `CustomMatrix` are mapping memory which user should manage by himself.
+Therefore, we provide another function to help user do convertion from R objects.
+We provide `RcppBlaze::copyToCustomVector` and `RcppBlaze::copyToCustomMatrix` to make easier on data copy. 
+Below is the example code:
+
+``` c++
+// For CustomVector<int>
+using iCustomVectorUU = blaze::CustomVector<int, blaze::unaligned, blaze::unpadded>;
+using iCustomVectorAP = blaze::CustomVector<int, blaze::aligned, blaze::padded>;
+
+// initialize R IntegerVector
+Rcpp::IntegerVector intVec = Rcpp::IntegerVector::create(-2, -1, 0, 1, 2 );
+size_t int_vec_size = Rf_xlength(intVec);
+size_t intVecPaddedSize = blaze::nextMultiple<size_t>(int_vec_size, blaze::SIMDTrait<int>::size);
+
+// unaligned & unpadded CustomVector
+std::unique_ptr<int[], blaze::ArrayDelete> data_unpadded(new int[int_vec_size]);
+iCustomVectorUU cv_uu_int(data_unpadded.get(), int_vec_size);
+RcppBlaze::copyToCustomVector(intVec, cv_uu_int);
+
+// aligned & padded CustomVector
+std::unique_ptr<int[], blaze::Deallocate> data_padded(blaze::allocate<int>(intVecPaddedSize));
+iCustomVectorAP cv_ap_int(data_padded.get(), int_vec_size, intVecPaddedSize);
+RcppBlaze::copyToCustomVector(intVec, cv_ap_int);
+  
+// For CustomVector<double>  
+using dCustomVectorUU = blaze::CustomVector<double, blaze::unaligned, blaze::unpadded>;
+using dCustomVectorUP = blaze::CustomVector<double, blaze::unaligned, blaze::padded>;
+using dCustomVectorAU = blaze::CustomVector<double, blaze::aligned, blaze::unpadded>;
+using dCustomVectorAP = blaze::CustomVector<double, blaze::aligned, blaze::padded>;
+
+// initialize R NumericVector
+Rcpp::NumericVector dblVec = Rcpp::NumericVector::create(-2.0, -1.0, 0.0, 1.0, 2.0);
+size_t dbl_vec_size = Rf_xlength(dblVec);
+size_t dblVecPaddedSize = blaze::nextMultiple<size_t>(dbl_vec_size, blaze::SIMDTrait<double>::size);
+
+// unaligned & unpadded CustomVector
+std::unique_ptr<double[], blaze::ArrayDelete> cv_uu_data(new double[dbl_vec_size]);
+dCustomVectorUU cv_uu_dbl(cv_uu_data.get(), dbl_vec_size);
+RcppBlaze::copyToCustomVector(dblVec, cv_uu_dbl);
+
+// unaligned & padded CustomVector
+std::unique_ptr<double[], blaze::ArrayDelete> cv_up_data(new double[dblVecPaddedSize]);
+dCustomVectorUP cv_up_dbl(cv_up_data.get(), dbl_vec_size, dblVecPaddedSize);
+RcppBlaze::copyToCustomVector(dblVec, cv_up_dbl);
+
+// aligned & unpadded CustomVector
+std::unique_ptr<double[], blaze::Deallocate> cv_au_data(blaze::allocate<double>(dbl_vec_size));
+dCustomVectorAU cv_au_dbl(cv_au_data.get(), dbl_vec_size);
+RcppBlaze::copyToCustomVector(dblVec, cv_au_dbl);
+
+// aligned & padded CustomVector
+std::unique_ptr<double[], blaze::Deallocate> cv_ap_data(blaze::allocate<double>(dblVecPaddedSize));
+dCustomVectorAP cv_ap_dbl(cv_ap_data.get(), dbl_vec_size, dblVecPaddedSize);
+RcppBlaze::copyToCustomVector(dblVec, cv_ap_dbl);
+
+// For CustomMatrix<int>
+using iCustomMatrixUU = blaze::CustomMatrix<int, blaze::unaligned, blaze::unpadded, blaze::columnMajor>;
+using iCustomMatrixAP = blaze::CustomMatrix<int, blaze::aligned, blaze::padded, blaze::columnMajor>;
+using iCustomMatrixAP_RM = blaze::CustomMatrix<int, blaze::aligned, blaze::padded, blaze::rowMajor>;
+
+// initialize R IntegerMatrix
+Rcpp::IntegerMatrix intMat(2, 3);
+std::fill(intMat.begin(), intMat.end(), 8);
+intMat(0, 1) = 5;
+intMat(1, 2) = 4;
+Rcpp::Shield<SEXP> intMatDimsSexp(Rf_getAttrib(intMat, R_DimSymbol));
+int* intMatDims = INTEGER(intMatDimsSexp);
+size_t m = (size_t) intMatDims[0], n = (size_t) intMatDims[1];
+
+// column-major parameters
+size_t intSimdSize = blaze::SIMDTrait<int>::size;
+size_t intMatPaddedRows = blaze::nextMultiple<size_t>(m, intSimdSize);
+
+// unaligned & unpadded column-major CustomMatrix
+std::unique_ptr<int[], blaze::ArrayDelete> data_unpadded(new int[m*n]);
+iCustomMatrixUU cm_uu_int(data_unpadded.get(), m, n);
+RcppBlaze::copyToCustomMatrix(intMat, cm_uu_int);
+
+// aligned & padded column-major CustomMatrix
+std::unique_ptr<int[], blaze::Deallocate> data_padded(blaze::allocate<int>(intMatPaddedRows * n));
+iCustomMatrixAP cm_ap_int(data_padded.get(), m, n, intMatPaddedRows);
+RcppBlaze::copyToCustomMatrix(intMat, cm_ap_int);
+
+// row-major parameters
+size_t intMatPaddedCols = blaze::nextMultiple<size_t>(n, intSimdSize);
+
+// aligned & padded row-major CustomMatrix
+std::unique_ptr<int[], blaze::Deallocate> data_rm_padded(blaze::allocate<int>(m * intMatPaddedCols));
+iCustomMatrixAP_RM cm_ap_rm_int(data_rm_padded.get(), m, n, intMatPaddedCols);
+RcppBlaze::copyToCustomMatrix(intMat, cm_ap_rm_int);
+```
 
 ### Linear Model Fitting Benchmark 
 

@@ -13,8 +13,4 @@
 // avoid conflict to R constants
 #define _BLAZE_MATH_CONSTANTS_H_
 
-#ifndef RCPPBLAZE_ENABLE_WARN
-#define RCPPBLAZE_ENABLE_WARN true
-#endif
-
 #endif

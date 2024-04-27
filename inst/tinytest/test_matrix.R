@@ -71,17 +71,19 @@ expect_equal(matrix_as_res[["hm_double_unaligned_sum"]], expect_double_sum, info
 expect_error(matrix_sm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
 expect_error(matrix_hm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
 
-# matrix_as_res <- custom_matrix_as_test(
-#   list(
-#     matrix(c(1L, 2L, 4L, 5L, 8L, 3L), nrow=2L, byrow=TRUE),
-#     matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)
-#   )
-# )
-# expect_equal(matrix_as_res[["iCustomMatrixUU"]], 23L, info = "iCustomMatrixUU")
-# expect_equal(matrix_as_res[["dCustomMatrixUU"]], expect_double_sum, info = "dCustomMatrixUU")
-# expect_equal(matrix_as_res[["dCustomMatrixUP"]], expect_double_sum, info = "dCustomMatrixUP")
-# expect_equal(matrix_as_res[["dCustomMatrixAU"]], expect_double_sum, info = "dCustomMatrixAU")
-# expect_equal(matrix_as_res[["dCustomMatrixAP"]], expect_double_sum, info = "dCustomMatrixAP")
+matrix_as_res <- custom_matrix_as_test(
+  list(
+    matrix(c(1L, 2L, 4L, 5L, 8L, 3L), nrow=2L, byrow=TRUE),
+    matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)
+  )
+)
+expect_equal(matrix_as_res[["iCustomMatrixUU"]], 23L, info = "iCustomMatrixUU")
+expect_equal(matrix_as_res[["iCustomMatrixAP"]], 23L, info = "iCustomMatrixAP")
+expect_equal(matrix_as_res[["iCustomMatrixAP_RM"]], 23L, info = "iCustomMatrixAP_RM")
+expect_equal(matrix_as_res[["dCustomMatrixUU"]], expect_double_sum, info = "dCustomMatrixUU")
+expect_equal(matrix_as_res[["dCustomMatrixUP"]], expect_double_sum, info = "dCustomMatrixUP")
+expect_equal(matrix_as_res[["dCustomMatrixAU"]], expect_double_sum, info = "dCustomMatrixAU")
+expect_equal(matrix_as_res[["dCustomMatrixAP"]], expect_double_sum, info = "dCustomMatrixAP")
 
 # Column-Major SparseMatrix
 expect_double_sm_sum <- 12

@@ -49,12 +49,13 @@ expect_equal(vector_as_res[["hv_double_unaligned_sum"]], expect_double_sum, info
 expect_error(vector_sv_error(c(1.5, 2.5, 4.5, 5.5)))
 expect_error(vector_hv_error(c(1.5, 2.5, 4.5, 5.5)))
 
-# custom_vector_as_res <- custom_vector_as_test(list(c(1L, 3L, 6L), c(1.5, 2.5, 4.5)))
-# expect_equal(custom_vector_as_res[["iCustomVectorUU"]], 10L, info = "iCustomVectorUU")
-# expect_equal(custom_vector_as_res[["dCustomVectorUU"]], expect_double_sum, info = "dCustomVectorUU")
-# expect_equal(custom_vector_as_res[["dCustomVectorUP"]], expect_double_sum, info = "dCustomVectorUP")
-# expect_equal(custom_vector_as_res[["dCustomVectorAU"]], expect_double_sum, info = "dCustomVectorAU")
-# expect_equal(custom_vector_as_res[["dCustomVectorAP"]], expect_double_sum, info = "dCustomVectorAP")
+custom_vector_as_res <- custom_vector_as_test(list(c(1L, 3L, 6L), c(1.5, 2.5, 4.5)))
+expect_equal(custom_vector_as_res[["iCustomVectorUU"]], 10L, info = "iCustomVectorUU")
+expect_equal(custom_vector_as_res[["iCustomVectorAP"]], 10L, info = "iCustomVectorAP")
+expect_equal(custom_vector_as_res[["dCustomVectorUU"]], expect_double_sum, info = "dCustomVectorUU")
+expect_equal(custom_vector_as_res[["dCustomVectorUP"]], expect_double_sum, info = "dCustomVectorUP")
+expect_equal(custom_vector_as_res[["dCustomVectorAU"]], expect_double_sum, info = "dCustomVectorAU")
+expect_equal(custom_vector_as_res[["dCustomVectorAP"]], expect_double_sum, info = "dCustomVectorAP")
 
 sparse_vector_as_res <- sparse_vector_as_test(
   list(

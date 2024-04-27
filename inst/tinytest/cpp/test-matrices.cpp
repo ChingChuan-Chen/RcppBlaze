@@ -188,30 +188,84 @@ void matrix_hm_error(Rcpp::NumericMatrix x) {
   blaze::HybridMatrix<double, 3, 3, blaze::columnMajor> z = Rcpp::as<blaze::HybridMatrix<double, 3, 3, blaze::columnMajor>>(x);
 }
 
-/*
 // [[Rcpp::export]]
 Rcpp::List custom_matrix_as_test(Rcpp::List input_list) {
-  typedef typename blaze::CustomMatrix<int, blaze::unaligned, blaze::unpadded, blaze::columnMajor> iCustomMatrixUU;
-  typedef typename blaze::CustomMatrix<double, blaze::unaligned, blaze::unpadded, blaze::columnMajor> dCustomMatrixUU;
-  typedef typename blaze::CustomMatrix<double, blaze::unaligned, blaze::padded, blaze::columnMajor> dCustomMatrixUP;
-  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::columnMajor> dCustomMatrixAU;
-  typedef typename blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor> dCustomMatrixAP;
+  using iCustomMatrixUU = blaze::CustomMatrix<int, blaze::unaligned, blaze::unpadded, blaze::columnMajor>;
+  using iCustomMatrixAP = blaze::CustomMatrix<int, blaze::aligned, blaze::padded, blaze::columnMajor>;
+  using iCustomMatrixAP_RM = blaze::CustomMatrix<int, blaze::aligned, blaze::padded, blaze::rowMajor>;
 
-  iCustomMatrixUU cm_int = input_list[0];
-  dCustomMatrixUU cm_double1 = input_list[1];
-  dCustomMatrixUP cm_double2 = input_list[1];
-  dCustomMatrixAU cm_double3 = input_list[1];
-  dCustomMatrixAP cm_double4 = input_list[1];
+  // initialize
+  Rcpp::Shield<SEXP> intMatDimsSexp(Rf_getAttrib(input_list[0], R_DimSymbol));
+  int* intMatDims = INTEGER(intMatDimsSexp);
+  size_t m = (size_t) intMatDims[0], n = (size_t) intMatDims[1];
+
+  // column-major parameters
+  size_t intSimdSize = blaze::SIMDTrait<int>::size;
+  size_t intMatPaddedRows = blaze::nextMultiple<size_t>(m, intSimdSize);
+
+  // unaligned & unpadded column-major CustomMatrix
+  std::unique_ptr<int[], blaze::ArrayDelete> data_unpadded(new int[m*n]);
+  iCustomMatrixUU cm_uu_int(data_unpadded.get(), m, n);
+  RcppBlaze::copyToCustomMatrix(input_list[0], cm_uu_int);
+
+  // aligned & padded column-major CustomMatrix
+  std::unique_ptr<int[], blaze::Deallocate> data_padded(blaze::allocate<int>(intMatPaddedRows * n));
+  iCustomMatrixAP cm_ap_int(data_padded.get(), m, n, intMatPaddedRows);
+  RcppBlaze::copyToCustomMatrix(input_list[0], cm_ap_int);
+
+  // row-major parameters
+  size_t intMatPaddedCols = blaze::nextMultiple<size_t>(n, intSimdSize);
+
+  // aligned & padded row-major CustomMatrix
+  std::unique_ptr<int[], blaze::Deallocate> data_rm_padded(blaze::allocate<int>(m * intMatPaddedCols));
+  iCustomMatrixAP_RM cm_ap_rm_int(data_rm_padded.get(), m, n, intMatPaddedCols);
+  RcppBlaze::copyToCustomMatrix(input_list[0], cm_ap_rm_int);
+
+
+  using dCustomMatrixUU = blaze::CustomMatrix<double, blaze::unaligned, blaze::unpadded, blaze::columnMajor>;
+  using dCustomMatrixUP = blaze::CustomMatrix<double, blaze::unaligned, blaze::padded, blaze::columnMajor>;
+  using dCustomMatrixAU = blaze::CustomMatrix<double, blaze::aligned, blaze::unpadded, blaze::columnMajor>;
+  using dCustomMatrixAP = blaze::CustomMatrix<double, blaze::aligned, blaze::padded, blaze::columnMajor>;
+
+  // initialize
+  Rcpp::Shield<SEXP> dblMatDimsSexp(Rf_getAttrib(input_list[1], R_DimSymbol));
+  int* dblMatDims = INTEGER(dblMatDimsSexp);
+  size_t m2 = (size_t) dblMatDims[0], n2 = (size_t) dblMatDims[1];
+
+  // column-major parameters
+  size_t dblSimdSize = blaze::SIMDTrait<double>::size;
+  size_t dblMatPaddedRows = blaze::nextMultiple<size_t>(m2, dblSimdSize);
+
+  // unaligned & unpadded column-major CustomMatrix
+  std::unique_ptr<double[], blaze::ArrayDelete> data_uu_dbl(new double[m2*n2]);
+  dCustomMatrixUU cm_uu_dbl(data_uu_dbl.get(), m2, n2);
+  RcppBlaze::copyToCustomMatrix(input_list[1], cm_uu_dbl);
+
+  // unaligned & padded column-major CustomMatrix
+  std::unique_ptr<double[], blaze::ArrayDelete> data_up_dbl(new double[dblMatPaddedRows * n2]);
+  dCustomMatrixUP cm_up_dbl(data_up_dbl.get(), m2, n2, dblMatPaddedRows);
+  RcppBlaze::copyToCustomMatrix(input_list[1], cm_up_dbl);
+
+  // aligned & unpadded column-major CustomMatrix
+  std::unique_ptr<double[], blaze::Deallocate> data_au_dbl(blaze::allocate<double>(m2*n2));
+  dCustomMatrixAU cm_au_dbl(data_au_dbl.get(), m2, n2);
+  RcppBlaze::copyToCustomMatrix(input_list[1], cm_au_dbl);
+
+  // aligned & padded column-major CustomMatrix
+  std::unique_ptr<double[], blaze::Deallocate> data_ap_dbl(blaze::allocate<double>(dblMatPaddedRows * n2));
+  dCustomMatrixAP cm_ap_dbl(data_ap_dbl.get(), m2, n2, dblMatPaddedRows);
+  RcppBlaze::copyToCustomMatrix(input_list[1], cm_ap_dbl);
 
   return Rcpp::List::create(
-    Rcpp::_["iCustomMatrixUU"] = blaze::sum(cm_int),
-    Rcpp::_["dCustomMatrixUU"] = blaze::sum(cm_double1),
-    Rcpp::_["dCustomMatrixUP"] = blaze::sum(cm_double2),
-    Rcpp::_["dCustomMatrixAU"] = blaze::sum(cm_double3),
-    Rcpp::_["dCustomMatrixAP"] = blaze::sum(cm_double4)
+    Rcpp::_["iCustomMatrixUU"] = blaze::sum(cm_uu_int),
+    Rcpp::_["iCustomMatrixAP"] = blaze::sum(cm_ap_int),
+    Rcpp::_["iCustomMatrixAP_RM"] = blaze::sum(cm_ap_rm_int),
+    Rcpp::_["dCustomMatrixUU"] = blaze::sum(cm_uu_dbl),
+    Rcpp::_["dCustomMatrixUP"] = blaze::sum(cm_up_dbl),
+    Rcpp::_["dCustomMatrixAU"] = blaze::sum(cm_au_dbl),
+    Rcpp::_["dCustomMatrixAP"] = blaze::sum(cm_ap_dbl)
   );
 }
-*/
 
 // [[Rcpp::export]]
 Rcpp::List sparse_matrix_as_test(Rcpp::List input_list) {

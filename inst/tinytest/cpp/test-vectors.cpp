@@ -118,30 +118,53 @@ void vector_hv_error(Rcpp::NumericVector x) {
   blaze::HybridVector<double, 3> z = Rcpp::as<blaze::HybridVector<double, 3>>(x);
 }
 
-/*
+
 // [[Rcpp::export]]
 Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
-  typedef typename blaze::CustomVector<int, blaze::unaligned, blaze::unpadded> iCustomVectorUU;
-  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::unpadded> dCustomVectorUU;
-  typedef typename blaze::CustomVector<double, blaze::unaligned, blaze::padded> dCustomVectorUP;
-  typedef typename blaze::CustomVector<double, blaze::aligned, blaze::unpadded> dCustomVectorAU;
-  typedef typename blaze::CustomVector<double, blaze::aligned, blaze::padded> dCustomVectorAP;
+  using iCustomVectorUU = blaze::CustomVector<int, blaze::unaligned, blaze::unpadded>;
+  using iCustomVectorAP = blaze::CustomVector<int, blaze::aligned, blaze::padded>;
+  using dCustomVectorUU = blaze::CustomVector<double, blaze::unaligned, blaze::unpadded>;
+  using dCustomVectorUP = blaze::CustomVector<double, blaze::unaligned, blaze::padded>;
+  using dCustomVectorAU = blaze::CustomVector<double, blaze::aligned, blaze::unpadded>;
+  using dCustomVectorAP = blaze::CustomVector<double, blaze::aligned, blaze::padded>;
 
-  iCustomVectorUU cv_int = input_list[0];
-  dCustomVectorUU cv_uu_double = input_list[1];
-  dCustomVectorUP cv_up_double = input_list[1];
-  dCustomVectorAU cv_au_double = input_list[1];
-  dCustomVectorAP cv_ap_double = input_list[1];
+  size_t int_vec_size = Rf_xlength(input_list[0]);
+  std::unique_ptr<int[], blaze::ArrayDelete> data_unpadded(new int[int_vec_size]);
+  iCustomVectorUU cv_uu_int(data_unpadded.get(), int_vec_size);
+  RcppBlaze::copyToCustomVector(input_list[0], cv_uu_int);
+
+  size_t intVecPaddedSize = blaze::nextMultiple<size_t>(int_vec_size, blaze::SIMDTrait<int>::size);
+  std::unique_ptr<int[], blaze::Deallocate> data_padded(blaze::allocate<int>(intVecPaddedSize));
+  iCustomVectorAP cv_ap_int(data_padded.get(), int_vec_size, intVecPaddedSize);
+  RcppBlaze::copyToCustomVector(input_list[0], cv_ap_int);
+
+  size_t dbl_vec_size = Rf_xlength(input_list[1]);
+  std::unique_ptr<double[], blaze::ArrayDelete> cv_uu_data(new double[dbl_vec_size]);
+  dCustomVectorUU cv_uu_dbl(cv_uu_data.get(), dbl_vec_size);
+  RcppBlaze::copyToCustomVector(input_list[1], cv_uu_dbl);
+
+  size_t dblVecPaddedSize = blaze::nextMultiple<size_t>(dbl_vec_size, blaze::SIMDTrait<double>::size);
+  std::unique_ptr<double[], blaze::ArrayDelete> cv_up_data(new double[dblVecPaddedSize]);
+  dCustomVectorUP cv_up_dbl(cv_up_data.get(), dbl_vec_size, dblVecPaddedSize);
+  RcppBlaze::copyToCustomVector(input_list[1], cv_up_dbl);
+
+  std::unique_ptr<double[], blaze::Deallocate> cv_au_data(blaze::allocate<double>(dbl_vec_size));
+  dCustomVectorAU cv_au_dbl(cv_au_data.get(), dbl_vec_size);
+  RcppBlaze::copyToCustomVector(input_list[1], cv_au_dbl);
+
+  std::unique_ptr<double[], blaze::Deallocate> cv_ap_data(blaze::allocate<double>(dblVecPaddedSize));
+  dCustomVectorAP cv_ap_dbl(cv_ap_data.get(), dbl_vec_size, dblVecPaddedSize);
+  RcppBlaze::copyToCustomVector(input_list[1], cv_ap_dbl);
 
   return Rcpp::List::create(
-    Rcpp::_["iCustomVectorUU"] = blaze::sum(cv_int),
-    Rcpp::_["dCustomVectorUU"] = blaze::sum(cv_uu_double),
-    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_up_double),
-    Rcpp::_["dCustomVectorAU"] = blaze::sum(cv_au_double),
-    Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_ap_double)
+    Rcpp::_["iCustomVectorUU"] = blaze::sum(cv_uu_int),
+    Rcpp::_["iCustomVectorAP"] = blaze::sum(cv_ap_int),
+    Rcpp::_["dCustomVectorUU"] = blaze::sum(cv_uu_dbl),
+    Rcpp::_["dCustomVectorUP"] = blaze::sum(cv_up_dbl),
+    Rcpp::_["dCustomVectorAU"] = blaze::sum(cv_au_dbl),
+    Rcpp::_["dCustomVectorAP"] = blaze::sum(cv_ap_dbl)
   );
 }
-*/
 
 // [[Rcpp::export]]
 Rcpp::List sparse_vector_as_test(Rcpp::List input_list) {
