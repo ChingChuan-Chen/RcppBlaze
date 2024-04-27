@@ -62,37 +62,6 @@ RcppBlaze::copyToCustomVector(intVec, cv_uu_int);
 std::unique_ptr<int[], blaze::Deallocate> data_padded(blaze::allocate<int>(intVecPaddedSize));
 iCustomVectorAP cv_ap_int(data_padded.get(), int_vec_size, intVecPaddedSize);
 RcppBlaze::copyToCustomVector(intVec, cv_ap_int);
-  
-// For CustomVector<double>  
-using dCustomVectorUU = blaze::CustomVector<double, blaze::unaligned, blaze::unpadded>;
-using dCustomVectorUP = blaze::CustomVector<double, blaze::unaligned, blaze::padded>;
-using dCustomVectorAU = blaze::CustomVector<double, blaze::aligned, blaze::unpadded>;
-using dCustomVectorAP = blaze::CustomVector<double, blaze::aligned, blaze::padded>;
-
-// initialize R NumericVector
-Rcpp::NumericVector dblVec = Rcpp::NumericVector::create(-2.0, -1.0, 0.0, 1.0, 2.0);
-size_t dbl_vec_size = Rf_xlength(dblVec);
-size_t dblVecPaddedSize = blaze::nextMultiple<size_t>(dbl_vec_size, blaze::SIMDTrait<double>::size);
-
-// unaligned & unpadded CustomVector
-std::unique_ptr<double[], blaze::ArrayDelete> cv_uu_data(new double[dbl_vec_size]);
-dCustomVectorUU cv_uu_dbl(cv_uu_data.get(), dbl_vec_size);
-RcppBlaze::copyToCustomVector(dblVec, cv_uu_dbl);
-
-// unaligned & padded CustomVector
-std::unique_ptr<double[], blaze::ArrayDelete> cv_up_data(new double[dblVecPaddedSize]);
-dCustomVectorUP cv_up_dbl(cv_up_data.get(), dbl_vec_size, dblVecPaddedSize);
-RcppBlaze::copyToCustomVector(dblVec, cv_up_dbl);
-
-// aligned & unpadded CustomVector
-std::unique_ptr<double[], blaze::Deallocate> cv_au_data(blaze::allocate<double>(dbl_vec_size));
-dCustomVectorAU cv_au_dbl(cv_au_data.get(), dbl_vec_size);
-RcppBlaze::copyToCustomVector(dblVec, cv_au_dbl);
-
-// aligned & padded CustomVector
-std::unique_ptr<double[], blaze::Deallocate> cv_ap_data(blaze::allocate<double>(dblVecPaddedSize));
-dCustomVectorAP cv_ap_dbl(cv_ap_data.get(), dbl_vec_size, dblVecPaddedSize);
-RcppBlaze::copyToCustomVector(dblVec, cv_ap_dbl);
 
 // For CustomMatrix<int>
 using iCustomMatrixUU = blaze::CustomMatrix<int, blaze::unaligned, blaze::unpadded, blaze::columnMajor>;
