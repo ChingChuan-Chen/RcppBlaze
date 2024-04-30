@@ -1,12 +1,5 @@
-#' R and Blaze Integration
-#'
-#' RcppBlaze construct a bridge between R and Blaze.
-#'
-#' 'Blaze' is an open-source, high-performance C++ math library for dense and sparse arithmetic.
-## Copyright (C) 2010 - 2024 Dirk Eddelbuettel, Romain Francois and Douglas Bates
 ## Copyright (C) 2017 - 2024 Ching-Chuan Chen
 ##
-## This file is based on files from RcppArmadillo.
 ## This file is part of RcppBlaze.
 ##
 ## RcppBlaze is free software: you can redistribute it and/or modify it
@@ -14,7 +7,11 @@
 ## a copy of 3-Clause BSD License along with RcppBlaze.
 ## If not, see https://opensource.org/license/BSD-3-Clause.
 
-#' Blaze is an open-source, high-performance \strong{C++} math library for dense and sparse arithmetic.
+#' RcppBlaze - 'Rcpp' Integration for the 'Blaze' High-Performance 'C++' Math Library
+#'
+#' \strong{RcppBlaze} constructs a bridge between \strong{R} and \strong{Blaze}.
+#'
+#' \strong{Blaze} is an open-source, high-performance \strong{C++} math library for dense and sparse arithmetic.
 #' With its state-of-the-art Smart Expression Template implementation \strong{Blaze} combines the elegance and
 #' ease of use of a domain-specific language with HPC-grade performance, making it one of the most
 #' intuitive and fastest \strong{C++} math libraries available. The \strong{RcppBlaze} package includes the header files
@@ -22,12 +19,8 @@
 #' libraries which make \strong{RcppBlaze} be a header-only library. Therefore, users do not need to  install
 #' \strong{Blaze}.
 #'
-#' @section Using RcppBlaze:
-#' The simplest way to get started is to create a skeleton of a package
-#' using \code{RcppBlaze}. This can be done conveniently by the
-#' \code{\link{RcppBlaze.package.skeleton}} function.
-#'
-#' The important steps are
+#' @section Using \strong{RcppBlaze}:
+#' To use \strong{RcppBlaze} in your package, there are some important steps:
 #' \enumerate{
 #' \item Include the \samp{RcppBlaze.h} header file, which also includes \samp{blaze/Blaze.h}.
 #' \item Import \code{Rcpp}, LinkingTo \code{Rcpp} and \code{RcppBlaze} by adding these lines to the \samp{DESCRIPTION} file:
@@ -40,10 +33,16 @@
 #'   PKG_CXXFLAGS=$(SHLIB_OPENMP_CXXFLAGS)
 #'   PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
 #' }
+#' \item Since there are conflicted definitions between \strong{R} and \strong{blaze} which is \code{TRUE} and \code{FALSE}.
+#'  You have to write the initializing function for \strong{C/C++} code which the function is named after `R_init_{YourPackageName}`
+#'  You can refer to our another package, \url{https://github.com/ChingChuan-Chen/RcppLbfgsBlaze} for example.
 #' }
 #'
-#' Note that if you would like to enable Boost threads support, you need to import \strong{BH} package in your DESCRIPTION.
-#' Note that \code{CompressedVector} and \code{CompressedMatrix} only support \code{int}, \code{float} and \code{double} types.
+#' @section Notes:
+#' \enumerate{
+#' \item If you would like to enable Boost threads support, you need to import \strong{BH} package in your DESCRIPTION.
+#' \item \code{CompressedVector} and \code{CompressedMatrix} only support \code{int}, \code{float} and \code{double} types.
+#' }
 #'
 #' @author
 #' For RcppBlaze: Ching-Chuan Chen

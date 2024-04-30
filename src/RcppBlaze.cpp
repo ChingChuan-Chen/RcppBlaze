@@ -10,6 +10,16 @@
 #include <RcppBlaze.h>
 #include <blaze/system/Version.h>
 
+//' The version of Blaze used in RcppBlaze
+//'
+//' To return the version of Blaze used in RcppBlaze.
+//'
+//' @param single A logical value indicates which type to return. If TRUE, it returns an integer. If FALSE, it returns a named vector.
+//' @return A number or a named vector to represent the version of \code{blaze} depending on the input, \code{single}.
+//' @seealso Blaze header file \code{blaze/system/Version.h}.
+//' @examples
+//' blaze_version()
+//' @export
 // [[Rcpp::export]]
 Rcpp::IntegerVector blaze_version(bool single) {
   if (single) {

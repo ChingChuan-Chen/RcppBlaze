@@ -19,7 +19,7 @@ A list containing coefficients, standard errors, rank of model matrix,
   fitted values.
 }
 \description{
-\code{fastLmPure} provides the estimates of the linear model based on \code{RcppBlaze}.
+\code{fastLmPure} provides the estimates of the linear model based on \strong{RcppBlaze}.
 }
 \details{
 \code{fastLm} estimates the linear model using the \code{solve}.

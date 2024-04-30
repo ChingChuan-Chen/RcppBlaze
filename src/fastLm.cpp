@@ -98,7 +98,7 @@ Rcpp::List LLTSolver(const blaze::DynamicMatrix<double>& X, const blaze::Dynamic
 
 //' linear model fitting function based on RcppBlaze
 //'
-//' \code{fastLmPure} provides the estimates of the linear model based on \code{RcppBlaze}.
+//' \code{fastLmPure} provides the estimates of the linear model based on \strong{RcppBlaze}.
 //'
 //' \code{fastLm} estimates the linear model using the \code{solve}.
 //'
