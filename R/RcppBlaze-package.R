@@ -14,9 +14,10 @@
 ## a copy of 3-Clause BSD License along with RcppBlaze.
 ## If not, see https://opensource.org/license/BSD-3-Clause.
 
+#' Blaze is an open-source, high-performance \strong{C++} math library for dense and sparse arithmetic.
 #' With its state-of-the-art Smart Expression Template implementation \strong{Blaze} combines the elegance and
 #' ease of use of a domain-specific language with HPC-grade performance, making it one of the most
-#' intuitive and fastest C++ math libraries available. The \strong{RcppBlaze} package includes the header files
+#' intuitive and fastest \strong{C++} math libraries available. The \strong{RcppBlaze} package includes the header files
 #' from the \strong{Blaze} library with disabling some functionalities related to link to the thread and system
 #' libraries which make \strong{RcppBlaze} be a header-only library. Therefore, users do not need to  install
 #' \strong{Blaze}.
@@ -36,7 +37,8 @@
 #' }
 #' \item Link against the \code{BLAS} and \code{LAPACK} libraries, by adding following two lines in the \samp{Makevars} and \samp{Makevars.win} files:
 #' \preformatted{
-#'   PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+#'   PKG_CXXFLAGS=$(SHLIB_OPENMP_CXXFLAGS)
+#'   PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
 #' }
 #' }
 #'
