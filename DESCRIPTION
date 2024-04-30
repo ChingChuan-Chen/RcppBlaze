@@ -27,7 +27,6 @@ Description: Blaze is an open-source, high-performance 'C++' math library for de
 Depends:
     R (>= 4.2.0)
 Imports:
-    utils,
     Rcpp (>= 1.0.0),
     Matrix (>= 1.5-0)
 LinkingTo:

@@ -16,7 +16,7 @@ A number or a named vector to represent the version of \code{blaze} depending on
 To return the version of Blaze used in RcppBlaze.
 }
 \examples{
-blaze_version()
+blaze_version(FALSE)
 }
 \seealso{
 Blaze header file \code{blaze/system/Version.h}.

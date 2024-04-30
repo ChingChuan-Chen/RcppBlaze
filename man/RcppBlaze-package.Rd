@@ -33,7 +33,7 @@ To use \strong{RcppBlaze} in your package, there are some important steps:
   PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
 }
 \item Since there are conflicted definitions between \strong{R} and \strong{blaze} which is \code{TRUE} and \code{FALSE}.
- You have to write the initializing function for \strong{C/C++} code which the function is named after `R_init_{YourPackageName}`
+ You have to write the initializing function for \strong{C/C++} code which the function is named after \code{R_init_YourPackageName}
  You can refer to our another package, \url{https://github.com/ChingChuan-Chen/RcppLbfgsBlaze} for example.
 }
 }

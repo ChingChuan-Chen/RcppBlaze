@@ -9,7 +9,7 @@
 #' @return A number or a named vector to represent the version of \code{blaze} depending on the input, \code{single}.
 #' @seealso Blaze header file \code{blaze/system/Version.h}.
 #' @examples
-#' blaze_version()
+#' blaze_version(FALSE)
 #' @export
 blaze_version <- function(single) {
     .Call(`_RcppBlaze_blaze_version`, single)

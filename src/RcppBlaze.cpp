@@ -18,7 +18,7 @@
 //' @return A number or a named vector to represent the version of \code{blaze} depending on the input, \code{single}.
 //' @seealso Blaze header file \code{blaze/system/Version.h}.
 //' @examples
-//' blaze_version()
+//' blaze_version(FALSE)
 //' @export
 // [[Rcpp::export]]
 Rcpp::IntegerVector blaze_version(bool single) {
