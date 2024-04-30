@@ -138,4 +138,4 @@ Ching-Chuan Chen, Klaus Iglberger, Georg Hager, Christian Godenschwager, Tobias 
 
 ### License
 
-GPL (>= 2)
+BSD-3 License
