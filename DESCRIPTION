@@ -33,7 +33,8 @@ LinkingTo:
     Rcpp
 Suggests:
     MatrixExtra,
-    tinytest
+    tinytest,
+	microbenchmark
 LazyLoad: yes
 Encoding: UTF-8
 License: BSD_3_clause + file LICENSE
