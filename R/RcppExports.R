@@ -15,7 +15,7 @@ blaze_version <- function(single) {
     .Call(`_RcppBlaze_blaze_version`, single)
 }
 
-#' Set the random number generator for blaze with given seed
+#' Set/Get the random number generator for blaze with given seed
 #'
 #' @param seed A positive integer to specify the seed value for the random number generator.
 #' @return No return value.
@@ -28,24 +28,24 @@ blaze_set_seed <- function(seed) {
 #' @rdname blaze_seed
 #' @export
 blaze_get_seed <- function() {
-    invisible(.Call(`_RcppBlaze_blaze_get_seed`))
+    .Call(`_RcppBlaze_blaze_get_seed`)
 }
 
-#' Get/Set the Number of Threads used in blaze
+#' Set/Get the Number of Threads used in blaze
 #'
 #' @param n The number of threads to set in blaze.
 #' @return \code{blaze_get_threads} returns an integer and \code{blaze_set_threads} returns nothing.
 #' @seealso blaze wiki: \url{https://bitbucket.org/blaze-lib/blaze/wiki/Shared\%20Memory\%20Parallelization}.
 #' @rdname blaze_threads
 #' @export
-blaze_get_threads <- function() {
-    .Call(`_RcppBlaze_blaze_get_threads`)
+blaze_set_num_threads <- function(n) {
+    invisible(.Call(`_RcppBlaze_blaze_set_num_threads`, n))
 }
 
 #' @rdname blaze_threads
 #' @export
-blaze_set_threads <- function(n) {
-    invisible(.Call(`_RcppBlaze_blaze_set_threads`, n))
+blaze_get_num_threads <- function() {
+    .Call(`_RcppBlaze_blaze_get_num_threads`)
 }
 
 #' linear model fitting function based on RcppBlaze

@@ -32,25 +32,25 @@ Rcpp::IntegerVector blaze_version(bool single) {
   );
 }
 
-//' Set the random number generator for blaze with given seed
+//' Set/Get the random number generator for blaze with given seed
 //'
 //' @param seed A positive integer to specify the seed value for the random number generator.
 //' @return No return value.
 //' @rdname blaze_seed
 //' @export
 // [[Rcpp::export]]
-void blaze_set_seed(unsigned int seed) {
+void blaze_set_seed(uint32_t seed) {
   blaze::setSeed(seed);
 }
 
 //' @rdname blaze_seed
 //' @export
 // [[Rcpp::export]]
-void blaze_get_seed() {
-  blaze::getSeed();
+uint32_t blaze_get_seed() {
+  return blaze::getSeed();
 }
 
-//' Get/Set the Number of Threads used in blaze
+//' Set/Get the Number of Threads used in blaze
 //'
 //' @param n The number of threads to set in blaze.
 //' @return \code{blaze_get_threads} returns an integer and \code{blaze_set_threads} returns nothing.
@@ -58,21 +58,21 @@ void blaze_get_seed() {
 //' @rdname blaze_threads
 //' @export
 // [[Rcpp::export]]
-int blaze_get_threads() {
+void blaze_set_num_threads(size_t n) {
 #if BLAZE_HPX_PARALLEL_MODE || BLAZE_OPENMP_PARALLEL_MODE || BLAZE_CPP_THREADS_PARALLEL_MODE || BLAZE_BOOST_THREADS_PARALLEL_MODE
-   return (int) blaze::getNumThreads();
+  blaze::setNumThreads(n);
 #else
-   return 1;
+  (void) n;
 #endif
 }
 
 //' @rdname blaze_threads
 //' @export
 // [[Rcpp::export]]
-void blaze_set_threads(int n) {
+size_t blaze_get_num_threads() {
 #if BLAZE_HPX_PARALLEL_MODE || BLAZE_OPENMP_PARALLEL_MODE || BLAZE_CPP_THREADS_PARALLEL_MODE || BLAZE_BOOST_THREADS_PARALLEL_MODE
-  blaze::setNumThreads((size_t) n);
+  return blaze::getNumThreads();
 #else
-  (void) n;
+  return 1;
 #endif
 }

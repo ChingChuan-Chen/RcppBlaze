@@ -3,7 +3,7 @@
 \name{blaze_set_seed}
 \alias{blaze_set_seed}
 \alias{blaze_get_seed}
-\title{Set the random number generator for blaze with given seed}
+\title{Set/Get the random number generator for blaze with given seed}
 \usage{
 blaze_set_seed(seed)
 
@@ -16,5 +16,5 @@ blaze_get_seed()
 No return value.
 }
 \description{
-Set the random number generator for blaze with given seed
+Set/Get the random number generator for blaze with given seed
 }
