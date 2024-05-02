@@ -35,37 +35,24 @@ Rcpp::List QRsolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size_t
 
   INIT_MAT(Q, q_data, n, p, n_padded);
   INIT_MAT(R, r_data, p, p, p_padded);
-#pragma omp sections
-{
-#pragma omp section
   blaze::qr(X, Q, R);
-}
 
   const size_t rank = R.rows();
   INIT_VEC(coef, coef_data, p, p_padded);
   INIT_VEC(fitted, fitted_data, n, n_padded);
   INIT_VEC(resid, resid_data, n, n_padded);
-  double s;
   INIT_VEC(se, se_data, p, p_padded);
 
-#pragma omp sections
-{
-#pragma omp section
   blaze::invert(R);
-#pragma omp section
   coef = R * blaze::trans(Q) * y;
-#pragma omp section
   fitted = X * coef;
-#pragma omp section
   resid = y - fitted;
-#pragma omp section
-  s = std::sqrt(blaze::dot(resid, resid) / ((double) (n-rank)));
-#pragma omp section
-#pragma omp parallel for
+  double s = std::sqrt(blaze::dot(resid, resid) / ((double) (n-rank)));
+  #pragma omp parallel for
   for (size_t i=0UL; i<p; ++i) {
     se[i] = std::sqrt(blaze::dot(row(R, i), row(R, i))) * s;
   }
-}
+
   return Rcpp::List::create(
     _["coefficients"]  = coef,
     _["se"]            = se,
@@ -80,34 +67,19 @@ Rcpp::List QRsolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size_t
 Rcpp::List LLTSolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size_t n_padded, size_t p_padded) {
   const size_t n = X.rows(), p = X.columns();
   INIT_MAT(XTXinv, xtx_data, p, p, p_padded);
-
-#pragma omp sections
-{
-#pragma omp section
   XTXinv = blaze::trans(X) * X;
-#pragma omp section
   blaze::invert<blaze::byLLH>(XTXinv);
-}
 
   INIT_VEC(coef, coef_data, p, p_padded);
   INIT_VEC(fitted, fitted_data, n, n_padded);
   INIT_VEC(resid, resid_data, n, n_padded);
   INIT_VEC(se, se_data, p, p_padded);
-  double s;
 
-#pragma omp sections
-{
-#pragma omp section
   coef = XTXinv * blaze::trans(X) * y;
-#pragma omp section
   fitted = X * coef;
-#pragma omp section
   resid = y - fitted;
-#pragma omp section
-  s = std::sqrt(blaze::dot(resid, resid) / ((double) (n-p)));
-#pragma omp section
+  double s = std::sqrt(blaze::dot(resid, resid) / ((double) (n-p)));
   se = blaze::diagonal(XTXinv) * s;
-}
 
   return Rcpp::List::create(
     _["coefficients"]  = coef,
@@ -124,33 +96,19 @@ Rcpp::List LDLTSolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size
   const size_t n = X.rows(), p = X.columns();
   INIT_MAT(XTXinv, xtx_data, p, p, p_padded);
 
-#pragma omp sections
-{
-#pragma omp section
   XTXinv = blaze::trans(X) * X;
-#pragma omp section
   blaze::invert<blaze::byLDLT>(XTXinv);
-}
 
   INIT_VEC(coef, coef_data, p, p_padded);
   INIT_VEC(fitted, fitted_data, n, n_padded);
   INIT_VEC(resid, resid_data, n, n_padded);
   INIT_VEC(se, se_data, p, p_padded);
-  double s;
 
-#pragma omp sections
-{
-#pragma omp section
   coef = XTXinv * blaze::trans(X) * y;
-#pragma omp section
   fitted = X * coef;
-#pragma omp section
   resid = y - fitted;
-#pragma omp section
-  s = std::sqrt(blaze::dot(resid, resid) / ((double) (n-p)));
-#pragma omp section
+  double s = std::sqrt(blaze::dot(resid, resid) / ((double) (n-p)));
   se = blaze::diagonal(XTXinv) * s;
-}
 
   return Rcpp::List::create(
     _["coefficients"]  = coef,
