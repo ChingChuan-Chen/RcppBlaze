@@ -11,7 +11,7 @@ fastLmPure(X, y, type)
 
 \item{y}{A response vector.}
 
-\item{type}{A integer. 0 is QR solver, 1 is LLT solver and 2 is LDLT sovler.}
+\item{type}{A integer. 0 is QR solver, 1 is LDLT solver, 2 is LLT sovler and 3 is LU solver.}
 }
 \value{
 A list containing coefficients, standard errors, rank of model matrix,

@@ -56,7 +56,7 @@ blaze_set_threads <- function(n) {
 #'
 #' @param X A model matrix.
 #' @param y A response vector.
-#' @param type A integer. 0 is QR solver, 1 is LLT solver and 2 is LDLT sovler.
+#' @param type A integer. 0 is QR solver, 1 is LDLT solver, 2 is LLT sovler and 3 is LU solver.
 #' @return A list containing coefficients, standard errors, rank of model matrix,
 #'   degree of freedom of residuals, residuals, the standard deviation of random errors and
 #'   fitted values.

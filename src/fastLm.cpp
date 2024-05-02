@@ -28,7 +28,7 @@ BlazeDblCuVector __var__ ( __data__.get(), __size__, __padded_size__ );\
 std::unique_ptr<double[], blaze::Deallocate> __data__( blaze::allocate<double>(__padded__ * __cols__) ); \
 BlazeDblCuMatrix __var__ ( __data__.get(), __rows__, __cols__, __padded__ );
 
-enum {QRSolverType = 0, LDLTSolverType, LLTSolverType};
+enum {QRSolverType = 0, LDLTSolverType, LLTSolverType, LUSolverType};
 
 Rcpp::List QRsolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size_t n_padded, size_t p_padded) {
   const size_t n = X.rows(), p = X.columns();
@@ -64,40 +64,30 @@ Rcpp::List QRsolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size_t
   );
 }
 
-Rcpp::List LLTSolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size_t n_padded, size_t p_padded) {
-  const size_t n = X.rows(), p = X.columns();
-  INIT_MAT(XTXinv, xtx_data, p, p, p_padded);
-  XTXinv = blaze::trans(X) * X;
-  blaze::invert<blaze::byLLH>(XTXinv);
-
-  INIT_VEC(coef, coef_data, p, p_padded);
-  INIT_VEC(fitted, fitted_data, n, n_padded);
-  INIT_VEC(resid, resid_data, n, n_padded);
-  INIT_VEC(se, se_data, p, p_padded);
-
-  coef = XTXinv * blaze::trans(X) * y;
-  fitted = X * coef;
-  resid = y - fitted;
-  double s = std::sqrt(blaze::dot(resid, resid) / ((double) (n-p)));
-  se = blaze::diagonal(XTXinv) * s;
-
-  return Rcpp::List::create(
-    _["coefficients"]  = coef,
-    _["se"]            = se,
-    _["rank"]          = (int) p,
-    _["df.residual"]   = (int) (n-p),
-    _["residuals"]     = resid,
-    _["s"]             = s,
-    _["fitted.values"] = fitted
-  );
-}
-
-Rcpp::List LDLTSolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size_t n_padded, size_t p_padded) {
+Rcpp::List InvertSolver(
+    const BlazeDblCuMatrix& X,
+    const BlazeDblCuVector& y,
+    size_t n_padded,
+    size_t p_padded,
+    int lmSolverType
+) {
   const size_t n = X.rows(), p = X.columns();
   INIT_MAT(XTXinv, xtx_data, p, p, p_padded);
 
   XTXinv = blaze::trans(X) * X;
-  blaze::invert<blaze::byLDLT>(XTXinv);
+  switch (lmSolverType) {
+  case LDLTSolverType:
+    blaze::invert<blaze::byLDLT>(XTXinv);
+    break;
+  case LLTSolverType:
+    blaze::invert<blaze::byLLH>(XTXinv);
+    break;
+  case LUSolverType:
+    blaze::invert<blaze::byLU>(XTXinv);
+    break;
+  default:
+    Rcpp::stop("No such solver type!");
+  }
 
   INIT_VEC(coef, coef_data, p, p_padded);
   INIT_VEC(fitted, fitted_data, n, n_padded);
@@ -129,7 +119,7 @@ Rcpp::List LDLTSolver(const BlazeDblCuMatrix& X, const BlazeDblCuVector& y, size
 //'
 //' @param X A model matrix.
 //' @param y A response vector.
-//' @param type A integer. 0 is QR solver, 1 is LLT solver and 2 is LDLT sovler.
+//' @param type A integer. 0 is QR solver, 1 is LDLT solver, 2 is LLT sovler and 3 is LU solver.
 //' @return A list containing coefficients, standard errors, rank of model matrix,
 //'   degree of freedom of residuals, residuals, the standard deviation of random errors and
 //'   fitted values.
@@ -161,11 +151,7 @@ Rcpp::List fastLmPure(Rcpp::NumericMatrix X, Rcpp::NumericVector y, int type) {
   switch(type) {
     case QRSolverType:
       return QRsolver(x_, y_, n_padded, p_padded);
-    case LLTSolverType:
-      return LLTSolver(x_, y_, n_padded, p_padded);
-    case LDLTSolverType:
-      return LDLTSolver(x_, y_, n_padded, p_padded);
     default:
-      throw std::invalid_argument("invalid type");
+      return InvertSolver(x_, y_, n_padded, p_padded, type);
   }
 }

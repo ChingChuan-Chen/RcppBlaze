@@ -20,6 +20,7 @@ exprs$lm.fit <- expression(stats::lm.fit(X, y))
 exprs$blaze_qr <- expression(.Call('_RcppBlaze_fastLmPure', PACKAGE = 'RcppBlaze', X, y, 0L))
 exprs$blaze_ldlt <- expression(.Call('_RcppBlaze_fastLmPure', PACKAGE = 'RcppBlaze', X, y, 1L))
 exprs$blaze_llt <- expression(.Call('_RcppBlaze_fastLmPure', PACKAGE = 'RcppBlaze', X, y, 2L))
+exprs$blaze_lu <- expression(.Call('_RcppBlaze_fastLmPure', PACKAGE = 'RcppBlaze', X, y, 3L))
 
 if (suppressMessages(require(RcppEigen, quietly = TRUE))) {
   # versions from RcppEigen

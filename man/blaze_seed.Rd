@@ -2,9 +2,12 @@
 % Please edit documentation in R/RcppExports.R
 \name{blaze_set_seed}
 \alias{blaze_set_seed}
+\alias{blaze_get_seed}
 \title{Set the random number generator for blaze with given seed}
 \usage{
 blaze_set_seed(seed)
+
+blaze_get_seed()
 }
 \arguments{
 \item{seed}{A positive integer to specify the seed value for the random number generator.}
