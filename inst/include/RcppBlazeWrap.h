@@ -22,8 +22,8 @@ namespace Rcpp {
       typedef typename VT::ElementType Type;
       const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-	  size_t size = (*x).size();
-      Rcpp::Vector<RTYPE> out(size);
+	    size_t size = (*x).size();
+	    Rcpp::Vector<RTYPE> out(size);
       for (size_t i=0UL; i<size; ++i) {
         out[i] = Rcpp::internal::caster<Type, value_t>((*x)[i]);
       }
@@ -34,7 +34,7 @@ namespace Rcpp {
     SEXP blaze_uv_wrap(const blaze::UniformVector<Type, TF>& x) {
       const int RTYPE = Rcpp::traits::r_sexptype_traits<Type>::rtype;
       typedef typename Rcpp::traits::storage_type<RTYPE>::type value_t;
-	  size_t size = (*x).size();
+	    size_t size = (*x).size();
       Rcpp::Vector<RTYPE> out(size);
       std::fill(out.begin(), out.end(), Rcpp::internal::caster<Type, value_t>((*x)[0UL]));
       return out;

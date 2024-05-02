@@ -14,10 +14,18 @@
 /* .Call calls */
 extern SEXP _RcppBlaze_blaze_version(SEXP);
 extern SEXP _RcppBlaze_fastLmPure(SEXP, SEXP, SEXP);
+extern SEXP _RcppBlaze_blaze_get_seed();
+extern SEXP _RcppBlaze_blaze_set_seed(SEXP);
+extern SEXP _RcppBlaze_blaze_get_threads();
+extern SEXP _RcppBlaze_blaze_set_threads(SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
   {"_RcppBlaze_blaze_version", (DL_FUNC) &_RcppBlaze_blaze_version, 1},
   {"_RcppBlaze_fastLmPure", (DL_FUNC) &_RcppBlaze_fastLmPure, 3},
+  {"_RcppBlaze_blaze_get_seed", (DL_FUNC) &_RcppBlaze_blaze_get_seed, 0},
+  {"_RcppBlaze_blaze_set_seed", (DL_FUNC) &_RcppBlaze_blaze_set_seed, 1},
+  {"_RcppBlaze_blaze_get_threads", (DL_FUNC) &_RcppBlaze_blaze_get_threads, 0},
+  {"_RcppBlaze_blaze_set_threads", (DL_FUNC) &_RcppBlaze_blaze_set_threads, 1},
   {NULL, NULL, 0}
 };
 

@@ -1,7 +1,7 @@
 Package: RcppBlaze
 Type: Package
 Title: 'Rcpp' Integration for the 'Blaze' High-Performance 'C++' Math Library
-Version: 1.0.0
+Version: 1.0.1
 Date: 2024-04-27
 Authors@R: c(
    person(given = "Ching-Chuan",

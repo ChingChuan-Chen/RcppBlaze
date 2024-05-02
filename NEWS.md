@@ -1,3 +1,9 @@
+# RcppBlaze v1.0.1
+
+* Add function to set/get the number of threads.
+* Add function to set/get seed for blaze.
+* Improve the performance of `fastLm` by using `CustomVector` and `CustomMatrix`.
+
 # RcppBlaze v1.0.0
 
 * Update Blaze-lib to 3.8.2 since Rcpp supports C++14 / C++17 since 4.2.0.
