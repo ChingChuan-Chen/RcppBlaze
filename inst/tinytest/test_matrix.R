@@ -6,15 +6,20 @@
 ## under the terms of the 3-Clause BSD License. You should have received
 ## a copy of 3-Clause BSD License along with RcppBlaze.
 ## If not, see https://opensource.org/license/BSD-3-Clause.
+suppressPackageStartupMessages({
+  require(Rcpp)
+  require(RcppBlaze)
+  require(Matrix)
+  require(MatrixExtra)
+  require(tinytest)
+})
 
 cppFile <- "test-matrices.cpp"
 if (file.exists(file.path("cpp", cppFile))) {
-  Rcpp::sourceCpp(file.path("cpp", cppFile))
+  sourceCpp(file.path("cpp", cppFile))
 } else {
-  Rcpp::sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
+  sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
 }
-library(Matrix)
-library(MatrixExtra)
 
 matrix_wrap_res <- matrix_wrap_test()
 expect_int_mat <- matrix(c(1L, -2L, 4L, 5L, -8L, 0L), nrow=2L, byrow=TRUE)

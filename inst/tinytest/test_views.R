@@ -6,15 +6,20 @@
 ## under the terms of the 3-Clause BSD License. You should have received
 ## a copy of 3-Clause BSD License along with RcppBlaze.
 ## If not, see https://opensource.org/license/BSD-3-Clause.
+suppressPackageStartupMessages({
+  require(Rcpp)
+  require(RcppBlaze)
+  require(Matrix)
+  require(MatrixExtra)
+  require(tinytest)
+})
 
 cppFile <- "test-views.cpp"
 if (file.exists(file.path("cpp", cppFile))) {
-  Rcpp::sourceCpp(file.path("cpp", cppFile))
+  sourceCpp(file.path("cpp", cppFile))
 } else {
-  Rcpp::sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
+  sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
 }
-library(Matrix)
-library(MatrixExtra)
 
 wrap_vector_views_res <- wrap_vector_view_test()
 expect_equal(wrap_vector_views_res[["subvector_dv_function"]], c(4.0, 4.4, -12.1, 8.6), info = "subvector_dv_function")

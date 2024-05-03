@@ -34,7 +34,7 @@ LinkingTo:
 Suggests:
     MatrixExtra,
     tinytest,
-	microbenchmark
+    microbenchmark
 LazyLoad: yes
 Encoding: UTF-8
 License: BSD_3_clause + file LICENSE

@@ -6,15 +6,20 @@
 ## under the terms of the 3-Clause BSD License. You should have received
 ## a copy of 3-Clause BSD License along with RcppBlaze.
 ## If not, see https://opensource.org/license/BSD-3-Clause.
+suppressPackageStartupMessages({
+  require(Rcpp)
+  require(RcppBlaze)
+  require(Matrix)
+  require(MatrixExtra)
+  require(tinytest)
+})
 
 cppFile <- "test-expr.cpp"
 if (file.exists(file.path("cpp", cppFile))) {
-  Rcpp::sourceCpp(file.path("cpp", cppFile))
+  sourceCpp(file.path("cpp", cppFile))
 } else {
-  Rcpp::sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
+  sourceCpp(system.file("tinytest", "cpp", cppFile, package = "RcppBlaze"))
 }
-library(Matrix)
-library(MatrixExtra)
 
 vec_expr_wrap_res <- wrap_vec_expr_test()
 dense_vec <- c(1.5, -2.5, 4.5)
