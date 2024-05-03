@@ -9,7 +9,14 @@
 ## a copy of 3-Clause BSD License along with RcppBlaze.
 ## If not, see https://opensource.org/license/BSD-3-Clause.
 
-#' @importFrom Rcpp Rcpp.plugin.maker
+RcppBlazeCxxFlags <- function(){
+  paste0('-I"', system.file("include", package = "RcppBlaze"), '"', sep = "")
+}
+
+CxxFlags <- function() cat(RcppBlazeCxxFlags())
+
+# Inline plugin used by sourceCpp.
+#' @importFrom Rcpp Rcpp.plugin.maker evalCpp sourceCpp
 inlineCxxPlugin <-  function() {
   openmpFlag <- ifelse(Sys.info()[["sysname"]] == "Darwin", "", "$(SHLIB_OPENMP_CFLAGS)")
   getSettings <- Rcpp.plugin.maker(
