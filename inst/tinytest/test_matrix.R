@@ -92,17 +92,16 @@ expect_equal(matrix_as_res[["dCustomMatrixAP"]], expect_double_sum, info = "dCus
 
 # Column-Major SparseMatrix
 expect_double_sm_sum <- 12
+dgCMatrix_as_test_res <- sparse_matrix_as_test(list(expect_dbl_sparse_matrix_cm))
+expect_equal(dgCMatrix_as_test_res[["cpm_cm"]], 12, info="dgCMatrix_cpm_cm")
+expect_equal(dgCMatrix_as_test_res[["cpm_rm"]], 12, info="dgCMatrix_cpm_rm")
+
 dims <- c(3L, 3L)
 value <- c(3.25, 1.25, 1.5)
 idx_i <-c(0L,0L,1L)
 idx_j <- c(1L,2L,2L)
 cm_p_vec <- c(0L,0L,1L,3L)
 rm_p_vec <- c(0L,2L,3L,3L)
-
-dgCMatrix_as_test_res <- sparse_matrix_as_test(list(expect_dbl_sparse_matrix_cm))
-expect_equal(dgCMatrix_as_test_res[["cpm_cm"]], 12, info="dgCMatrix_cpm_cm")
-expect_equal(dgCMatrix_as_test_res[["cpm_rm"]], 12, info="dgCMatrix_cpm_rm")
-
 tri_sm_u <- new("dtCMatrix", x=value, i=idx_i, p=cm_p_vec, Dim=dims, uplo="U")
 tri_sm_l <- new("dtCMatrix", x=value, i=idx_j, p=rm_p_vec, Dim=dims, uplo="L")
 dtCMatrix_upper_as_test_res <- sparse_matrix_as_test(list(tri_sm_u))

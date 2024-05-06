@@ -359,7 +359,9 @@ namespace Rcpp {
         for (int u=1; u < p.size(); ++u) {
           if (p[u] > p[u-1]) {
             cnt = p[u] - p[u-1];
-            vi_pair_vec[u-1].reserve(cnt);
+            if (sourceSO == targetSO) {
+              vi_pair_vec[u-1].reserve(cnt);
+            }
             for (int t=0; t<cnt; ++t) {
               if (sourceSO != targetSO) {
                 vi_pair_vec[idx[v]].push_back(vi_pair(u-1, x[v]));
