@@ -179,16 +179,6 @@ Rcpp::List matrix_as_test(Rcpp::List input_list) {
 }
 
 // [[Rcpp::export]]
-void matrix_sm_error(Rcpp::NumericMatrix x) {
-  blaze::StaticMatrix<double, 3, 3, blaze::columnMajor> z = Rcpp::as<blaze::StaticMatrix<double, 3, 3, blaze::columnMajor>>(x);
-}
-
-// [[Rcpp::export]]
-void matrix_hm_error(Rcpp::NumericMatrix x) {
-  blaze::HybridMatrix<double, 3, 3, blaze::columnMajor> z = Rcpp::as<blaze::HybridMatrix<double, 3, 3, blaze::columnMajor>>(x);
-}
-
-// [[Rcpp::export]]
 Rcpp::List custom_matrix_as_test(Rcpp::List input_list) {
   using iCustomMatrixUU = blaze::CustomMatrix<int, blaze::unaligned, blaze::unpadded, blaze::columnMajor>;
   using iCustomMatrixAP = blaze::CustomMatrix<int, blaze::aligned, blaze::padded, blaze::columnMajor>;

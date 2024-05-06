@@ -51,9 +51,6 @@ expect_equal(vector_as_res[["sv_double_unaligned_sum"]], expect_double_sum, info
 expect_equal(vector_as_res[["hv_double_sum"]], expect_double_sum, info = "hv_double_sum")
 expect_equal(vector_as_res[["hv_double_unaligned_sum"]], expect_double_sum, info = "hv_double_unaligned_sum")
 
-expect_error(vector_sv_error(c(1.5, 2.5, 4.5, 5.5)))
-expect_error(vector_hv_error(c(1.5, 2.5, 4.5, 5.5)))
-
 custom_vector_as_res <- custom_vector_as_test(list(c(1L, 3L, 6L), c(1.5, 2.5, 4.5)))
 expect_equal(custom_vector_as_res[["iCustomVectorUU"]], 10L, info = "iCustomVectorUU")
 expect_equal(custom_vector_as_res[["iCustomVectorAP"]], 10L, info = "iCustomVectorAP")

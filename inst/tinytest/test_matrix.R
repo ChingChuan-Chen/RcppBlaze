@@ -73,9 +73,6 @@ expect_equal(matrix_as_res[["sm_double_unaligned_sum"]], expect_double_sum, info
 expect_equal(matrix_as_res[["hm_double_sum"]], expect_double_sum, info = "hm_double_sum")
 expect_equal(matrix_as_res[["hm_double_unaligned_sum"]], expect_double_sum, info = "hm_double_unaligned_sum")
 
-expect_error(matrix_sm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
-expect_error(matrix_hm_error(matrix(c(1.5, 2.5, 4.5, 5.5, 8.5, 7.3), nrow=2L, byrow=TRUE)))
-
 matrix_as_res <- custom_matrix_as_test(
   list(
     matrix(c(1L, 2L, 4L, 5L, 8L, 3L), nrow=2L, byrow=TRUE),

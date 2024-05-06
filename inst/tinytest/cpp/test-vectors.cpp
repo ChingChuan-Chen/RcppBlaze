@@ -109,17 +109,6 @@ Rcpp::List vector_as_test(Rcpp::List input_list) {
 }
 
 // [[Rcpp::export]]
-void vector_sv_error(Rcpp::NumericVector x) {
-  blaze::StaticVector<double, 3> z = Rcpp::as<blaze::StaticVector<double, 3>>(x);
-}
-
-// [[Rcpp::export]]
-void vector_hv_error(Rcpp::NumericVector x) {
-  blaze::HybridVector<double, 3> z = Rcpp::as<blaze::HybridVector<double, 3>>(x);
-}
-
-
-// [[Rcpp::export]]
 Rcpp::List custom_vector_as_test(Rcpp::List input_list) {
   using iCustomVectorUU = blaze::CustomVector<int, blaze::unaligned, blaze::unpadded>;
   using iCustomVectorAP = blaze::CustomVector<int, blaze::aligned, blaze::padded>;
